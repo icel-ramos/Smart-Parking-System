@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parking Map - Live Overview</title>
+  <link rel="stylesheet" href="parkingMap.css">
+  <script src="parkingMap.js" defer></script>
+</head>
+<body>
+
+  <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div>
+            <div class="brand-logo">
+                <span>🅿️</span> Park Easy
+            </div>
+
+            <ul class="nav-links">
+                <li class="nav-item"><a href="Dashboard.html">📊 Dashboard</a></li>
+                <li class="nav-item active"><a href="parkingMap.html">🗺️ Parking Map</a></li>
+                <li class="nav-item"><a href="Infra&Hardware.html">⚙️ Infrastructure and Hardware</a></li>
+                <li class="nav-item"><a href="bill&Pricing.html">💰 Billing & Pricing</a></li>
+                <li class="nav-item"><a href="#">🚨 Compliance & Settings</a></li>
+            </ul>
+
+        </div>
+            <div class="logout-btn">
+                <a href="#">↩️ Logout</a>
+            </div>
+    </aside>
+
+    <!-- Main Content Dashboard -->
+    <main class="main-content">
+        <header>
+            <h1>Parking Map -</h1>
+            
+            <div class="user-profile">
+                <span class="bell-icon">🔔</span>
+                <div class="avatar"></div>
+            </div>
+
+        </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <div class="overview-header">
+      <div>
+        <h2>Live parking overview</h2>
+        <p>Monitor every space and keep traffic moving.</p>
+      </div>
+      <div class="live-badge">
+        <span class="live-dot"></span>
+        <span>Live &bull; Updated just now</span>
+      </div>
+    </div>
+
+    <!-- Parking Map Card -->
+    <div class="dashboard-card">
+      <div class="zone-header">
+        <div class="zone-title" id="zoneTitle">Floor 1 &middot; Zone A</div>
+        <div class="legend">
+          <div class="legend-item"><span class="dot green"></span> Available</div>
+          <div class="legend-item"><span class="dot red"></span> Occupied</div>
+        </div>
+      </div>
+
+      <!-- Dark Sensor Canvas -->
+      <div class="parking-canvas">
+        <div class="zone-label">ZONE A</div>
+        
+        <!-- Top Row (Slots 1-5) -->
+        <div class="slot-row" id="topRow"></div>
+
+        <!-- One Way Lane -->
+        <div class="lane-divider">
+          <div class="dash-line"></div>
+          <span>ONE WAY &rarr;</span>
+          <div class="dash-line"></div>
+        </div>
+
+        <!-- Bottom Row (Slots 6-10) -->
+        <div class="slot-row" id="bottomRow"></div>
+      </div>
+
+      <!-- Bottom Telemetry & Controls -->
+      <div class="telemetry-panel">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">Selected Lot</div>
+            <div class="stat-value" id="statLot">1A-04</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Beam Pathway</div>
+            <div class="stat-value text-green" id="statBeam">Clear</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Entry Time</div>
+            <div class="stat-value" id="statEntry">--:--</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Duration</div>
+            <div class="stat-value" id="statDuration">0m 0s</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Total Full</div>
+            <div class="stat-value text-red" id="statTotalFull">0 / 4</div>
+          </div>
+        </div>
+
+
+          <div class="control-group">
+            <div class="control-title">Attendant Manual Force Override</div>
+            <button class="action-btn" id="btnOverride" onclick="toggleOverride()">
+              <span>&#128274;</span>
+              <span id="btnOverrideText">Force Occupied Status</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="footer-note">Selected Slot details (above) are updated dynamically. Use controls to override.</p>
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Parking Control Dashboard</title>
+  <link rel="stylesheet" href="Infra&Hardware.css">
+  <script src="Infra&Hardware.js" defer></script>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div>
+            <div class="brand-logo">
+                <span>🅿️</span> Park Easy
+            </div>
+
+            <ul class="nav-links">
+                <li class="nav-item"><a href="Dashboard.html">📊 Dashboard</a></li>
+                <li class="nav-item"><a href="parkingMap.html">🗺️ Parking Map</a></li>
+                <li class="nav-item active"><a href="Infra&Hardware.html">⚙️ Infrastructure and Hardware</a></li>
+                <li class="nav-item"><a href="bill&Pricing.html">💰 Billing & Pricing</a></li>
+                <li class="nav-item"><a href="#">🚨 Compliance & Settings</a></li>
+            </ul>
+
+        </div>
+            <div class="logout-btn">
+                <a href="#">↩️ Logout</a>
+            </div>
+    </aside>
+
+
+  <main class="dashboard">
+    <header>
+            <h1>Dashboard -</h1>
+            
+            <div class="user-profile">
+                <span class="bell-icon">🔔</span>
+                <div class="avatar"></div>
+            </div>
+
+        </header>
+    <!-- GATE CONTROL SECTION -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">Gate Control</h2>
+        <span class="section-subtitle">2 connected gates</span>
+      </div>
+
+      <div class="grid-2">
+        <!-- Entry Gate -->
+        <div class="card" id="entry-gate-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="icon-box">🚧</span>
+              <span>Entry Gate</span>
+            </div>
+            <span class="badge open" id="entry-status">Open</span>
+          </div>
+
+          <div class="btn-row">
+            <button class="pill-btn active-blue" id="entry-auto" onclick="setGateMode('entry', 'auto')">Automatic</button>
+            <button class="pill-btn" id="entry-manual" onclick="setGateMode('entry', 'manual')">Manual</button>
+          </div>
+
+          <div class="btn-row">
+            <button class="pill-btn" id="entry-open" disabled onclick="setGateState('entry', 'Open')">Open Gate</button>
+            <button class="pill-btn" id="entry-close" disabled onclick="setGateState('entry', 'Closed')">Close Gate</button>
+          </div>
+
+          <div class="card-footer-note" id="entry-note">System controlled via auto-loop sensor</div>
+        </div>
+
+        <!-- Exit Gate -->
+        <div class="card" id="exit-gate-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="icon-box">↪️</span>
+              <span>Exit Gate</span>
+            </div>
+            <span class="badge open" id="exit-status">Open</span>
+          </div>
+
+          <div class="btn-row">
+            <button class="pill-btn active-blue" id="exit-auto" onclick="setGateMode('exit', 'auto')">Automatic</button>
+            <button class="pill-btn" id="exit-manual" onclick="setGateMode('exit', 'manual')">Manual</button>
+          </div>
+
+          <div class="btn-row">
+            <button class="pill-btn" id="exit-open" disabled onclick="setGateState('exit', 'Open')">Open Gate</button>
+            <button class="pill-btn" id="exit-close" disabled onclick="setGateState('exit', 'Closed')">Close Gate</button>
+          </div>
+
+          <div class="card-footer-note" id="exit-note">System controlled via auto-loop sensor</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARKING SLOT LED INDICATORS SECTION -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">Parking Slot LED Indicators</h2>
+        <span class="section-subtitle">Help drivers navigate to available spots</span>
+      </div>
+
+      <div class="grid-2" id="slots-container">
+        <!-- Populated via JavaScript -->
+         <div class="grid-2">
+
+            <!-- SLOT 1 -->
+            <div class="card" id="entry-gate-card">
+            <div class="card-header">
+                <div class="card-title-group">
+                <span class="icon-box">🚦</span>
+                <span>Slot 1</span>
+                </div>
+                <span class="badge open" id="entry-status">Available</span>
+            </div>
+
+            <div class="btn-row">
+                <button class="pill-btn active-blue" id="entry-auto" onclick="setGateMode('entry', 'auto')">Automatic</button>
+                <button class="pill-btn" id="entry-manual" onclick="setGateMode('entry', 'manual')">Manual</button>
+            </div>
+
+            <div class="btn-row">
+                <button class="pill-btn" id="entry-open" disabled onclick="setGateState('entry', 'Open')">Green Light</button>
+                <button class="pill-btn" id="entry-close" disabled onclick="setGateState('entry', 'Closed')">Red Light</button>
+            </div>
+
+            <div class="card-footer-note" id="entry-note">System controlled via auto-loop sensor</div>
+            </div>
+
+            <!-- SLOT 2 -->
+            <div class="card" id="exit-gate-card">
+            <div class="card-header">
+                <div class="card-title-group">
+                <span class="icon-box">🚦</span>
+                <span>Slot 2</span>
+                </div>
+                <span class="badge open" id="exit-status">Available</span>
+            </div>
+
+            <div class="btn-row">
+                <button class="pill-btn active-blue" id="exit-auto" onclick="setGateMode('exit', 'auto')">Automatic</button>
+                <button class="pill-btn" id="exit-manual" onclick="setGateMode('exit', 'manual')">Manual</button>
+            </div>
+
+            <div class="btn-row">
+                <button class="pill-btn" id="exit-open" disabled onclick="setGateState('exit', 'Open')">Green Light</button>
+                <button class="pill-btn" id="exit-close" disabled onclick="setGateState('exit', 'Closed')">Red Light</button>
+            </div>
+
+            <div class="card-footer-note" id="exit-note">System controlled via auto-loop sensor</div>
+            </div>
+
+            <!-- SLOT 3 -->
+            <div class="card" id="entry-gate-card">
+            <div class="card-header">
+                <div class="card-title-group">
+                <span class="icon-box">🚦</span>
+                <span>Slot 3</span>
+                </div>
+                <span class="badge open" id="entry-status">Available</span>
+            </div>
+
+            <div class="btn-row">
+                <button class="pill-btn active-blue" id="entry-auto" onclick="setGateMode('entry', 'auto')">Automatic</button>
+                <button class="pill-btn" id="entry-manual" onclick="setGateMode('entry', 'manual')">Manual</button>
+            </div>
+
+            <div class="btn-row">
+                <button class="pill-btn" id="entry-open" disabled onclick="setGateState('entry', 'Open')">Green Light</button>
+                <button class="pill-btn" id="entry-close" disabled onclick="setGateState('entry', 'Closed')">Red Light</button>
+            </div>
+
+            <div class="card-footer-note" id="entry-note">System controlled via auto-loop sensor</div>
+            </div>
+
+            <!-- SLOT 4 -->
+            <div class="card" id="exit-gate-card">
+            <div class="card-header">
+                <div class="card-title-group">
+                <span class="icon-box">🚦</span>
+                <span>Slot 4</span>
+                </div>
+                <span class="badge open" id="exit-status">Available</span>
+            </div>
+
+            <div class="btn-row">
+                <button class="pill-btn active-blue" id="exit-auto" onclick="setGateMode('exit', 'auto')">Automatic</button>
+                <button class="pill-btn" id="exit-manual" onclick="setGateMode('exit', 'manual')">Manual</button>
+            </div>
+
+            <div class="btn-row">
+                <button class="pill-btn" id="exit-open" disabled onclick="setGateState('exit', 'Open')">Green Light</button>
+                <button class="pill-btn" id="exit-close" disabled onclick="setGateState('exit', 'Closed')">Red Light</button>
+            </div>
+
+            <div class="card-footer-note" id="exit-note">System controlled via auto-loop sensor</div>
+            </div>
+
+
+        </div>
+      </div>
+    </section>
+
+    <!-- CONNECTED HARDWARE DEVICES SECTION -->
+    <section>
+      <div class="hardware-controls">
+        <div>
+          <h2 class="section-title">Connected Hardware</h2>
+          <h2 class="section-title">Devices</h2>
+        </div>
+
+        <div class="filter-bar">
+          <div class="select-wrapper">
+            <label for="typeFilter">Type:</label>
+            <select id="typeFilter" onchange="filterDevices()">
+              <option value="All">All</option>
+              <option value="Barrier">Barrier</option>
+              <option value="LED">LED Indicator</option>
+              <option value="Camera">Camera</option>
+              <option value="Sensor">Sensor</option>
+            </select>
+          </div>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Search serial or location..."
+            oninput="filterDevices()"
+          />
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Device ID</th>
+              <th>Name & Layer</th>
+              <th>Health</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="deviceTableBody">
+            <!-- Populated via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  
