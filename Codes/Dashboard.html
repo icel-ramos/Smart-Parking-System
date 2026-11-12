@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Smart Parking System</title>
+        <link rel="stylesheet" href="Dashboard.css">
+    </head>
+
+    <body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div>
+            <div class="brand-logo">
+                <span>🅿️</span> Park Easy
+            </div>
+
+            <ul class="nav-links">
+                <li class="nav-item active"><a href="#">📊 Dashboard</a></li>
+                <li class="nav-item"><a href="parkingMap.html">🗺️ Parking Map</a></li>
+                <li class="nav-item"><a href="Infra&Hardware.html">⚙️ Infrastructure and Hardware</a></li>
+                <li class="nav-item"><a href="bill&Pricing.html">💰 Billing & Pricing</a></li>
+                <li class="nav-item"><a href="#">🚨 Compliance & Settings</a></li>
+            </ul>
+
+        </div>
+            <div class="logout-btn">
+                <a href="Login.html">↩️ Logout</a>
+            </div>
+    </aside>
+
+    <!-- Main Content Dashboard -->
+    <main class="main-content">
+        <header>
+            <h1>Dashboard -</h1>
+            
+            <div class="user-profile">
+                <span class="bell-icon">🔔</span>
+                <div class="avatar"></div>
+            </div>
+
+        </header>
+
+        <!-- Section: Current Details -->
+        <h2 class="section-title">Current Parking Lot Details</h2>
+
+        <div class="dashboard-grid">
+
+            <!--Vehicle -->
+            <div class="card">
+                <div class="card-title">Ground Floor</div>
+                <div class="progress-bar-container">
+                <div class="progress-bar" style="width: 0%;"></div>
+                </div>
+                <div class="data-row"><span><span class="status-dot dot-occupied"></span>Occupied</span><strong>0</strong></div>
+                <div class="data-row"><span><span class="status-dot dot-available"></span>Available</span><strong>4</strong></div>
+                <div class="data-row"><span>Total</span><span>4</span></div>
+            </div>
+
+           
+        </div>
+
+        <!-- Section: Parking Statistics -->
+        <h2 class="section-title">
+            Parking Statistics 
+            <select class="dropdown-inline">
+                <option>today</option>
+            </select>
+        </h2>
+
+        <div class="dashboard-grid">
+            <!-- 2 Wheelers Stats -->
+            <div class="card">
+                <div class="card-title">2 Wheelers</div>
+                <div class="stat-row"><span>Total number of 2 wheelers parked</span><span class="stat-value">0</span></div>
+                <div class="stat-row"><span>Revenue generated</span><span class="stat-value">₱0</span></div>
+            </div>
+            <!-- 4 Wheelers Stats -->
+            <div class="card">
+                <div class="card-title">4 Wheelers</div>
+                <div class="stat-row"><span>Total number of 4 wheelers parked</span><span class="stat-value">0</span></div>
+                <div class="stat-row"><span>Revenue generated</span><span class="stat-value">₱0</span></div>
+            </div>
+            <!-- Total Stats -->
+            <div class="card">
+                <div class="card-title">Total</div>
+                <div class="stat-row"><span>Total Number Vehicles Parked</span><span class="stat-value">0</span></div>
+                <div class="stat-row"><span>Revenue generated</span><span class="stat-value">₱0</span></div>
+            </div>
+        </div>
+
+        <!-- Section: Graphical Summary -->
+        <h2 class="section-title">
+        Graphical Summary 
+        <select class="dropdown-inline" style="background-color: #3b82f6;">
+            <option>parking</option>
+        </select>
+        <select class="dropdown-inline">
+            <option>today</option>
+        </select>
+        </h2>
+        <div class="chart-card">
+        <div class="mock-chart">
+            <svg class="chart-svg-bg" viewBox="0 0 600 300" preserveAspectRatio="none">
+            <path d="M0,220 Q75,250 150,150 T300,200 T450,140 T600,160" fill="none" stroke="#f59e0b" stroke-width="2"/>
+            <path d="M0,120 Q75,100 150,80 T300,110 T450,70 T600,90" fill="none" stroke="#3b82f6" stroke-width="2"/>
+            </svg>
+            
+            <div class="tooltip-line"></div>
+            <div class="chart-card-interaction">
+            <div class="chart-tooltip">
+                <strong>7:00 PM</strong><br>
+                <span style="color:#3b82f6;">180</span>
+            </div>
+            </div>
+        </div>
+        <div class="chart-legend">
+            <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b;"></div> 2 wheelers</div>
+            <div class="legend-item"><div class="legend-color" style="background-color: #3b82f6;"></div> 4 wheelers</div>
+        </div>
+        </div>
+    </main>
+
+    </body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Billing &amp; Pricing</title>
+  <link rel="stylesheet" href="bill&Pricing.css">
+  <script src="bill&Pricing.js" defer></script>
+</head>
+<body>
+
+  <!-- Sidebar navigation -->
+    <aside class="sidebar">
+        <div>
+            <div class="brand-logo">
+                <span>🅿️</span> Park Easy
+            </div>
+
+            <ul class="nav-links">
+                <li class="nav-item"><a href="Dashboard.html">📊 Dashboard</a></li>
+                <li class="nav-item"><a href="parkingMap.html">🗺️ Parking Map</a></li>
+                <li class="nav-item"><a href="Infra&Hardware.html">⚙️ Infrastructure and Hardware</a></li>
+                <li class="nav-item active"><a href="bill&Pricing.html">💰 Billing & Pricing</a></li>
+                <li class="nav-item"><a href="#">🚨 Compliance & Settings</a></li>
+            </ul>
+
+        </div>
+            <div class="logout-btn">
+                <a href="#">↩️ Logout</a>
+            </div>
+    </aside>
+
+    <!-- Main Content Dashboard -->
+    <main class="main-content">
+        <header>
+            <h1>Dashboard -</h1>
+            
+            <div class="user-profile">
+                <span class="bell-icon">🔔</span>
+                <div class="avatar"></div>
+            </div>
+
+        </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    
+    <!-- Header Row -->
+    <div class="section-header">
+      <div>
+        <h2>Revenue at a glance</h2>
+        <p>Manage parking rates and stay on top of every payment.</p>
+      </div>
+      <div class="date-filter">
+        <select id="periodFilter" onchange="updateKPIs()">
+          <option value="today">Today, 12 Nov 2026</option>
+          <option value="yesterday">Yesterday, 11 Nov 2026</option>
+          <option value="week">This Week</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 4 KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Today's Revenue</div>
+        <div class="kpi-value" id="kpiToday">&#8369;0</div>
+        <div class="kpi-sub text-green" id="kpiTodaySub">&uarr; 0% vs yesterday</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Monthly Revenue</div>
+        <div class="kpi-value" id="kpiMonth">&#8369;0</div>
+        <div class="kpi-sub text-green" id="kpiMonthSub">&uarr; 0% vs last month</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Transactions</div>
+        <div class="kpi-value" id="kpiTx">0</div>
+        <div class="kpi-sub text-muted" id="kpiTxSub">0 paid transactions</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Pending</div>
+        <div class="kpi-value" id="kpiPending">&#8369;0</div>
+        <div class="kpi-sub text-orange" id="kpiPendingSub">0 unpaid transactions</div>
+      </div>
+    </div>
+
+    <!-- Parking Rates Card -->
+    <section class="card">
+      <div class="card-header">
+        <h3>Parking Rates</h3>
+        <span class="currency-note">All rates in Philippine Peso (PHP)</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="rates-table">
+          <thead>
+            <tr>
+              <th>Vehicle Type</th>
+              <th>First hour</th>
+              <th>Extra hour</th>
+              <th>Daily max</th>
+              <th>Overnight</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ratesBody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Transactions Card -->
+    <section class="card">
+      <div class="card-header">
+        <h3>Transactions</h3>
+        <span class="date-note">12 November 2026</span>
+      </div>
+
+      <!-- Toolbar: Search, Date, Export -->
+      <div class="tx-toolbar">
+        <div class="search-box">
+          <span class="search-icon">&#128269;</span>
+          <input type="text" id="searchInput" placeholder="Search ticket or plate number" oninput="filterTransactions()">
+        </div>
+
+        <div class="toolbar-actions">
+          <select id="txDateFilter" class="outline-btn">
+            <option value="all">12 Nov 2026</option>
+            <option value="Paid">Paid Only</option>
+            <option value="Unpaid">Unpaid Only</option>
+          </select>
+          <button class="outline-btn" onclick="exportCSV()">
+            <span>&darr;</span> Export
+          </button>
+        </div>
+      </div>
+
+      <!-- Transactions Table -->
+      <div class="table-wrapper">
+        <table class="tx-table">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Plate No.</th>
+              <th>Vehicle</th>
+              <th>Time In</th>
+              <th>Time Out</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="txBody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="table-footer">
+        <div class="showing-text" id="showingText">Showing 1–5 of 186 transactions</div>
+        <div class="pagination" id="paginationControls">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+</body>
+</html>
