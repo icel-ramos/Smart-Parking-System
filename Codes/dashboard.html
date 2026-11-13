@@ -1,174 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Parking System - Dashboard</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Smart Parking System</title>
-        <link rel="stylesheet" href="global.css">
-        <link rel="stylesheet" href="Dashboard.css">
-    </head>
+  <!-- Sidebar Navigation (No Emojis, No Logout Button) -->
+  <aside class="sidebar">
+    <div class="brand-logo">
+      <span data-icon="logo"></span> Park Easy
+    </div>
 
-    <body>
+    <ul class="nav-links">
+      <li class="nav-item active"><a href="dashboard.html"><span data-icon="dashboard"></span> Dashboard</a></li>
+      <li class="nav-item"><a href="parkingMap.html"><span data-icon="map"></span> Parking Map</a></li>
+      <li class="nav-item"><a href="infra&Hardware.html"><span data-icon="hardware"></span> Infrastructure and Hardware</a></li>
+      <li class="nav-item"><a href="bill&Pricing.html"><span data-icon="billing"></span> Billing &amp; Pricing</a></li>
+      <li class="nav-item"><a href="comply&Setting.html"><span data-icon="compliance"></span> Compliance &amp; Settings</a></li>
+    </ul>
+  </aside>
 
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar">
-        <div>
-            <div class="brand-logo">
-                <span>🅿️</span> Park Easy
-            </div>
+  <header>
+    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu"></button>
+    <h1>Dashboard</h1>
+    <div class="user-profile">
+      <span class="bell-icon" aria-label="Notifications"></span>
+      <div class="avatar" aria-label="Account"></div>
+    </div>
+  </header>
 
-            <ul class="nav-links">
-                <li class="nav-item active"><a href="dashboard.html">📊 Dashboard</a></li>
-                <li class="nav-item"><a href="parkingMap.html">🗺️ Parking Map</a></li>
-                <li class="nav-item"><a href="infra&Hardware.html">⚙️ Infrastructure and Hardware</a></li>
-                <li class="nav-item"><a href="bill&Pricing.html">💰 Billing & Pricing</a></li>
-                <li class="nav-item"><a href="comply&Setting.html">🚨 Compliance & Settings</a></li>
-            </ul>
+  <!-- Main Content Dashboard -->
+  <main class="main-content">
 
+    <!-- Section: Current Details -->
+    <h2 class="section-title">Current Parking Lot Details</h2>
+
+    <div class="dashboard-grid">
+      <div class="card">
+        <div class="card-title">Ground Floor</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="floorProgressBar" style="width: 0%;"></div>
         </div>
-    </aside>
-
-    <header>
-        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-        <h1>Dashboard</h1>
-        <div class="user-profile">
-            <span class="bell-icon">🔔</span>
-            <div class="avatar"></div>
+        <div class="data-row">
+          <span><span class="status-dot dot-occupied"></span>Occupied</span>
+          <strong id="dashOccupied">0</strong>
         </div>
-    </header>
-
-    <!-- Main Content Dashboard -->
-    <main class="main-content">
-
-        <!-- Section: Current Details -->
-        <h2 class="section-title">Current Parking Lot Details</h2>
-
-        <div class="dashboard-grid">
-
-            <!--Vehicle -->
-            <div class="card">
-                <div class="card-title">Ground Floor</div>
-                <div class="progress-bar-container">
-                <div class="progress-bar" style="width: 0%;"></div>
-                </div>
-                <div class="data-row"><span><span class="status-dot dot-occupied"></span>Occupied</span><strong>0</strong></div>
-                <div class="data-row"><span><span class="status-dot dot-available"></span>Available</span><strong>4</strong></div>
-                <div class="data-row"><span>Total</span><span>4</span></div>
-            </div>
-
-           
+        <div class="data-row">
+          <span><span class="status-dot dot-available"></span>Available</span>
+          <strong id="dashAvailable">4</strong>
         </div>
-
-        <!-- Section: Parking Statistics -->
-        <h2 class="section-title">
-            Parking Statistics 
-            <select class="dropdown-inline">
-                <option>today</option>
-            </select>
-        </h2>
-
-        <div class="dashboard-grid">
-            <!-- 2 Wheelers Stats -->
-            <div class="card">
-                <div class="card-title">2 Wheelers</div>
-                <div class="stat-row"><span>Total number of 2 wheelers parked</span><span class="stat-value">0</span></div>
-                <div class="stat-row"><span>Revenue generated</span><span class="stat-value">₱0</span></div>
-            </div>
-            <!-- 4 Wheelers Stats -->
-            <div class="card">
-                <div class="card-title">4 Wheelers</div>
-                <div class="stat-row"><span>Total number of 4 wheelers parked</span><span class="stat-value">0</span></div>
-                <div class="stat-row"><span>Revenue generated</span><span class="stat-value">₱0</span></div>
-            </div>
-            <!-- Total Stats -->
-            <div class="card">
-                <div class="card-title">Total</div>
-                <div class="stat-row"><span>Total Number Vehicles Parked</span><span class="stat-value">0</span></div>
-                <div class="stat-row"><span>Revenue generated</span><span class="stat-value">₱0</span></div>
-            </div>
+        <div class="data-row">
+          <span>Total</span>
+          <span id="dashTotal">4</span>
         </div>
+      </div>
+    </div>
 
-        <!-- Section: Graphical Summary -->
-        <h2 class="section-title">
-        Graphical Summary 
-        <select class="dropdown-inline" style="background-color: #3b82f6;">
-            <option>parking</option>
-        </select>
-        <select class="dropdown-inline">
-            <option>today</option>
-        </select>
-        </h2>
-        <div class="chart-card">
-        <div class="mock-chart">
-            <svg class="chart-svg-bg" viewBox="0 0 600 300" preserveAspectRatio="none">
-            <path d="M0,220 Q75,250 150,150 T300,200 T450,140 T600,160" fill="none" stroke="#f59e0b" stroke-width="2"/>
-            <path d="M0,120 Q75,100 150,80 T300,110 T450,70 T600,90" fill="none" stroke="#3b82f6" stroke-width="2"/>
-            </svg>
-            
-            <div class="tooltip-line"></div>
-            <div class="chart-card-interaction">
-            <div class="chart-tooltip">
-                <strong>7:00 PM</strong><br>
-                <span style="color:#3b82f6;">180</span>
-            </div>
-            </div>
+    <!-- Section: Parking Statistics -->
+    <h2 class="section-title">
+      Parking Statistics
+      <select class="dropdown-inline" id="statsPeriodSelect">
+        <option value="today">today</option>
+        <option value="week">this week</option>
+      </select>
+    </h2>
+
+    <div class="dashboard-grid">
+      <div class="card">
+        <div class="card-title">2 Wheelers</div>
+        <div class="stat-row">
+          <span>Total number of 2 wheelers parked</span>
+          <span class="stat-value" id="stat2WCount">0</span>
         </div>
-        <div class="chart-legend">
-            <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b;"></div> 2 wheelers</div>
-            <div class="legend-item"><div class="legend-color" style="background-color: #3b82f6;"></div> 4 wheelers</div>
+        <div class="stat-row">
+          <span>Revenue generated</span>
+          <span class="stat-value" id="stat2WRev">₱0</span>
         </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">4 Wheelers</div>
+        <div class="stat-row">
+          <span>Total number of 4 wheelers parked</span>
+          <span class="stat-value" id="stat4WCount">0</span>
         </div>
-    </main>
-
-    <footer class="site-footer">
-        <span>&copy; 2026 Park Easy Smart Parking System. All rights reserved.</span>
-        <div class="footer-links">
-            <a href="comply&Setting.html">Privacy &amp; Compliance</a>
-            <a href="comply&Setting.html">System Settings</a>
+        <div class="stat-row">
+          <span>Revenue generated</span>
+          <span class="stat-value" id="stat4WRev">₱0</span>
         </div>
-    </footer>
+      </div>
 
-    <script src="global.js"></script>
+      <div class="card">
+        <div class="card-title">Total</div>
+        <div class="stat-row">
+          <span>Total Number Vehicles Parked</span>
+          <span class="stat-value" id="statTotalCount">0</span>
+        </div>
+        <div class="stat-row">
+          <span>Revenue generated</span>
+          <span class="stat-value" id="statTotalRev">₱0</span>
+        </div>
+      </div>
+    </div>
 
-    <script>
-        (function initAccountMenu() {
-            const profileContainer = document.querySelector('.user-profile');
-            const avatar = document.querySelector('.avatar');
-            if (!profileContainer || !avatar) return;
+    <!-- Section: Interactive Graphical Summary -->
+    <h2 class="section-title">
+      Graphical Summary
+      <select class="dropdown-inline" id="chartMetricSelect" onchange="updateChart()">
+        <option value="parking">parking</option>
+        <option value="revenue">revenue</option>
+      </select>
+      <select class="dropdown-inline" id="chartPeriodSelect" onchange="updateChart()">
+        <option value="today">today</option>
+        <option value="week">this week</option>
+      </select>
+    </h2>
 
-            const savedEmail = localStorage.getItem('parkEasyEmail') || 'Not signed in';
-            const initial = savedEmail !== 'Not signed in' ? savedEmail.charAt(0).toUpperCase() : '👤';
-            avatar.textContent = initial;
+    <div class="chart-card">
+      <div class="mock-chart" id="interactiveChart">
+        <svg class="chart-svg-bg" viewBox="0 0 600 300" preserveAspectRatio="none">
+          <path id="path2W" d="M0,295 L600,295" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
+          <path id="path4W" d="M0,295 L600,295" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
+        </svg>
 
-            const dropdown = document.createElement('div');
-            dropdown.className = 'account-dropdown';
-            dropdown.innerHTML = `
-                <div class="account-header">
-                <div class="account-name" id="menuUserName">System Account</div>
-                <div class="account-email" id="menuUserEmail">${savedEmail}</div>
-                </div>
-                <a href="comply&Setting.html" class="account-item">⚙️ Account &amp; Settings</a>
-                <button type="button" class="account-item danger" id="menuLogoutBtn">↩️ Sign Out</button>
-            `;
-            profileContainer.appendChild(dropdown);
+        <div class="tooltip-line" id="chartTooltipLine" style="display: none;"></div>
+        <div class="chart-tooltip" id="chartTooltip" style="display: none;">
+          <strong id="tooltipLabel">--:--</strong><br>
+          <span style="color:#3b82f6;" id="tooltip4W">4W: 0</span> |
+          <span style="color:#f59e0b;" id="tooltip2W">2W: 0</span>
+        </div>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b;"></div> 2 wheelers</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #3b82f6;"></div> 4 wheelers</div>
+      </div>
+    </div>
 
-            avatar.addEventListener('click', (e) => {
-                e.stopPropagation();
-                dropdown.classList.toggle('open');
-            });
+  </main>
 
-            document.getElementById('menuLogoutBtn').addEventListener('click', () => {
-                sessionStorage.removeItem('parkEasyLoggedIn');
-                window.location.href = 'index.html';
-            });
+  <footer class="site-footer">
+    <span>&copy; 2026 Park Easy Smart Parking System. All rights reserved.</span>
+    <div class="footer-links">
+      <a href="comply&Setting.html">Privacy &amp; Compliance</a>
+      <a href="comply&Setting.html">System Settings</a>
+    </div>
+  </footer>
 
-            document.addEventListener('click', (e) => {
-                if (!profileContainer.contains(e.target)) {
-                    dropdown.classList.remove('open');
-                }
-            });
-        })();
-    </script>
-    </body>
+  <script src="global.js"></script>
+  <script>
+    // Chart Dataset (Starts at 0; Firebase can overwrite window.chartData later)
+    window.chartData = {
+      today: {
+        labels: ['8 AM', '10 AM', '12 PM', '2 PM', '4 PM', '6 PM', '8 PM'],
+        parking: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] },
+        revenue: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] }
+      },
+      week: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        parking: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] },
+        revenue: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] }
+      }
+    };
+
+    function buildSvgPath(values, maxVal) {
+      const width = 600;
+      const height = 280;
+      const stepX = width / (values.length - 1);
+      return values.map((v, i) => {
+        const x = (i * stepX).toFixed(1);
+        const y = (290 - (maxVal > 0 ? (v / maxVal) * height : 0)).toFixed(1);
+        return (i === 0 ? 'M' : 'L') + x + ',' + y;
+      }).join(' ');
+    }
+
+    function updateChart() {
+      const metric = document.getElementById('chartMetricSelect').value;
+      const period = document.getElementById('chartPeriodSelect').value;
+      const current = window.chartData[period];
+      const series = current[metric];
+
+      const maxVal = Math.max(...series.twoW, ...series.fourW, 10);
+      document.getElementById('path2W').setAttribute('d', buildSvgPath(series.twoW, maxVal));
+      document.getElementById('path4W').setAttribute('d', buildSvgPath(series.fourW, maxVal));
+    }
+
+    // Interactive Hover Tooltip
+    const chartBox = document.getElementById('interactiveChart');
+    const tooltip = document.getElementById('chartTooltip');
+    const tooltipLine = document.getElementById('chartTooltipLine');
+
+    chartBox.addEventListener('mousemove', (e) => {
+      const rect = chartBox.getBoundingClientRect();
+      const relX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const pct = (relX / rect.width) * 100;
+
+      const metric = document.getElementById('chartMetricSelect').value;
+      const period = document.getElementById('chartPeriodSelect').value;
+      const current = window.chartData[period];
+      const series = current[metric];
+
+      const idx = Math.round((relX / rect.width) * (current.labels.length - 1));
+      const prefix = metric === 'revenue' ? '₱' : '';
+
+      tooltipLine.style.display = 'block';
+      tooltip.style.display = 'block';
+      tooltipLine.style.left = pct + '%';
+      tooltip.style.left = Math.min(Math.max(pct, 12), 88) + '%';
+
+      document.getElementById('tooltipLabel').textContent = current.labels[idx];
+      document.getElementById('tooltip4W').textContent = '4W: ' + prefix + series.fourW[idx];
+      document.getElementById('tooltip2W').textContent = '2W: ' + prefix + series.twoW[idx];
+    });
+
+    chartBox.addEventListener('mouseleave', () => {
+      tooltipLine.style.display = 'none';
+      tooltip.style.display = 'none';
+    });
+
+    updateChart();
+  </script>
+</body>
 </html>
