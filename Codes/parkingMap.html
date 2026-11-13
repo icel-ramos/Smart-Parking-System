@@ -100,7 +100,7 @@
           </div>
           <div class="stat-item">
             <div class="stat-label">Total Full</div>
-            <div class="stat-value text-red" id="statTotalFull">0 / 4</div>
+            <div class="stat-value" id="statTotalFull">0 / 4</div>
           </div>
         </div>
 
@@ -196,7 +196,11 @@
 
       document.getElementById("statEntry").textContent = currentSlot.entry;
       document.getElementById("statDuration").textContent = currentSlot.duration;
-      document.getElementById("statTotalFull").textContent = `${occupiedCount} / ${slots.length}`;
+      const totalFullEl = document.getElementById("statTotalFull");
+      totalFullEl.textContent = `${occupiedCount} / ${slots.length}`;
+      totalFullEl.className = (occupiedCount === slots.length && slots.length > 0)
+        ? "stat-value text-red"
+        : "stat-value";
 
       document.getElementById("btnOverrideText").textContent =
         currentSlot.forced ? "Release Manual Override" : "Force Occupied Status";
@@ -212,29 +216,62 @@
       return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     }
 
-    function toggleOverride() {
-      const slot = floorsData[currentFloor][selectedIndex];
-      if (!slot.forced) {
-        slot.forced = true;
-        slot.status = "occupied";
-        if (slot.entry === "--:--") {
-          slot.entry = getCurrentTimeStr();
-          slot.duration = "0m 1s";
-        }
-        if (window.pushNotification) {
-          window.pushNotification("Manual Override Active", `Slot ${slot.id} was manually forced to Occupied.`);
-        }
-      } else {
-        slot.forced = false;
-        slot.status = "available";
-        slot.entry = "--:--";
-        slot.duration = "0m 0s";
-        if (window.pushNotification) {
-          window.pushNotification("Manual Override Released", `Slot ${slot.id} returned to Available.`);
-        }
-      }
-      renderDashboard();
+    function formatElapsed(startMs) {
+    if (!startMs) return "0m 0s";
+    const totalSeconds = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
     }
+    return `${minutes}m ${seconds}s`;
+  }
+
+  function toggleOverride() {
+    const slot = floorsData[currentFloor][selectedIndex];
+    if (!slot.forced) {
+      slot.forced = true;
+      slot.status = "occupied";
+      if (slot.entry === "--:--") {
+        slot.entry = getCurrentTimeStr();
+        slot.entryTimeMs = Date.now();
+        slot.duration = "0m 0s";
+      }
+      if (window.pushNotification) {
+        window.pushNotification("Manual Override Active", `Slot ${slot.id} was manually forced to Occupied.`);
+      }
+    } else {
+      slot.forced = false;
+      slot.status = "available";
+      slot.entry = "--:--";
+      slot.entryTimeMs = null;
+      slot.duration = "0m 0s";
+      if (window.pushNotification) {
+        window.pushNotification("Manual Override Released", `Slot ${slot.id} returned to Available.`);
+      }
+    }
+    renderDashboard();
+  }
+
+  // Live 1-second timer to update duration for all occupied slots
+  setInterval(() => {
+    const slots = floorsData[currentFloor];
+    let anyUpdated = false;
+
+    slots.forEach(slot => {
+      if (slot.status === "occupied" && slot.entryTimeMs) {
+        slot.duration = formatElapsed(slot.entryTimeMs);
+        anyUpdated = true;
+      }
+    });
+
+    if (anyUpdated) {
+      const currentSlot = slots[selectedIndex];
+      document.getElementById("statDuration").textContent = currentSlot.duration;
+    }
+  }, 1000);
 
     renderDashboard();
   </script>
