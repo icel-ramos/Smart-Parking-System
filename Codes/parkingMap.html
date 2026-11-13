@@ -161,17 +161,15 @@
       const statusLabel = slot.status === "occupied" ? "Occupied" : "Available";
       const carMarkup = slot.status === "occupied"
         ? `<div class="slot-car" data-icon="car"></div>`
-        : "";
+        : `<div class="slot-car"></div>`;
 
       box.innerHTML = `
         <div class="slot-status">
           <span class="dot ${dotColor}"></span>
           <span>${statusLabel}</span>
         </div>
-        <div class="slot-bottom">
-          <div class="slot-id">${slot.id}</div>
-          ${carMarkup}
-        </div>
+        ${carMarkup}
+        <div class="slot-id">${slot.id}</div>
       `;
 
       if (index < 5) {
