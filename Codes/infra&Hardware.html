@@ -9,31 +9,28 @@
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div>
-            <div class="brand-logo">
-                <span>🅿️</span> Park Easy
-            </div>
+  <aside class="sidebar">
+    <div class="brand-logo">
+      <span data-icon="logo"></span> Park Easy
+    </div>
 
-            <ul class="nav-links">
-                <li class="nav-item"><a href="dashboard.html">📊 Dashboard</a></li>
-                <li class="nav-item"><a href="parkingMap.html">🗺️ Parking Map</a></li>
-                <li class="nav-item active"><a href="infra&Hardware.html">⚙️ Infrastructure and Hardware</a></li>
-                <li class="nav-item"><a href="bill&Pricing.html">💰 Billing & Pricing</a></li>
-                <li class="nav-item"><a href="comply&Setting.html">🚨 Compliance & Settings</a></li>
-            </ul>
+    <ul class="nav-links">
+      <li class="nav-item"><a href="dashboard.html"><span data-icon="dashboard"></span> Dashboard</a></li>
+      <li class="nav-item"><a href="parkingMap.html"><span data-icon="map"></span> Parking Map</a></li>
+      <li class="nav-item active"><a href="infra&Hardware.html"><span data-icon="hardware"></span> Infrastructure and Hardware</a></li>
+      <li class="nav-item"><a href="bill&Pricing.html"><span data-icon="billing"></span> Billing &amp; Pricing</a></li>
+      <li class="nav-item"><a href="comply&Setting.html"><span data-icon="compliance"></span> Compliance &amp; Settings</a></li>
+    </ul>
+  </aside>
 
-        </div>
-    </aside>
-
-    <header>
-      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-      <h1>Infrastructure & Hardware</h1>
-      <div class="user-profile">
-        <span class="bell-icon">🔔</span>
-        <div class="avatar"></div>
-      </div>
-    </header>
+  <header>
+    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu"></button>
+    <h1>Infrastructure &amp; Hardware</h1>
+    <div class="user-profile">
+      <span class="bell-icon" aria-label="Notifications"></span>
+      <div class="avatar" aria-label="Account"></div>
+    </div>
+  </header>
 
   <main class="dashboard">
     <!-- GATE CONTROL SECTION -->
@@ -48,7 +45,7 @@
         <div class="card" id="entry-gate-card">
           <div class="card-header">
             <div class="card-title-group">
-              <span class="icon-box">🚧</span>
+              <span class="icon-box" data-icon="barrier"></span>
               <span>Entry Gate</span>
             </div>
             <span class="badge open" id="entry-status">Open</span>
@@ -71,7 +68,7 @@
         <div class="card" id="exit-gate-card">
           <div class="card-header">
             <div class="card-title-group">
-              <span class="icon-box">↪️</span>
+              <span class="icon-box" data-icon="exit"></span>
               <span>Exit Gate</span>
             </div>
             <span class="badge open" id="exit-status">Open</span>
@@ -101,99 +98,6 @@
 
       <div class="grid-2" id="slots-container">
         <!-- Populated via JavaScript -->
-
-            <!-- SLOT 1 -->
-            <div class="card" id="entry-gate-card">
-            <div class="card-header">
-                <div class="card-title-group">
-                <span class="icon-box">🚦</span>
-                <span>Slot 1</span>
-                </div>
-                <span class="badge open" id="entry-status">Available</span>
-            </div>
-
-            <div class="btn-row">
-                <button class="pill-btn active-blue" id="entry-auto" onclick="setGateMode('entry', 'auto')">Automatic</button>
-                <button class="pill-btn" id="entry-manual" onclick="setGateMode('entry', 'manual')">Manual</button>
-            </div>
-
-            <div class="btn-row">
-                <button class="pill-btn" id="entry-open" disabled onclick="setGateState('entry', 'Open')">Green Light</button>
-                <button class="pill-btn" id="entry-close" disabled onclick="setGateState('entry', 'Closed')">Red Light</button>
-            </div>
-
-            <div class="card-footer-note" id="entry-note">System controlled via auto-loop sensor</div>
-            </div>
-
-            <!-- SLOT 2 -->
-            <div class="card" id="exit-gate-card">
-            <div class="card-header">
-                <div class="card-title-group">
-                <span class="icon-box">🚦</span>
-                <span>Slot 2</span>
-                </div>
-                <span class="badge open" id="exit-status">Available</span>
-            </div>
-
-            <div class="btn-row">
-                <button class="pill-btn active-blue" id="exit-auto" onclick="setGateMode('exit', 'auto')">Automatic</button>
-                <button class="pill-btn" id="exit-manual" onclick="setGateMode('exit', 'manual')">Manual</button>
-            </div>
-
-            <div class="btn-row">
-                <button class="pill-btn" id="exit-open" disabled onclick="setGateState('exit', 'Open')">Green Light</button>
-                <button class="pill-btn" id="exit-close" disabled onclick="setGateState('exit', 'Closed')">Red Light</button>
-            </div>
-
-            <div class="card-footer-note" id="exit-note">System controlled via auto-loop sensor</div>
-            </div>
-
-            <!-- SLOT 3 -->
-            <div class="card" id="entry-gate-card">
-            <div class="card-header">
-                <div class="card-title-group">
-                <span class="icon-box">🚦</span>
-                <span>Slot 3</span>
-                </div>
-                <span class="badge open" id="entry-status">Available</span>
-            </div>
-
-            <div class="btn-row">
-                <button class="pill-btn active-blue" id="entry-auto" onclick="setGateMode('entry', 'auto')">Automatic</button>
-                <button class="pill-btn" id="entry-manual" onclick="setGateMode('entry', 'manual')">Manual</button>
-            </div>
-
-            <div class="btn-row">
-                <button class="pill-btn" id="entry-open" disabled onclick="setGateState('entry', 'Open')">Green Light</button>
-                <button class="pill-btn" id="entry-close" disabled onclick="setGateState('entry', 'Closed')">Red Light</button>
-            </div>
-
-            <div class="card-footer-note" id="entry-note">System controlled via auto-loop sensor</div>
-            </div>
-
-            <!-- SLOT 4 -->
-            <div class="card" id="exit-gate-card">
-            <div class="card-header">
-                <div class="card-title-group">
-                <span class="icon-box">🚦</span>
-                <span>Slot 4</span>
-                </div>
-                <span class="badge open" id="exit-status">Available</span>
-            </div>
-
-            <div class="btn-row">
-                <button class="pill-btn active-blue" id="exit-auto" onclick="setGateMode('exit', 'auto')">Automatic</button>
-                <button class="pill-btn" id="exit-manual" onclick="setGateMode('exit', 'manual')">Manual</button>
-            </div>
-
-            <div class="btn-row">
-                <button class="pill-btn" id="exit-open" disabled onclick="setGateState('exit', 'Open')">Green Light</button>
-                <button class="pill-btn" id="exit-close" disabled onclick="setGateState('exit', 'Closed')">Red Light</button>
-            </div>
-
-            <div class="card-footer-note" id="exit-note">System controlled via auto-loop sensor</div>
-            </div>
-
       </div>
     </section>
 
@@ -230,7 +134,7 @@
           <thead>
             <tr>
               <th>Device ID</th>
-              <th>Name & Layer</th>
+              <th>Name &amp; Layer</th>
               <th>Health</th>
               <th>Status</th>
               <th>Actions</th>
@@ -253,46 +157,7 @@
   </footer>
 
   <script src="global.js"></script>
-
   <script>
-    (function initAccountMenu() {
-      const profileContainer = document.querySelector('.user-profile');
-      const avatar = document.querySelector('.avatar');
-      if (!profileContainer || !avatar) return;
-
-      const savedEmail = localStorage.getItem('parkEasyEmail') || 'Not signed in';
-      const initial = savedEmail !== 'Not signed in' ? savedEmail.charAt(0).toUpperCase() : '👤';
-      avatar.textContent = initial;
-
-      const dropdown = document.createElement('div');
-      dropdown.className = 'account-dropdown';
-      dropdown.innerHTML = `
-        <div class="account-header">
-          <div class="account-name" id="menuUserName">System Account</div>
-          <div class="account-email" id="menuUserEmail">${savedEmail}</div>
-        </div>
-        <a href="comply&Setting.html" class="account-item">⚙️ Account &amp; Settings</a>
-        <button type="button" class="account-item danger" id="menuLogoutBtn">↩️ Sign Out</button>
-      `;
-      profileContainer.appendChild(dropdown);
-
-      avatar.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('open');
-      });
-
-      document.getElementById('menuLogoutBtn').addEventListener('click', () => {
-        sessionStorage.removeItem('parkEasyLoggedIn');
-        window.location.href = 'index.html';
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!profileContainer.contains(e.target)) {
-          dropdown.classList.remove('open');
-        }
-      });
-    })();
-
     // Gate Logic
     function setGateMode(gate, mode) {
       const autoBtn = document.getElementById(`${gate}-auto`);
@@ -337,12 +202,12 @@
       }
     }
 
-    // Parking Slots Data & Logic
+    // 4 Parking Slots Data & Logic
     const slots = [
       { id: 1, status: 'Available', mode: 'auto', light: 'green' },
       { id: 2, status: 'Available', mode: 'auto', light: 'green' },
       { id: 3, status: 'Available', mode: 'auto', light: 'green' },
-      { id: 4, status: 'Available', mode: 'auto', light: 'green' },
+      { id: 4, status: 'Available', mode: 'auto', light: 'green' }
     ];
 
     function renderSlots() {
@@ -388,17 +253,8 @@
       renderSlots();
     }
 
-    // Connected Hardware Devices Data & Logic
-    const devices = [
-      { id: 'BR-01', type: 'Barrier', name: 'Main Entrance Barrier', layer: 'Level 1 - North', health: 98, status: 'Online' },
-      { id: 'BR-02', type: 'Barrier', name: 'Express Exit Gate', layer: 'Level 1 - South', health: 74, status: 'Warning' },
-      { id: 'LED-01', type: 'LED', name: 'Smart LED Indicator 1', layer: 'Level 1 - Bay A1', health: 100, status: 'Online' },
-      { id: 'LED-02', type: 'LED', name: 'Smart LED Indicator 2', layer: 'Level 1 - Bay A2', health: 100, status: 'Online' },
-      { id: 'LED-03', type: 'LED', name: 'Smart LED Indicator 3', layer: 'Level 1 - Bay A3', health: 92, status: 'Online' },
-      { id: 'LED-04', type: 'LED', name: 'Smart LED Indicator 4', layer: 'Level 1 - Bay A4', health: 100, status: 'Online' },
-      { id: 'SNS-101', type: 'Sensor', name: 'Main Entrance Sensor', layer: 'Level 1 - North', health: 100, status: 'Online' },
-      { id: 'SNS-102', type: 'Sensor', name: 'Main Entrance Sensor', layer: 'Level 1 - South', health: 100, status: 'Online' }
-    ];
+    // Connected Hardware Devices (Cleared for Firebase)
+    const devices = [];
 
     function filterDevices() {
       const typeFilter = document.getElementById('typeFilter').value;
@@ -413,6 +269,17 @@
           d.layer.toLowerCase().includes(searchQuery);
         return matchesType && matchesSearch;
       });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: #64748b; padding: 28px;">
+              No hardware devices connected yet.
+            </td>
+          </tr>
+        `;
+        return;
+      }
 
       tbody.innerHTML = filtered.map(d => {
         let colorClass = 'green';
@@ -442,14 +309,8 @@
       }).join('');
     }
 
-    // Initialize UI
     renderSlots();
     filterDevices();
   </script>
 </body>
 </html>
-
-</body>
-</html>
-
-  

@@ -9,38 +9,33 @@
 </head>
 <body>
 
-  <!-- Sidebar navigation -->
-    <aside class="sidebar">
-        <div>
-            <div class="brand-logo">
-                <span>🅿️</span> Park Easy
-            </div>
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="brand-logo">
+      <span data-icon="logo"></span> Park Easy
+    </div>
 
-            <ul class="nav-links">
-                <li class="nav-item"><a href="dashboard.html">📊 Dashboard</a></li>
-                <li class="nav-item"><a href="parkingMap.html">🗺️ Parking Map</a></li>
-                <li class="nav-item"><a href="infra&Hardware.html">⚙️ Infrastructure and Hardware</a></li>
-                <li class="nav-item active"><a href="bill&Pricing.html">💰 Billing & Pricing</a></li>
-                <li class="nav-item"><a href="comply&Setting.html">🚨 Compliance & Settings</a></li>
-            </ul>
+    <ul class="nav-links">
+      <li class="nav-item"><a href="dashboard.html"><span data-icon="dashboard"></span> Dashboard</a></li>
+      <li class="nav-item"><a href="parkingMap.html"><span data-icon="map"></span> Parking Map</a></li>
+      <li class="nav-item"><a href="infra&Hardware.html"><span data-icon="hardware"></span> Infrastructure and Hardware</a></li>
+      <li class="nav-item active"><a href="bill&Pricing.html"><span data-icon="billing"></span> Billing &amp; Pricing</a></li>
+      <li class="nav-item"><a href="comply&Setting.html"><span data-icon="compliance"></span> Compliance &amp; Settings</a></li>
+    </ul>
+  </aside>
 
-        </div>
-    </aside>
-
-    <header>
-        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-        <h1>Billing & Pricing</h1>
-        <div class="user-profile">
-          <span class="bell-icon">🔔</span>
-          <div class="avatar"></div>
-        </div>
-      </header>
-
-    <!-- Main Content Dashboard -->
-    <main class="main-content">
+  <header>
+    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu"></button>
+    <h1>Billing &amp; Pricing</h1>
+    <div class="user-profile">
+      <span class="bell-icon" aria-label="Notifications"></span>
+      <div class="avatar" aria-label="Account"></div>
+    </div>
+  </header>
 
   <!-- Main Content -->
-    
+  <main class="main-content">
+
     <!-- Header Row -->
     <div class="section-header">
       <div>
@@ -49,8 +44,8 @@
       </div>
       <div class="date-filter">
         <select id="periodFilter" onchange="updateKPIs()">
-          <option value="today">Today, 12 Nov 2026</option>
-          <option value="yesterday">Yesterday, 11 Nov 2026</option>
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
           <option value="week">This Week</option>
         </select>
       </div>
@@ -61,13 +56,13 @@
       <div class="kpi-card">
         <div class="kpi-label">Today's Revenue</div>
         <div class="kpi-value" id="kpiToday">&#8369;0</div>
-        <div class="kpi-sub text-green" id="kpiTodaySub">&uarr; 0% vs yesterday</div>
+        <div class="kpi-sub text-green" id="kpiTodaySub">0% vs yesterday</div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-label">Monthly Revenue</div>
         <div class="kpi-value" id="kpiMonth">&#8369;0</div>
-        <div class="kpi-sub text-green" id="kpiMonthSub">&uarr; 0% vs last month</div>
+        <div class="kpi-sub text-green" id="kpiMonthSub">0% vs last month</div>
       </div>
 
       <div class="kpi-card">
@@ -113,24 +108,24 @@
     <section class="card">
       <div class="card-header">
         <h3>Transactions</h3>
-        <span class="date-note">12 November 2026</span>
+        <span class="date-note" id="currentDateNote">All Records</span>
       </div>
 
-      <!-- Toolbar: Search, Date, Export -->
+      <!-- Toolbar: Search, Status Filter, Export -->
       <div class="tx-toolbar">
         <div class="search-box">
-          <span class="search-icon">&#128269;</span>
+          <span class="search-icon" data-icon="search"></span>
           <input type="text" id="searchInput" placeholder="Search ticket or plate number" oninput="filterTransactions()">
         </div>
 
         <div class="toolbar-actions">
           <select id="txDateFilter" class="outline-btn">
-            <option value="all">12 Nov 2026</option>
+            <option value="all">All Statuses</option>
             <option value="Paid">Paid Only</option>
             <option value="Unpaid">Unpaid Only</option>
           </select>
-          <button class="outline-btn" onclick="exportCSV()">
-            <span>&darr;</span> Export
+          <button class="outline-btn" onclick="exportCSV()" style="display: inline-flex; align-items: center; gap: 6px;">
+            <span data-icon="download"></span> Export
           </button>
         </div>
       </div>
@@ -157,7 +152,7 @@
 
       <!-- Pagination Footer -->
       <div class="table-footer">
-        <div class="showing-text" id="showingText">Showing 1–5 of 186 transactions</div>
+        <div class="showing-text" id="showingText">Showing 0 of 0 transactions</div>
         <div class="pagination" id="paginationControls">
           <!-- Rendered by JS -->
         </div>
@@ -174,62 +169,15 @@
   </footer>
 
   <script src="global.js"></script>
-
   <script>
-    (function initAccountMenu() {
-      const profileContainer = document.querySelector('.user-profile');
-      const avatar = document.querySelector('.avatar');
-      if (!profileContainer || !avatar) return;
-
-      const savedEmail = localStorage.getItem('parkEasyEmail') || 'Not signed in';
-      const initial = savedEmail !== 'Not signed in' ? savedEmail.charAt(0).toUpperCase() : '👤';
-      avatar.textContent = initial;
-
-      const dropdown = document.createElement('div');
-      dropdown.className = 'account-dropdown';
-      dropdown.innerHTML = `
-        <div class="account-header">
-          <div class="account-name" id="menuUserName">System Account</div>
-          <div class="account-email" id="menuUserEmail">${savedEmail}</div>
-        </div>
-        <a href="comply&Setting.html" class="account-item">⚙️ Account &amp; Settings</a>
-        <button type="button" class="account-item danger" id="menuLogoutBtn">↩️ Sign Out</button>
-      `;
-      profileContainer.appendChild(dropdown);
-
-      avatar.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('open');
-      });
-
-      document.getElementById('menuLogoutBtn').addEventListener('click', () => {
-        sessionStorage.removeItem('parkEasyLoggedIn');
-        window.location.href = 'index.html';
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!profileContainer.contains(e.target)) {
-          dropdown.classList.remove('open');
-        }
-      });
-    })();
-    
-    // 1. Parking Rates Data (2 Wheelers defaults to editing mode like screenshot)
+    // 1. Parking Rates Data (Zeroed out for Firebase)
     const ratesData = [
-      { id: "2w", type: "2 Wheelers", firstHour: "20.00", extraHour: "10.00", dailyMax: "100.00", overnight: "80.00", isEditing: false },
-      { id: "4w", type: "4 Wheelers", firstHour: "40.00", extraHour: "20.00", dailyMax: "200.00", overnight: "150.00", isEditing: false }
+      { id: "2w", type: "2 Wheelers", firstHour: "0.00", extraHour: "0.00", dailyMax: "0.00", overnight: "0.00", isEditing: false },
+      { id: "4w", type: "4 Wheelers", firstHour: "0.00", extraHour: "0.00", dailyMax: "0.00", overnight: "0.00", isEditing: false }
     ];
 
-    // 2. Transactions Data
-    const transactionsData = [
-      { id: "PK-0186", plate: "NCL 4821", vehicle: "4 Wheeler", timeIn: "12 Nov, 09:24 AM", timeOut: "12 Nov, 11:42 AM", amount: "80.00", status: "Paid" },
-      { id: "PK-0185", plate: "542 QRT", vehicle: "2 Wheeler", timeIn: "12 Nov, 09:18 AM", timeOut: "12 Nov, 10:50 AM", amount: "30.00", status: "Paid" },
-      { id: "PK-0184", plate: "DBV 9036", vehicle: "4 Wheeler", timeIn: "12 Nov, 08:56 AM", timeOut: "—", amount: "100.00", status: "Unpaid" },
-      { id: "PK-0183", plate: "NAG 1279", vehicle: "4 Wheeler", timeIn: "12 Nov, 08:40 AM", timeOut: "12 Nov, 10:12 AM", amount: "60.00", status: "Paid" },
-      { id: "PK-0182", plate: "781 MKL", vehicle: "2 Wheeler", timeIn: "12 Nov, 08:32 AM", timeOut: "—", amount: "40.00", status: "Unpaid" },
-      { id: "PK-0181", plate: "ABC 1234", vehicle: "4 Wheeler", timeIn: "12 Nov, 08:15 AM", timeOut: "12 Nov, 09:10 AM", amount: "40.00", status: "Paid" },
-      { id: "PK-0180", plate: "998 XYZ", vehicle: "2 Wheeler", timeIn: "12 Nov, 07:50 AM", timeOut: "12 Nov, 09:45 AM", amount: "30.00", status: "Paid" }
-    ];
+    // 2. Transactions Data (Cleared for Firebase)
+    const transactionsData = [];
 
     let currentPage = 1;
     const rowsPerPage = 5;
@@ -295,12 +243,28 @@
       ratesData[index].isEditing = false;
 
       renderRates();
+      if (window.pushNotification) {
+        window.pushNotification("Rates Updated", `${ratesData[index].type} pricing was updated.`);
+      }
     }
 
     // Render Transactions Table & Pagination
     function renderTransactions() {
       const tbody = document.getElementById("txBody");
       tbody.innerHTML = "";
+
+      if (filteredTransactions.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; color: #64748b; padding: 28px;">
+              No transactions recorded yet.
+            </td>
+          </tr>
+        `;
+        document.getElementById("showingText").textContent = "Showing 0 of 0 transactions";
+        renderPagination();
+        return;
+      }
 
       const start = (currentPage - 1) * rowsPerPage;
       const end = start + rowsPerPage;
@@ -322,26 +286,28 @@
         tbody.appendChild(tr);
       });
 
-      // Update footer counter
-      const totalDisplay = filteredTransactions.length === transactionsData.length ? 186 : filteredTransactions.length;
-      const showStart = filteredTransactions.length === 0 ? 0 : start + 1;
+      const showStart = start + 1;
       const showEnd = Math.min(end, filteredTransactions.length);
-      document.getElementById("showingText").textContent = `Showing ${showStart}–${showEnd} of ${totalDisplay} transactions`;
+      document.getElementById("showingText").textContent = `Showing ${showStart}-${showEnd} of ${filteredTransactions.length} transactions`;
 
       renderPagination();
     }
 
     function renderPagination() {
       const container = document.getElementById("paginationControls");
-      container.innerHTML = `
-        <button class="page-btn" onclick="changePage(${currentPage - 1})">&lsaquo;</button>
-        <button class="page-btn ${currentPage === 1 ? 'active' : ''}" onclick="changePage(1)">1</button>
-        <button class="page-btn ${currentPage === 2 ? 'active' : ''}" onclick="changePage(2)">2</button>
-        <button class="page-btn">3</button>
-        <span>...</span>
-        <button class="page-btn">38</button>
-        <button class="page-btn" onclick="changePage(${currentPage + 1})">&rsaquo;</button>
-      `;
+      const maxPage = Math.ceil(filteredTransactions.length / rowsPerPage);
+
+      if (maxPage <= 1) {
+        container.innerHTML = "";
+        return;
+      }
+
+      let buttonsHTML = `<button class="page-btn" onclick="changePage(${currentPage - 1})">&lsaquo;</button>`;
+      for (let i = 1; i <= maxPage; i++) {
+        buttonsHTML += `<button class="page-btn ${currentPage === i ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+      }
+      buttonsHTML += `<button class="page-btn" onclick="changePage(${currentPage + 1})">&rsaquo;</button>`;
+      container.innerHTML = buttonsHTML;
     }
 
     function changePage(page) {
@@ -370,34 +336,26 @@
 
     // Export to CSV
     function exportCSV() {
+      if (filteredTransactions.length === 0) return;
       const headers = ["Ticket ID,Plate No.,Vehicle,Time In,Time Out,Amount,Status"];
-      const rows = filteredTransactions.map(tx => 
+      const rows = filteredTransactions.map(tx =>
         `${tx.id},"${tx.plate}",${tx.vehicle},"${tx.timeIn}","${tx.timeOut}",${tx.amount},${tx.status}`
       );
-      
+
       const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "parking_transactions_12Nov2026.csv");
+      link.setAttribute("download", "parking_transactions.csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
-    // KPI Period Switcher
+    // KPI Period Switcher (Zeroed out for Firebase)
     function updateKPIs() {
-      const period = document.getElementById("periodFilter").value;
-      if (period === "yesterday") {
-        document.getElementById("kpiToday").innerHTML = "&#8369;11,530";
-        document.getElementById("kpiTodaySub").textContent = "↑ 4.1% vs previous day";
-      } else if (period === "week") {
-        document.getElementById("kpiToday").innerHTML = "&#8369;78,940";
-        document.getElementById("kpiTodaySub").textContent = "↑ 11.0% vs last week";
-      } else {
-        document.getElementById("kpiToday").innerHTML = "&#8369;12,480";
-        document.getElementById("kpiTodaySub").textContent = "↑ 8.2% vs yesterday";
-      }
+      document.getElementById("kpiToday").innerHTML = "&#8369;0";
+      document.getElementById("kpiTodaySub").textContent = "0% vs previous period";
     }
 
     // Initial Render

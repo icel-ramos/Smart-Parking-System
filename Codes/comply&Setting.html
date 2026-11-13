@@ -11,27 +11,25 @@
 
   <!-- Collapsible Sidebar Drawer -->
   <aside class="sidebar">
-    <div>
-      <div class="brand-logo">
-        <span>🅿️</span> Park Easy
-      </div>
-      <ul class="nav-links">
-        <li class="nav-item"><a href="dashboard.html">📊 Dashboard</a></li>
-        <li class="nav-item"><a href="parkingMap.html">🗺️ Parking Map</a></li>
-        <li class="nav-item"><a href="infra&Hardware.html">⚙️ Infrastructure and Hardware</a></li>
-        <li class="nav-item"><a href="bill&Pricing.html">💳 Billing &amp; Pricing</a></li>
-        <li class="nav-item active"><a href="comply&Setting.html">🚨 Compliance &amp; Settings</a></li>
-      </ul>
+    <div class="brand-logo">
+      <span data-icon="logo"></span> Park Easy
     </div>
+    <ul class="nav-links">
+      <li class="nav-item"><a href="dashboard.html"><span data-icon="dashboard"></span> Dashboard</a></li>
+      <li class="nav-item"><a href="parkingMap.html"><span data-icon="map"></span> Parking Map</a></li>
+      <li class="nav-item"><a href="infra&Hardware.html"><span data-icon="hardware"></span> Infrastructure and Hardware</a></li>
+      <li class="nav-item"><a href="bill&Pricing.html"><span data-icon="billing"></span> Billing &amp; Pricing</a></li>
+      <li class="nav-item active"><a href="comply&Setting.html"><span data-icon="compliance"></span> Compliance &amp; Settings</a></li>
+    </ul>
   </aside>
 
   <!-- Full-Width Top Navigation Bar -->
   <header>
-    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu"></button>
     <h1>Compliance &amp; Settings</h1>
     <div class="user-profile">
-      <span class="bell-icon">🔔</span>
-      <div class="avatar"></div>
+      <span class="bell-icon" aria-label="Notifications"></span>
+      <div class="avatar" aria-label="Account"></div>
     </div>
   </header>
 
@@ -62,7 +60,7 @@
         <div class="settings-card">
           <div class="settings-card-header">
             <div class="header-left">
-              <div class="icon-badge">ⓘ</div>
+              <div class="icon-badge" data-icon="info"></div>
               <div>
                 <h3>General Information</h3>
                 <p>Basic facility details and operating preferences</p>
@@ -121,18 +119,19 @@
         <div class="settings-card">
           <div class="settings-card-header">
             <div class="header-left">
-              <div class="icon-badge">📄</div>
+              <div class="icon-badge" data-icon="file"></div>
               <div>
                 <h3>Compliance Documents</h3>
                 <p>Keep permits and certificates current</p>
               </div>
             </div>
+            <button type="button" class="btn-primary-sm" onclick="addComplianceDoc()">+ Add Document</button>
           </div>
 
-          <div class="doc-list">
+          <div class="doc-list" id="complianceDocList">
             <div class="doc-row" data-status="none">
               <div class="doc-info">
-                <div class="doc-icon">📑</div>
+                <div class="doc-icon" data-icon="file"></div>
                 <div>
                   <div class="doc-title">Business Permit</div>
                   <div class="doc-file">No document uploaded</div>
@@ -144,13 +143,15 @@
               </div>
               <div class="doc-actions">
                 <span class="status-pill exp-none">Not Uploaded</span>
-                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
+                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)" style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span data-icon="upload"></span> Upload
+                </button>
               </div>
             </div>
 
             <div class="doc-row" data-status="none">
               <div class="doc-info">
-                <div class="doc-icon">📑</div>
+                <div class="doc-icon" data-icon="file"></div>
                 <div>
                   <div class="doc-title">Fire Safety Certificate</div>
                   <div class="doc-file">No document uploaded</div>
@@ -162,13 +163,15 @@
               </div>
               <div class="doc-actions">
                 <span class="status-pill exp-none">Not Uploaded</span>
-                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
+                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)" style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span data-icon="upload"></span> Upload
+                </button>
               </div>
             </div>
 
             <div class="doc-row" data-status="none">
               <div class="doc-info">
-                <div class="doc-icon">📑</div>
+                <div class="doc-icon" data-icon="file"></div>
                 <div>
                   <div class="doc-title">Data Privacy Registration</div>
                   <div class="doc-file">No document uploaded</div>
@@ -180,13 +183,15 @@
               </div>
               <div class="doc-actions">
                 <span class="status-pill exp-none">Not Uploaded</span>
-                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
+                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)" style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span data-icon="upload"></span> Upload
+                </button>
               </div>
             </div>
 
             <div class="doc-row" data-status="none">
               <div class="doc-info">
-                <div class="doc-icon">📑</div>
+                <div class="doc-icon" data-icon="file"></div>
                 <div>
                   <div class="doc-title">BIR Official Receipts</div>
                   <div class="doc-file">No document uploaded</div>
@@ -198,7 +203,9 @@
               </div>
               <div class="doc-actions">
                 <span class="status-pill exp-none">Not Uploaded</span>
-                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
+                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)" style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span data-icon="upload"></span> Upload
+                </button>
               </div>
             </div>
           </div>
@@ -211,7 +218,7 @@
         <div class="settings-card">
           <div class="settings-card-header">
             <div class="header-left">
-              <div class="icon-badge">👥</div>
+              <div class="icon-badge" data-icon="users"></div>
               <div>
                 <h3>Users &amp; Roles</h3>
                 <p>Control access to your parking dashboard</p>
@@ -248,7 +255,7 @@
         <div class="settings-card">
           <div class="settings-card-header">
             <div class="header-left">
-              <div class="icon-badge">🔔</div>
+              <div class="icon-badge" data-icon="bell"></div>
               <div>
                 <h3>Notification Preferences</h3>
                 <p>Choose which operational alerts you receive</p>
@@ -315,46 +322,7 @@
   </footer>
 
   <script src="global.js"></script>
-
   <script>
-    (function initAccountMenu() {
-      const profileContainer = document.querySelector('.user-profile');
-      const avatar = document.querySelector('.avatar');
-      if (!profileContainer || !avatar) return;
-
-      const savedEmail = localStorage.getItem('parkEasyEmail') || 'Not signed in';
-      const initial = savedEmail !== 'Not signed in' ? savedEmail.charAt(0).toUpperCase() : '👤';
-      avatar.textContent = initial;
-
-      const dropdown = document.createElement('div');
-      dropdown.className = 'account-dropdown';
-      dropdown.innerHTML = `
-        <div class="account-header">
-          <div class="account-name" id="menuUserName">System Account</div>
-          <div class="account-email" id="menuUserEmail">${savedEmail}</div>
-        </div>
-        <a href="comply&Setting.html" class="account-item">⚙️ Account &amp; Settings</a>
-        <button type="button" class="account-item danger" id="menuLogoutBtn">↩️ Sign Out</button>
-      `;
-      profileContainer.appendChild(dropdown);
-
-      avatar.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('open');
-      });
-
-      document.getElementById('menuLogoutBtn').addEventListener('click', () => {
-        sessionStorage.removeItem('parkEasyLoggedIn');
-        window.location.href = 'index.html';
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!profileContainer.contains(e.target)) {
-          dropdown.classList.remove('open');
-        }
-      });
-    })();
-
     function switchTab(tabId, btnElement) {
       document.querySelectorAll('.tab-panel').forEach(panel => {
         panel.classList.remove('active');
@@ -379,17 +347,63 @@
     fileInput.addEventListener('change', function () {
       if (this.files && this.files[0] && activeDocRow) {
         const fileName = this.files[0].name;
+        const currentExpiry = activeDocRow.querySelector('.expiry-date').textContent;
+        const newExpiry = prompt('Enter document expiry date:', currentExpiry !== '-' ? currentExpiry : 'December 31, 2026');
+
         activeDocRow.querySelector('.doc-file').textContent = fileName;
-        activeDocRow.querySelector('.expiry-date').textContent = 'Uploaded';
+        activeDocRow.querySelector('.expiry-date').textContent = (newExpiry && newExpiry.trim()) ? newExpiry.trim() : 'Uploaded';
         activeDocRow.dataset.status = 'valid';
 
         const pill = activeDocRow.querySelector('.status-pill');
         pill.className = 'status-pill valid';
         pill.innerHTML = '<span class="dot"></span> Valid';
 
+        const docTitle = activeDocRow.querySelector('.doc-title').textContent;
         showStatusMessage('Document "' + fileName + '" staged. Click Save Changes to confirm.');
+        if (window.pushNotification) {
+          window.pushNotification('Document Uploaded', fileName + ' uploaded for ' + docTitle + '.');
+        }
       }
     });
+
+    function addComplianceDoc() {
+      const docName = prompt('Enter compliance document or permit name:');
+      if (!docName || !docName.trim()) return;
+
+      const expiryInput = prompt('Enter expiry date (optional, e.g., December 31, 2026):', '-');
+      const expiryText = expiryInput && expiryInput.trim() ? expiryInput.trim() : '-';
+
+      const docList = document.getElementById('complianceDocList');
+      const row = document.createElement('div');
+      row.className = 'doc-row';
+      row.dataset.status = 'none';
+      row.innerHTML = `
+        <div class="doc-info">
+          <div class="doc-icon" data-icon="file"></div>
+          <div>
+            <div class="doc-title">${docName.trim()}</div>
+            <div class="doc-file">No document uploaded</div>
+          </div>
+        </div>
+        <div class="doc-expiry">
+          <span class="expiry-label">EXPIRY DATE</span>
+          <span class="expiry-date">${expiryText}</span>
+        </div>
+        <div class="doc-actions">
+          <span class="status-pill exp-none">Not Uploaded</span>
+          <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)" style="display: inline-flex; align-items: center; gap: 6px;">
+            <span data-icon="upload"></span> Upload
+          </button>
+        </div>
+      `;
+      docList.appendChild(row);
+      if (window.renderIcons) window.renderIcons();
+
+      showStatusMessage('Added "' + docName.trim() + '". Upload a file or click Save Changes.');
+      if (window.pushNotification) {
+        window.pushNotification('Compliance Requirement Added', docName.trim() + ' was added to the checklist.');
+      }
+    }
 
     function addNewUser() {
       const name = prompt('Enter new user full name:');
@@ -425,6 +439,9 @@
       `;
       tbody.appendChild(tr);
       showStatusMessage('User "' + name.trim() + '" added. Click Save Changes to confirm.');
+      if (window.pushNotification) {
+        window.pushNotification('User Added', name.trim() + ' (' + cleanRole + ') was added.');
+      }
     }
 
     function saveChanges() {
@@ -434,7 +451,10 @@
       document.querySelectorAll('.notify-list input[type="checkbox"]').forEach(chk => {
         chk.dataset.default = chk.checked ? 'true' : 'false';
       });
-      showStatusMessage('✓ All changes saved successfully.', true);
+      showStatusMessage('All changes saved successfully.', true);
+      if (window.pushNotification) {
+        window.pushNotification('Settings Saved', 'Facility compliance and configuration settings were updated.');
+      }
     }
 
     function resetChanges() {

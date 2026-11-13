@@ -10,36 +10,31 @@
 <body>
 
   <!-- Sidebar Navigation -->
-    <aside class="sidebar">
-        <div>
-            <div class="brand-logo">
-                <span>🅿️</span> Park Easy
-            </div>
+  <aside class="sidebar">
+    <div class="brand-logo">
+      <span data-icon="logo"></span> Park Easy
+    </div>
 
-            <ul class="nav-links">
-                <li class="nav-item"><a href="dashboard.html">📊 Dashboard</a></li>
-                <li class="nav-item active"><a href="parkingMap.html">🗺️ Parking Map</a></li>
-                <li class="nav-item"><a href="infra&Hardware.html">⚙️ Infrastructure and Hardware</a></li>
-                <li class="nav-item"><a href="bill&Pricing.html">💰 Billing & Pricing</a></li>
-                <li class="nav-item"><a href="comply&Setting.html">🚨 Compliance & Settings</a></li>
-            </ul>
+    <ul class="nav-links">
+      <li class="nav-item"><a href="dashboard.html"><span data-icon="dashboard"></span> Dashboard</a></li>
+      <li class="nav-item active"><a href="parkingMap.html"><span data-icon="map"></span> Parking Map</a></li>
+      <li class="nav-item"><a href="infra&Hardware.html"><span data-icon="hardware"></span> Infrastructure and Hardware</a></li>
+      <li class="nav-item"><a href="bill&Pricing.html"><span data-icon="billing"></span> Billing &amp; Pricing</a></li>
+      <li class="nav-item"><a href="comply&Setting.html"><span data-icon="compliance"></span> Compliance &amp; Settings</a></li>
+    </ul>
+  </aside>
 
-        </div>
-    </aside>
-
-    <header>
-      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-      <h1>Parking Map</h1>
-      <div class="user-profile">
-        <span class="bell-icon">🔔</span>
-        <div class="avatar"></div>
-      </div>
-    </header>
-
-    <!-- Main Content Dashboard -->
-    <main class="main-content">
+  <header>
+    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu"></button>
+    <h1>Parking Map</h1>
+    <div class="user-profile">
+      <span class="bell-icon" aria-label="Notifications"></span>
+      <div class="avatar" aria-label="Account"></div>
+    </div>
+  </header>
 
   <!-- Main Content -->
+  <main class="main-content">
     <div class="overview-header">
       <div>
         <h2>Live parking overview</h2>
@@ -64,7 +59,7 @@
       <!-- Dark Sensor Canvas -->
       <div class="parking-canvas">
         <div class="zone-label">ZONE A</div>
-        
+
         <!-- Top Row -->
         <div class="slot-row" id="topRow"></div>
 
@@ -109,11 +104,11 @@
           </div>
         </div>
 
-
+        <div class="controls-row">
           <div class="control-group">
             <div class="control-title">Attendant Manual Force Override</div>
             <button class="action-btn" id="btnOverride" onclick="toggleOverride()">
-              <span>&#128274;</span>
+              <span data-icon="lock"></span>
               <span id="btnOverrideText">Force Occupied Status</span>
             </button>
           </div>
@@ -133,193 +128,115 @@
   </footer>
 
   <script src="global.js"></script>
-
   <script>
-    (function initAccountMenu() {
-      const profileContainer = document.querySelector('.user-profile');
-      const avatar = document.querySelector('.avatar');
-      if (!profileContainer || !avatar) return;
+    const floorsData = {
+      1: [
+        { id: "1A-01", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },
+        { id: "1A-02", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },
+        { id: "1A-03", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },
+        { id: "1A-04", status: "available", forced: false, entry: "--:--", duration: "0m 0s" }
+      ]
+    };
 
-      const savedEmail = localStorage.getItem('parkEasyEmail') || 'Not signed in';
-      const initial = savedEmail !== 'Not signed in' ? savedEmail.charAt(0).toUpperCase() : '👤';
-      avatar.textContent = initial;
+    let currentFloor = 1;
+    let selectedIndex = 3; // Default to 1A-04
 
-      const dropdown = document.createElement('div');
-      dropdown.className = 'account-dropdown';
-      dropdown.innerHTML = `
-        <div class="account-header">
-          <div class="account-name" id="menuUserName">System Account</div>
-          <div class="account-email" id="menuUserEmail">${savedEmail}</div>
-        </div>
-        <a href="comply&Setting.html" class="account-item">⚙️ Account &amp; Settings</a>
-        <button type="button" class="account-item danger" id="menuLogoutBtn">↩️ Sign Out</button>
-      `;
-      profileContainer.appendChild(dropdown);
+    function renderDashboard() {
+      const slots = floorsData[currentFloor];
+      const topRow = document.getElementById("topRow");
+      const bottomRow = document.getElementById("bottomRow");
 
-      avatar.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('open');
-      });
+      topRow.innerHTML = "";
+      bottomRow.innerHTML = "";
 
-      document.getElementById('menuLogoutBtn').addEventListener('click', () => {
-        sessionStorage.removeItem('parkEasyLoggedIn');
-        window.location.href = 'index.html';
-      });
+      slots.forEach((slot, index) => {
+        const box = document.createElement("div");
+        const stateClass = slot.forced ? "forced" : slot.status;
+        const isSelected = index === selectedIndex ? "selected" : "";
 
-      document.addEventListener('click', (e) => {
-        if (!profileContainer.contains(e.target)) {
-          dropdown.classList.remove('open');
+        box.className = `slot-box ${stateClass} ${isSelected}`;
+        box.onclick = () => selectSlot(index);
+
+        const dotColor = slot.status === "occupied" ? "red" : "green";
+        const statusLabel = slot.status === "occupied" ? "Occupied" : "Available";
+
+        box.innerHTML = `
+          <div class="slot-status">
+            <span class="dot ${dotColor}"></span>
+            <span>${statusLabel}</span>
+          </div>
+          <div class="slot-id">${slot.id}</div>
+        `;
+
+        if (index < 5) {
+          topRow.appendChild(box);
+        } else {
+          bottomRow.appendChild(box);
         }
       });
-    })();
 
-    const floorsData = {
-    1: [
-      { id: "1A-01", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },
-      { id: "1A-02", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },
-      { id: "1A-03", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },
-      { id: "1A-04", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },
-    ],
-    2: Array.from({ length: 10 }, (_, i) => ({
-      id: `2A-${String(i + 1).padStart(2, '0')}`,
-      status: i % 3 === 0 ? "occupied" : "available",
-      forced: false,
-      entry: i % 3 === 0 ? "04:05" : "--:--",
-      duration: i % 3 === 0 ? "21m 10s" : "0m 0s"
-    })),
-    3: Array.from({ length: 10 }, (_, i) => ({
-      id: `3A-${String(i + 1).padStart(2, '0')}`,
-      status: i < 2 ? "occupied" : "available",
-      forced: false,
-      entry: i < 2 ? "03:55" : "--:--",
-      duration: i < 2 ? "31m 05s" : "0m 0s"
-    }))
-  };
+      updateTelemetry();
+    }
 
-  let currentFloor = 1;
-  let selectedIndex = 3; // Default to 1A-04
+    function updateTelemetry() {
+      const slots = floorsData[currentFloor];
+      const currentSlot = slots[selectedIndex];
+      const occupiedCount = slots.filter(s => s.status === "occupied").length;
 
-  function renderDashboard() {
-    const slots = floorsData[currentFloor];
-    const topRow = document.getElementById("topRow");
-    const bottomRow = document.getElementById("bottomRow");
-    
-    topRow.innerHTML = "";
-    bottomRow.innerHTML = "";
+      document.getElementById("statLot").textContent = currentSlot.id;
 
-    slots.forEach((slot, index) => {
-      const box = document.createElement("div");
-      const stateClass = slot.forced ? "forced" : slot.status;
-      const isSelected = index === selectedIndex ? "selected" : "";
-      
-      box.className = `slot-box ${stateClass} ${isSelected}`;
-      box.onclick = () => selectSlot(index);
-
-      const dotColor = slot.status === "occupied" ? "red" : "green";
-      const statusLabel = slot.status === "occupied" ? "Occupied" : "Available";
-
-      box.innerHTML = `
-        <div class="slot-status">
-          <span class="dot ${dotColor}"></span>
-          <span>${statusLabel}</span>
-        </div>
-        <div class="slot-id">${slot.id}</div>
-      `;
-
-      if (index < 5) {
-        topRow.appendChild(box);
+      const beamEl = document.getElementById("statBeam");
+      if (currentSlot.status === "occupied") {
+        beamEl.textContent = "Blocked";
+        beamEl.className = "stat-value text-red";
       } else {
-        bottomRow.appendChild(box);
+        beamEl.textContent = "Clear";
+        beamEl.className = "stat-value text-green";
       }
-    });
 
-    updateTelemetry();
-  }
+      document.getElementById("statEntry").textContent = currentSlot.entry;
+      document.getElementById("statDuration").textContent = currentSlot.duration;
+      document.getElementById("statTotalFull").textContent = `${occupiedCount} / ${slots.length}`;
 
-  function updateTelemetry() {
-    const slots = floorsData[currentFloor];
-    const currentSlot = slots[selectedIndex];
-    const occupiedCount = slots.filter(s => s.status === "occupied").length;
-
-    document.getElementById("statLot").textContent = currentSlot.id;
-    
-    const beamEl = document.getElementById("statBeam");
-    if (currentSlot.status === "occupied") {
-      beamEl.textContent = "Blocked";
-      beamEl.className = "stat-value text-red";
-    } else {
-      beamEl.textContent = "Clear";
-      beamEl.className = "stat-value text-green";
+      document.getElementById("btnOverrideText").textContent =
+        currentSlot.forced ? "Release Manual Override" : "Force Occupied Status";
     }
 
-    document.getElementById("statEntry").textContent = currentSlot.entry;
-    document.getElementById("statDuration").textContent = currentSlot.duration;
-    document.getElementById("statTotalFull").textContent = `${occupiedCount} / ${slots.length}`;
-
-    // Update Control Labels
-      currentSlot.status === "occupied" ? "Clear Car (Unblock Beam)" : "Park Car (Block Beam)";
-
-    document.getElementById("btnOverrideText").textContent = 
-      currentSlot.forced ? "Release Manual Override" : "Force Occupied Status";
-  }
-
-  function selectSlot(index) {
-    selectedIndex = index;
-    renderDashboard();
-  }
-
-  function switchFloor(floorNum, btnElement) {
-    currentFloor = floorNum;
-    selectedIndex = 0;
-    document.getElementById("zoneTitle").textContent = `Floor ${floorNum} · Zone A`;
-
-    document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-    btnElement.classList.add("active");
-
-    renderDashboard();
-  }
-
-  function getCurrentTimeStr() {
-    const now = new Date();
-    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  }
-
-  function toggleSimulation() {
-    const slot = floorsData[currentFloor][selectedIndex];
-    slot.forced = false;
-
-    if (slot.status === "occupied") {
-      slot.status = "available";
-      slot.entry = "--:--";
-      slot.duration = "0m 0s";
-    } else {
-      slot.status = "occupied";
-      slot.entry = getCurrentTimeStr();
-      slot.duration = "0m 1s";
+    function selectSlot(index) {
+      selectedIndex = index;
+      renderDashboard();
     }
-    renderDashboard();
-  }
 
-  function toggleOverride() {
-    const slot = floorsData[currentFloor][selectedIndex];
-    if (!slot.forced) {
-      slot.forced = true;
-      slot.status = "occupied";
-      if (slot.entry === "--:--") {
-        slot.entry = getCurrentTimeStr();
-        slot.duration = "0m 1s";
+    function getCurrentTimeStr() {
+      const now = new Date();
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function toggleOverride() {
+      const slot = floorsData[currentFloor][selectedIndex];
+      if (!slot.forced) {
+        slot.forced = true;
+        slot.status = "occupied";
+        if (slot.entry === "--:--") {
+          slot.entry = getCurrentTimeStr();
+          slot.duration = "0m 1s";
+        }
+        if (window.pushNotification) {
+          window.pushNotification("Manual Override Active", `Slot ${slot.id} was manually forced to Occupied.`);
+        }
+      } else {
+        slot.forced = false;
+        slot.status = "available";
+        slot.entry = "--:--";
+        slot.duration = "0m 0s";
+        if (window.pushNotification) {
+          window.pushNotification("Manual Override Released", `Slot ${slot.id} returned to Available.`);
+        }
       }
-    } else {
-      slot.forced = false;
-      slot.status = "available";
-      slot.entry = "--:--";
-      slot.duration = "0m 0s";
+      renderDashboard();
     }
-    renderDashboard();
-  }
 
-  // Initialize dashboard on load
-  renderDashboard();
+    renderDashboard();
   </script>
 </body>
 </html>

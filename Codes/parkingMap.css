@@ -241,7 +241,7 @@
 /* Control Buttons Section */
 .controls-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding-top: 22px;
   flex-wrap: wrap;
@@ -264,6 +264,7 @@
 .action-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 11px 22px;
   border-radius: 999px;
