@@ -35,7 +35,8 @@
 }
 
 body {
-  display: block;
+  display: flex;
+  flex-direction: column;
   background-color: var(--bg-page);
   color: #333333;
   min-height: 100vh;
@@ -127,27 +128,19 @@ body {
   color: #ffffff;
 }
 
-/* Full-Width Main Content Area */
-.main-content,
-.dashboard {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px 40px;
-}
-
-.container {
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-/* Top Header & Hamburger Button */
+/* Full-Width Top Navigation Bar */
 header {
+  width: 100%;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-light);
+  padding: 14px 32px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 32px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .menu-btn {
@@ -171,7 +164,7 @@ header {
 
 header h1 {
   font-size: 1.1rem;
-  color: #4b5563;
+  color: #1e293b;
   font-weight: 600;
   margin-right: auto;
 }
@@ -195,9 +188,63 @@ header h1 {
   border-radius: 50%;
 }
 
+/* Centered Main Content Area */
+.main-content,
+.dashboard {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 40px;
+  flex: 1;
+}
+
+.container {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Full-Width Bottom Copyright Footer */
+.site-footer {
+  width: 100%;
+  background-color: #ffffff;
+  border-top: 1px solid var(--border-light);
+  padding: 16px 32px;
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+}
+
+.footer-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--text-main);
+}
+
 @media (max-width: 768px) {
+  header {
+    padding: 12px 16px;
+  }
   .main-content,
   .dashboard {
-    padding: 18px 16px;
+    padding: 20px 16px;
+  }
+  .site-footer {
+    padding: 14px 16px;
+    flex-direction: column;
+    text-align: center;
   }
 }
