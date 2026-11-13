@@ -125,17 +125,23 @@
 
 .slot-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(4, 115px);
+  gap: 25px;
 }
 
 .slot-box {
+  aspect-ratio: 1 / 2.3;
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 16px 12px;
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
   border: 1.5px solid transparent;
   user-select: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
 }
 
 .slot-box:hover {
@@ -167,10 +173,11 @@
 .slot-status {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-size: 0.75rem;
   font-weight: 500;
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 
 .slot-box.available .slot-status { color: var(--green); }

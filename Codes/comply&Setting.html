@@ -54,7 +54,7 @@
       <div class="settings-tabs">
         <button class="settings-tab active" onclick="switchTab('general', this)">General</button>
         <button class="settings-tab" onclick="switchTab('compliance', this)">
-          Compliance <span class="tab-badge" id="complianceBadge">2</span>
+          Compliance <span class="tab-badge" id="complianceBadge" style="display: none;">0</span>
         </button>
         <button class="settings-tab" onclick="switchTab('users', this)">Users &amp; Roles</button>
         <button class="settings-tab" onclick="switchTab('notifications', this)">Notifications</button>
@@ -77,41 +77,41 @@
             <div class="form-grid-2">
               <div class="form-group">
                 <label for="lotName">Parking lot name</label>
-                <input type="text" id="lotName" value="Central Plaza Parking" data-default="Central Plaza Parking">
+                <input type="text" id="lotName" value="" data-default="">
               </div>
               <div class="form-group">
                 <label for="contactNum">Contact number</label>
-                <input type="text" id="contactNum" value="+63 2 8123 4567" data-default="+63 2 8123 4567">
+                <input type="text" id="contactNum" value="" data-default="">
               </div>
             </div>
 
             <div class="form-group">
               <label for="address">Complete address</label>
-              <input type="text" id="address" value="1423 Ayala Avenue, Makati City, Metro Manila" data-default="1423 Ayala Avenue, Makati City, Metro Manila">
+              <input type="text" id="address" value="" data-default="">
             </div>
 
             <div class="form-grid-2">
               <div class="form-group">
                 <label for="openTime">Opening time</label>
-                <input type="time" id="openTime" value="06:00" data-default="06:00">
+                <input type="time" id="openTime" value="" data-default="">
               </div>
               <div class="form-group">
                 <label for="closeTime">Closing time</label>
-                <input type="time" id="closeTime" value="23:00" data-default="23:00">
+                <input type="time" id="closeTime" value="" data-default="">
               </div>
             </div>
 
             <div class="form-grid-2">
               <div class="form-group">
                 <label for="numFloors">Number of floors</label>
-                <input type="number" id="numFloors" min="1" max="20" value="3" data-default="3">
+                <input type="number" id="numFloors" min="1" max="20" value="1" data-default="1">
               </div>
               <div class="form-group">
                 <label for="currency">Currency</label>
                 <select id="currency" data-default="PHP">
-                  <option value="PHP" selected>PHP — Philippine Peso</option>
-                  <option value="USD">USD — US Dollar</option>
-                  <option value="SGD">SGD — Singapore Dollar</option>
+                  <option value="PHP" selected>PHP - Philippine Peso</option>
+                  <option value="USD">USD - US Dollar</option>
+                  <option value="SGD">SGD - Singapore Dollar</option>
                 </select>
               </div>
             </div>
@@ -133,83 +133,78 @@
           </div>
 
           <div class="doc-list">
-            <!-- Document Row 1 -->
-            <div class="doc-row" data-status="valid">
+            <div class="doc-row" data-status="none">
               <div class="doc-info">
                 <div class="doc-icon">📑</div>
                 <div>
                   <div class="doc-title">Business Permit</div>
-                  <div class="doc-file">business-permit-2025.pdf</div>
+                  <div class="doc-file">No document uploaded</div>
                 </div>
               </div>
               <div class="doc-expiry">
                 <span class="expiry-label">EXPIRY DATE</span>
-                <span class="expiry-date">December 31, 2025</span>
+                <span class="expiry-date">-</span>
               </div>
               <div class="doc-actions">
-                <span class="status-pill valid"><span class="dot"></span> Valid</span>
+                <span class="status-pill exp-none">Not Uploaded</span>
                 <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
               </div>
             </div>
 
-            <!-- Document Row 2 -->
-            <div class="doc-row" data-status="expiring">
+            <div class="doc-row" data-status="none">
               <div class="doc-info">
                 <div class="doc-icon">📑</div>
                 <div>
                   <div class="doc-title">Fire Safety Certificate</div>
-                  <div class="doc-file">fire-safety-certificate.pdf</div>
+                  <div class="doc-file">No document uploaded</div>
                 </div>
               </div>
               <div class="doc-expiry">
                 <span class="expiry-label">EXPIRY DATE</span>
-                <span class="expiry-date">June 15, 2025</span>
+                <span class="expiry-date">-</span>
               </div>
               <div class="doc-actions">
-                <span class="status-pill expiring"><span class="dot"></span> Expiring</span>
+                <span class="status-pill exp-none">Not Uploaded</span>
                 <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
               </div>
             </div>
 
-            <!-- Document Row 3 -->
-            <div class="doc-row" data-status="valid">
+            <div class="doc-row" data-status="none">
               <div class="doc-info">
                 <div class="doc-icon">📑</div>
                 <div>
                   <div class="doc-title">Data Privacy Registration</div>
-                  <div class="doc-file">npc-registration.pdf</div>
+                  <div class="doc-file">No document uploaded</div>
                 </div>
               </div>
               <div class="doc-expiry">
                 <span class="expiry-label">EXPIRY DATE</span>
-                <span class="expiry-date">March 10, 2026</span>
+                <span class="expiry-date">-</span>
               </div>
               <div class="doc-actions">
-                <span class="status-pill valid"><span class="dot"></span> Valid</span>
+                <span class="status-pill exp-none">Not Uploaded</span>
                 <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
               </div>
             </div>
 
-            <!-- Document Row 4 -->
-            <div class="doc-row" data-status="expired">
+            <div class="doc-row" data-status="none">
               <div class="doc-info">
                 <div class="doc-icon">📑</div>
                 <div>
                   <div class="doc-title">BIR Official Receipts</div>
-                  <div class="doc-file">bir-or-authority.pdf</div>
+                  <div class="doc-file">No document uploaded</div>
                 </div>
               </div>
               <div class="doc-expiry">
                 <span class="expiry-label">EXPIRY DATE</span>
-                <span class="expiry-date">April 01, 2025</span>
+                <span class="expiry-date">-</span>
               </div>
               <div class="doc-actions">
-                <span class="status-pill expired"><span class="dot"></span> Expired</span>
+                <span class="status-pill exp-none">Not Uploaded</span>
                 <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
               </div>
             </div>
           </div>
-          <!-- Hidden File Input for Document Uploads -->
           <input type="file" id="hiddenFileInput" accept=".pdf,.png,.jpg" style="display: none;">
         </div>
       </section>
@@ -240,41 +235,10 @@
                 </tr>
               </thead>
               <tbody id="usersTableBody">
-                <tr>
-                  <td>
-                    <div class="user-cell">
-                      <span class="user-initials bg-blue-soft">AM</span>
-                      <span class="user-name">Alice Morgan</span>
-                    </div>
+                <tr id="emptyUsersRow">
+                  <td colspan="5" class="text-muted" style="text-align: center; padding: 28px;">
+                    No users registered yet.
                   </td>
-                  <td class="text-muted">alice@parkeasy.ph</td>
-                  <td><span class="role-badge role-admin">Admin</span></td>
-                  <td><span class="active-indicator"><span class="dot"></span> Active</span></td>
-                  <td class="text-muted">Now</td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="user-cell">
-                      <span class="user-initials bg-purple-soft">JC</span>
-                      <span class="user-name">Jamie Cruz</span>
-                    </div>
-                  </td>
-                  <td class="text-muted">jamie@parkeasy.ph</td>
-                  <td><span class="role-badge role-operator">Operator</span></td>
-                  <td><span class="active-indicator"><span class="dot"></span> Active</span></td>
-                  <td class="text-muted">12m ago</td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="user-cell">
-                      <span class="user-initials bg-amber-soft">MS</span>
-                      <span class="user-name">Mike Santos</span>
-                    </div>
-                  </td>
-                  <td class="text-muted">mike@parkeasy.ph</td>
-                  <td><span class="role-badge role-cashier">Cashier</span></td>
-                  <td><span class="active-indicator"><span class="dot"></span> Active</span></td>
-                  <td class="text-muted">1h ago</td>
                 </tr>
               </tbody>
             </table>
@@ -302,7 +266,7 @@
                 <div class="notify-sub">Alert immediately when a gate fails to open or close.</div>
               </div>
               <label class="switch">
-                <input type="checkbox" checked data-default="true">
+                <input type="checkbox" data-default="false">
                 <span class="slider"></span>
               </label>
             </div>
@@ -313,7 +277,7 @@
                 <div class="notify-sub">Notify when hardware is disconnected for over 2 minutes.</div>
               </div>
               <label class="switch">
-                <input type="checkbox" checked data-default="true">
+                <input type="checkbox" data-default="false">
                 <span class="slider"></span>
               </label>
             </div>
@@ -354,7 +318,6 @@
   </footer>
 
   <script>
-    // 1. Hamburger Sidebar Toggle
     function toggleSidebar() {
       const sidebar = document.querySelector('.sidebar');
       let overlay = document.querySelector('.sidebar-overlay');
@@ -368,7 +331,44 @@
       overlay.classList.toggle('open');
     }
 
-    // 2. Sub-Tab Switching
+    (function initAccountMenu() {
+      const profileContainer = document.querySelector('.user-profile');
+      const avatar = document.querySelector('.avatar');
+      if (!profileContainer || !avatar) return;
+
+      const savedEmail = localStorage.getItem('parkEasyEmail') || 'Not signed in';
+      const initial = savedEmail !== 'Not signed in' ? savedEmail.charAt(0).toUpperCase() : '👤';
+      avatar.textContent = initial;
+
+      const dropdown = document.createElement('div');
+      dropdown.className = 'account-dropdown';
+      dropdown.innerHTML = `
+        <div class="account-header">
+          <div class="account-name" id="menuUserName">System Account</div>
+          <div class="account-email" id="menuUserEmail">${savedEmail}</div>
+        </div>
+        <a href="comply&Setting.html" class="account-item">⚙️ Account &amp; Settings</a>
+        <button type="button" class="account-item danger" id="menuLogoutBtn">↩️ Sign Out</button>
+      `;
+      profileContainer.appendChild(dropdown);
+
+      avatar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+      });
+
+      document.getElementById('menuLogoutBtn').addEventListener('click', () => {
+        sessionStorage.removeItem('parkEasyLoggedIn');
+        window.location.href = 'index.html';
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!profileContainer.contains(e.target)) {
+          dropdown.classList.remove('open');
+        }
+      });
+    })();
+
     function switchTab(tabId, btnElement) {
       document.querySelectorAll('.tab-panel').forEach(panel => {
         panel.classList.remove('active');
@@ -381,7 +381,6 @@
       btnElement.classList.add('active');
     }
 
-    // 3. Document Upload Simulation
     let activeDocRow = null;
     const fileInput = document.getElementById('hiddenFileInput');
 
@@ -395,31 +394,22 @@
       if (this.files && this.files[0] && activeDocRow) {
         const fileName = this.files[0].name;
         activeDocRow.querySelector('.doc-file').textContent = fileName;
-        activeDocRow.querySelector('.expiry-date').textContent = 'December 31, 2027';
+        activeDocRow.querySelector('.expiry-date').textContent = 'Uploaded';
         activeDocRow.dataset.status = 'valid';
 
         const pill = activeDocRow.querySelector('.status-pill');
         pill.className = 'status-pill valid';
         pill.innerHTML = '<span class="dot"></span> Valid';
 
-        updateComplianceBadge();
         showStatusMessage('Document "' + fileName + '" staged. Click Save Changes to confirm.');
       }
     });
 
-    function updateComplianceBadge() {
-      const issues = document.querySelectorAll('.doc-row:not([data-status="valid"])').length;
-      const badge = document.getElementById('complianceBadge');
-      badge.textContent = issues;
-      badge.style.display = issues > 0 ? 'inline-flex' : 'none';
-    }
-
-    // 4. Add New User to Users & Roles Table
     function addNewUser() {
       const name = prompt('Enter new user full name:');
       if (!name || !name.trim()) return;
 
-      const email = prompt('Enter user email address:', name.toLowerCase().replace(/\s+/g, '.') + '@parkeasy.ph');
+      const email = prompt('Enter user email address:');
       if (!email || !email.trim()) return;
 
       const role = prompt('Enter role (Admin, Operator, or Cashier):', 'Operator') || 'Operator';
@@ -429,6 +419,9 @@
       let roleClass = 'role-operator';
       if (cleanRole.toLowerCase() === 'admin') roleClass = 'role-admin';
       if (cleanRole.toLowerCase() === 'cashier') roleClass = 'role-cashier';
+
+      const emptyRow = document.getElementById('emptyUsersRow');
+      if (emptyRow) emptyRow.remove();
 
       const tbody = document.getElementById('usersTableBody');
       const tr = document.createElement('tr');
@@ -448,7 +441,6 @@
       showStatusMessage('User "' + name.trim() + '" added. Click Save Changes to confirm.');
     }
 
-    // 5. Save & Cancel Confirmation Bar
     function saveChanges() {
       document.querySelectorAll('#generalForm input, #generalForm select').forEach(el => {
         el.dataset.default = el.value;

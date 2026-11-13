@@ -189,6 +189,44 @@
       sidebar.classList.toggle('open');
       overlay.classList.toggle('open');
     }
+
+    (function initAccountMenu() {
+      const profileContainer = document.querySelector('.user-profile');
+      const avatar = document.querySelector('.avatar');
+      if (!profileContainer || !avatar) return;
+
+      const savedEmail = localStorage.getItem('parkEasyEmail') || 'Not signed in';
+      const initial = savedEmail !== 'Not signed in' ? savedEmail.charAt(0).toUpperCase() : '👤';
+      avatar.textContent = initial;
+
+      const dropdown = document.createElement('div');
+      dropdown.className = 'account-dropdown';
+      dropdown.innerHTML = `
+        <div class="account-header">
+          <div class="account-name" id="menuUserName">System Account</div>
+          <div class="account-email" id="menuUserEmail">${savedEmail}</div>
+        </div>
+        <a href="comply&Setting.html" class="account-item">⚙️ Account &amp; Settings</a>
+        <button type="button" class="account-item danger" id="menuLogoutBtn">↩️ Sign Out</button>
+      `;
+      profileContainer.appendChild(dropdown);
+
+      avatar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+      });
+
+      document.getElementById('menuLogoutBtn').addEventListener('click', () => {
+        sessionStorage.removeItem('parkEasyLoggedIn');
+        window.location.href = 'index.html';
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!profileContainer.contains(e.target)) {
+          dropdown.classList.remove('open');
+        }
+      });
+    })();
     
     // 1. Parking Rates Data (2 Wheelers defaults to editing mode like screenshot)
     const ratesData = [
