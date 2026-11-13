@@ -142,41 +142,48 @@
     let selectedIndex = 3; // Default to 1A-04
 
     function renderDashboard() {
-      const slots = floorsData[currentFloor];
-      const topRow = document.getElementById("topRow");
-      const bottomRow = document.getElementById("bottomRow");
+    const slots = floorsData[currentFloor];
+    const topRow = document.getElementById("topRow");
+    const bottomRow = document.getElementById("bottomRow");
+    
+    topRow.innerHTML = "";
+    bottomRow.innerHTML = "";
 
-      topRow.innerHTML = "";
-      bottomRow.innerHTML = "";
+    slots.forEach((slot, index) => {
+      const box = document.createElement("div");
+      const stateClass = slot.forced ? "forced" : slot.status;
+      const isSelected = index === selectedIndex ? "selected" : "";
+      
+      box.className = `slot-box ${stateClass} ${isSelected}`;
+      box.onclick = () => selectSlot(index);
 
-      slots.forEach((slot, index) => {
-        const box = document.createElement("div");
-        const stateClass = slot.forced ? "forced" : slot.status;
-        const isSelected = index === selectedIndex ? "selected" : "";
+      const dotColor = slot.status === "occupied" ? "red" : "green";
+      const statusLabel = slot.status === "occupied" ? "Occupied" : "Available";
+      const carMarkup = slot.status === "occupied"
+        ? `<div class="slot-car" data-icon="car"></div>`
+        : "";
 
-        box.className = `slot-box ${stateClass} ${isSelected}`;
-        box.onclick = () => selectSlot(index);
-
-        const dotColor = slot.status === "occupied" ? "red" : "green";
-        const statusLabel = slot.status === "occupied" ? "Occupied" : "Available";
-
-        box.innerHTML = `
-          <div class="slot-status">
-            <span class="dot ${dotColor}"></span>
-            <span>${statusLabel}</span>
-          </div>
+      box.innerHTML = `
+        <div class="slot-status">
+          <span class="dot ${dotColor}"></span>
+          <span>${statusLabel}</span>
+        </div>
+        <div class="slot-bottom">
           <div class="slot-id">${slot.id}</div>
-        `;
+          ${carMarkup}
+        </div>
+      `;
 
-        if (index < 5) {
-          topRow.appendChild(box);
-        } else {
-          bottomRow.appendChild(box);
-        }
-      });
+      if (index < 5) {
+        topRow.appendChild(box);
+      } else {
+        bottomRow.appendChild(box);
+      }
+    });
 
-      updateTelemetry();
-    }
+    if (window.renderIcons) window.renderIcons();
+    updateTelemetry();
+  }
 
     function updateTelemetry() {
       const slots = floorsData[currentFloor];
