@@ -1,33 +1,482 @@
 <!DOCTYPE html>
-    <head>
-        <link rel="stylesheet" href="global.css">
-    </head>
-    <body>
-        <header>
-            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-        </header>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compliance &amp; Settings - Park Easy</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="comply&Setting.css">
+</head>
+<body>
 
-        <footer class="site-footer">
-            <span>&copy; 2026 Park Easy Smart Parking System. All rights reserved.</span>
-            <div class="footer-links">
-                <a href="comply&Setting.html">Privacy &amp; Compliance</a>
-                <a href="comply&Setting.html">System Settings</a>
+  <!-- Collapsible Sidebar Drawer -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand-logo">
+        <span>🅿️</span> Park Easy
+      </div>
+      <ul class="nav-links">
+        <li class="nav-item"><a href="dashboard.html">📊 Dashboard</a></li>
+        <li class="nav-item"><a href="parkingMap.html">🗺️ Parking Map</a></li>
+        <li class="nav-item"><a href="infra&Hardware.html">⚙️ Infrastructure and Hardware</a></li>
+        <li class="nav-item"><a href="bill&Pricing.html">💳 Billing &amp; Pricing</a></li>
+        <li class="nav-item active"><a href="comply&Setting.html">🚨 Compliance &amp; Settings</a></li>
+      </ul>
+    </div>
+    <div class="logout-btn">
+      <a href="index.html">🚪 Logout</a>
+    </div>
+  </aside>
+
+  <!-- Full-Width Top Navigation Bar -->
+  <header>
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <h1>Compliance &amp; Settings</h1>
+    <div class="user-profile">
+      <span class="bell-icon">🔔</span>
+      <div class="avatar"></div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Page Overview Header -->
+      <div class="section-header">
+        <div>
+          <h2>Compliance &amp; Settings</h2>
+          <p>Configure your facility and compliance requirements</p>
+        </div>
+      </div>
+
+      <!-- Horizontal Sub-Navigation Tabs -->
+      <div class="settings-tabs">
+        <button class="settings-tab active" onclick="switchTab('general', this)">General</button>
+        <button class="settings-tab" onclick="switchTab('compliance', this)">
+          Compliance <span class="tab-badge" id="complianceBadge">2</span>
+        </button>
+        <button class="settings-tab" onclick="switchTab('users', this)">Users &amp; Roles</button>
+        <button class="settings-tab" onclick="switchTab('notifications', this)">Notifications</button>
+      </div>
+
+      <!-- TAB 1: GENERAL INFORMATION -->
+      <section id="tab-general" class="tab-panel active">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="header-left">
+              <div class="icon-badge">ⓘ</div>
+              <div>
+                <h3>General Information</h3>
+                <p>Basic facility details and operating preferences</p>
+              </div>
             </div>
-        </footer>
+          </div>
 
-        <script>
-            function toggleSidebar() {
-                const sidebar = document.querySelector('.sidebar');
-                let overlay = document.querySelector('.sidebar-overlay');
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.className = 'sidebar-overlay';
-                    overlay.onclick = toggleSidebar;
-                    document.body.appendChild(overlay);
-                }
-                sidebar.classList.toggle('open');
-                overlay.classList.toggle('open');
-            }
-        </script>
-    </body>
+          <form id="generalForm" class="settings-form" onsubmit="return false;">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="lotName">Parking lot name</label>
+                <input type="text" id="lotName" value="Central Plaza Parking" data-default="Central Plaza Parking">
+              </div>
+              <div class="form-group">
+                <label for="contactNum">Contact number</label>
+                <input type="text" id="contactNum" value="+63 2 8123 4567" data-default="+63 2 8123 4567">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="address">Complete address</label>
+              <input type="text" id="address" value="1423 Ayala Avenue, Makati City, Metro Manila" data-default="1423 Ayala Avenue, Makati City, Metro Manila">
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="openTime">Opening time</label>
+                <input type="time" id="openTime" value="06:00" data-default="06:00">
+              </div>
+              <div class="form-group">
+                <label for="closeTime">Closing time</label>
+                <input type="time" id="closeTime" value="23:00" data-default="23:00">
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="numFloors">Number of floors</label>
+                <input type="number" id="numFloors" min="1" max="20" value="3" data-default="3">
+              </div>
+              <div class="form-group">
+                <label for="currency">Currency</label>
+                <select id="currency" data-default="PHP">
+                  <option value="PHP" selected>PHP — Philippine Peso</option>
+                  <option value="USD">USD — US Dollar</option>
+                  <option value="SGD">SGD — Singapore Dollar</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 2: COMPLIANCE DOCUMENTS -->
+      <section id="tab-compliance" class="tab-panel">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="header-left">
+              <div class="icon-badge">📄</div>
+              <div>
+                <h3>Compliance Documents</h3>
+                <p>Keep permits and certificates current</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="doc-list">
+            <!-- Document Row 1 -->
+            <div class="doc-row" data-status="valid">
+              <div class="doc-info">
+                <div class="doc-icon">📑</div>
+                <div>
+                  <div class="doc-title">Business Permit</div>
+                  <div class="doc-file">business-permit-2025.pdf</div>
+                </div>
+              </div>
+              <div class="doc-expiry">
+                <span class="expiry-label">EXPIRY DATE</span>
+                <span class="expiry-date">December 31, 2025</span>
+              </div>
+              <div class="doc-actions">
+                <span class="status-pill valid"><span class="dot"></span> Valid</span>
+                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
+              </div>
+            </div>
+
+            <!-- Document Row 2 -->
+            <div class="doc-row" data-status="expiring">
+              <div class="doc-info">
+                <div class="doc-icon">📑</div>
+                <div>
+                  <div class="doc-title">Fire Safety Certificate</div>
+                  <div class="doc-file">fire-safety-certificate.pdf</div>
+                </div>
+              </div>
+              <div class="doc-expiry">
+                <span class="expiry-label">EXPIRY DATE</span>
+                <span class="expiry-date">June 15, 2025</span>
+              </div>
+              <div class="doc-actions">
+                <span class="status-pill expiring"><span class="dot"></span> Expiring</span>
+                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
+              </div>
+            </div>
+
+            <!-- Document Row 3 -->
+            <div class="doc-row" data-status="valid">
+              <div class="doc-info">
+                <div class="doc-icon">📑</div>
+                <div>
+                  <div class="doc-title">Data Privacy Registration</div>
+                  <div class="doc-file">npc-registration.pdf</div>
+                </div>
+              </div>
+              <div class="doc-expiry">
+                <span class="expiry-label">EXPIRY DATE</span>
+                <span class="expiry-date">March 10, 2026</span>
+              </div>
+              <div class="doc-actions">
+                <span class="status-pill valid"><span class="dot"></span> Valid</span>
+                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
+              </div>
+            </div>
+
+            <!-- Document Row 4 -->
+            <div class="doc-row" data-status="expired">
+              <div class="doc-info">
+                <div class="doc-icon">📑</div>
+                <div>
+                  <div class="doc-title">BIR Official Receipts</div>
+                  <div class="doc-file">bir-or-authority.pdf</div>
+                </div>
+              </div>
+              <div class="doc-expiry">
+                <span class="expiry-label">EXPIRY DATE</span>
+                <span class="expiry-date">April 01, 2025</span>
+              </div>
+              <div class="doc-actions">
+                <span class="status-pill expired"><span class="dot"></span> Expired</span>
+                <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)">⤴ Upload</button>
+              </div>
+            </div>
+          </div>
+          <!-- Hidden File Input for Document Uploads -->
+          <input type="file" id="hiddenFileInput" accept=".pdf,.png,.jpg" style="display: none;">
+        </div>
+      </section>
+
+      <!-- TAB 3: USERS & ROLES -->
+      <section id="tab-users" class="tab-panel">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="header-left">
+              <div class="icon-badge">👥</div>
+              <div>
+                <h3>Users &amp; Roles</h3>
+                <p>Control access to your parking dashboard</p>
+              </div>
+            </div>
+            <button type="button" class="btn-primary-sm" onclick="addNewUser()">+ Add User</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>USER</th>
+                  <th>EMAIL</th>
+                  <th>ROLE</th>
+                  <th>STATUS</th>
+                  <th>LAST ACTIVE</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr>
+                  <td>
+                    <div class="user-cell">
+                      <span class="user-initials bg-blue-soft">AM</span>
+                      <span class="user-name">Alice Morgan</span>
+                    </div>
+                  </td>
+                  <td class="text-muted">alice@parkeasy.ph</td>
+                  <td><span class="role-badge role-admin">Admin</span></td>
+                  <td><span class="active-indicator"><span class="dot"></span> Active</span></td>
+                  <td class="text-muted">Now</td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="user-cell">
+                      <span class="user-initials bg-purple-soft">JC</span>
+                      <span class="user-name">Jamie Cruz</span>
+                    </div>
+                  </td>
+                  <td class="text-muted">jamie@parkeasy.ph</td>
+                  <td><span class="role-badge role-operator">Operator</span></td>
+                  <td><span class="active-indicator"><span class="dot"></span> Active</span></td>
+                  <td class="text-muted">12m ago</td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="user-cell">
+                      <span class="user-initials bg-amber-soft">MS</span>
+                      <span class="user-name">Mike Santos</span>
+                    </div>
+                  </td>
+                  <td class="text-muted">mike@parkeasy.ph</td>
+                  <td><span class="role-badge role-cashier">Cashier</span></td>
+                  <td><span class="active-indicator"><span class="dot"></span> Active</span></td>
+                  <td class="text-muted">1h ago</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: NOTIFICATIONS -->
+      <section id="tab-notifications" class="tab-panel">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="header-left">
+              <div class="icon-badge">🔔</div>
+              <div>
+                <h3>Notification Preferences</h3>
+                <p>Choose which operational alerts you receive</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="notify-list">
+            <div class="notify-row">
+              <div class="notify-text">
+                <div class="notify-title">Gate failure</div>
+                <div class="notify-sub">Alert immediately when a gate fails to open or close.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" checked data-default="true">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="notify-row">
+              <div class="notify-text">
+                <div class="notify-title">Device offline</div>
+                <div class="notify-sub">Notify when hardware is disconnected for over 2 minutes.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" checked data-default="true">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="notify-row">
+              <div class="notify-text">
+                <div class="notify-title">Parking lot full</div>
+                <div class="notify-sub">Send an alert when available capacity reaches zero.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" data-default="false">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Confirm Bar -->
+      <div class="confirm-bar">
+        <span class="confirm-note" id="saveStatusText">Changes are saved only when you confirm.</span>
+        <div class="confirm-actions">
+          <button type="button" class="btn-cancel" onclick="resetChanges()">Cancel</button>
+          <button type="button" class="btn-save" onclick="saveChanges()">Save Changes</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Full-Width Copyright Footer -->
+  <footer class="site-footer">
+    <span>&copy; 2026 Park Easy Smart Parking System. All rights reserved.</span>
+    <div class="footer-links">
+      <a href="comply&Setting.html">Privacy &amp; Compliance</a>
+      <a href="comply&Setting.html">System Settings</a>
+    </div>
+  </footer>
+
+  <script>
+    // 1. Hamburger Sidebar Toggle
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      let overlay = document.querySelector('.sidebar-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        overlay.onclick = toggleSidebar;
+        document.body.appendChild(overlay);
+      }
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    }
+
+    // 2. Sub-Tab Switching
+    function switchTab(tabId, btnElement) {
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove('active');
+      });
+      document.querySelectorAll('.settings-tab').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      document.getElementById('tab-' + tabId).classList.add('active');
+      btnElement.classList.add('active');
+    }
+
+    // 3. Document Upload Simulation
+    let activeDocRow = null;
+    const fileInput = document.getElementById('hiddenFileInput');
+
+    function triggerUpload(btn) {
+      activeDocRow = btn.closest('.doc-row');
+      fileInput.value = '';
+      fileInput.click();
+    }
+
+    fileInput.addEventListener('change', function () {
+      if (this.files && this.files[0] && activeDocRow) {
+        const fileName = this.files[0].name;
+        activeDocRow.querySelector('.doc-file').textContent = fileName;
+        activeDocRow.querySelector('.expiry-date').textContent = 'December 31, 2027';
+        activeDocRow.dataset.status = 'valid';
+
+        const pill = activeDocRow.querySelector('.status-pill');
+        pill.className = 'status-pill valid';
+        pill.innerHTML = '<span class="dot"></span> Valid';
+
+        updateComplianceBadge();
+        showStatusMessage('Document "' + fileName + '" staged. Click Save Changes to confirm.');
+      }
+    });
+
+    function updateComplianceBadge() {
+      const issues = document.querySelectorAll('.doc-row:not([data-status="valid"])').length;
+      const badge = document.getElementById('complianceBadge');
+      badge.textContent = issues;
+      badge.style.display = issues > 0 ? 'inline-flex' : 'none';
+    }
+
+    // 4. Add New User to Users & Roles Table
+    function addNewUser() {
+      const name = prompt('Enter new user full name:');
+      if (!name || !name.trim()) return;
+
+      const email = prompt('Enter user email address:', name.toLowerCase().replace(/\s+/g, '.') + '@parkeasy.ph');
+      if (!email || !email.trim()) return;
+
+      const role = prompt('Enter role (Admin, Operator, or Cashier):', 'Operator') || 'Operator';
+      const cleanRole = role.trim();
+      const initials = name.trim().split(' ').map(part => part[0]).join('').toUpperCase().slice(0, 2);
+
+      let roleClass = 'role-operator';
+      if (cleanRole.toLowerCase() === 'admin') roleClass = 'role-admin';
+      if (cleanRole.toLowerCase() === 'cashier') roleClass = 'role-cashier';
+
+      const tbody = document.getElementById('usersTableBody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div class="user-cell">
+            <span class="user-initials bg-blue-soft">${initials}</span>
+            <span class="user-name">${name.trim()}</span>
+          </div>
+        </td>
+        <td class="text-muted">${email.trim()}</td>
+        <td><span class="role-badge ${roleClass}">${cleanRole}</span></td>
+        <td><span class="active-indicator"><span class="dot"></span> Active</span></td>
+        <td class="text-muted">Just now</td>
+      `;
+      tbody.appendChild(tr);
+      showStatusMessage('User "' + name.trim() + '" added. Click Save Changes to confirm.');
+    }
+
+    // 5. Save & Cancel Confirmation Bar
+    function saveChanges() {
+      document.querySelectorAll('#generalForm input, #generalForm select').forEach(el => {
+        el.dataset.default = el.value;
+      });
+      document.querySelectorAll('.notify-list input[type="checkbox"]').forEach(chk => {
+        chk.dataset.default = chk.checked ? 'true' : 'false';
+      });
+      showStatusMessage('✓ All changes saved successfully.', true);
+    }
+
+    function resetChanges() {
+      document.querySelectorAll('#generalForm input, #generalForm select').forEach(el => {
+        if (el.dataset.default !== undefined) {
+          el.value = el.dataset.default;
+        }
+      });
+      document.querySelectorAll('.notify-list input[type="checkbox"]').forEach(chk => {
+        chk.checked = chk.dataset.default === 'true';
+      });
+      showStatusMessage('Unsaved changes were discarded.');
+    }
+
+    function showStatusMessage(msg, isSuccess = false) {
+      const statusEl = document.getElementById('saveStatusText');
+      statusEl.textContent = msg;
+      statusEl.style.color = isSuccess ? '#15803d' : '#64748b';
+      statusEl.style.fontWeight = isSuccess ? '600' : '400';
+    }
+  </script>
+</body>
 </html>
