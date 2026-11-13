@@ -761,3 +761,14 @@ header h1 {
 .account-item.danger:hover {
   background-color: #fef2f2;
 }
+
+.svg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-item a {
+  gap: 12px;
+}

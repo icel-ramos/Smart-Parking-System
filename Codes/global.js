@@ -1,3 +1,4 @@
+// 1. Custom Vector SVG Icon Dictionary (24x24 Stroke Icons)
 const SVG_ICONS = {
   logo: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>',
   menu: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>',
@@ -21,6 +22,17 @@ const SVG_ICONS = {
   download: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
 };
 
+window.renderIcons = function () {
+  document.querySelectorAll('[data-icon]').forEach(el => {
+    const key = el.getAttribute('data-icon');
+    if (SVG_ICONS[key]) {
+      el.innerHTML = SVG_ICONS[key];
+      el.classList.add('svg-icon');
+    }
+  });
+};
+
+// 2. Collapsible Sidebar Drawer Toggle
 window.toggleSidebar = function () {
   const sidebar = document.querySelector('.sidebar');
   if (!sidebar) return;
@@ -37,10 +49,18 @@ window.toggleSidebar = function () {
   overlay.classList.toggle('open');
 };
 
+// 3. Initialize Icons, Header Bell, and Account Menu
 document.addEventListener('DOMContentLoaded', () => {
+  // Automatically replace menu button & bell emojis even if HTML wasn't updated yet
+  const menuBtn = document.querySelector('.menu-btn');
+  if (menuBtn) menuBtn.innerHTML = SVG_ICONS.menu;
+
   const profileContainer = document.querySelector('.user-profile');
   const bellIcon = document.querySelector('.bell-icon');
   const avatar = document.querySelector('.avatar');
+
+  if (bellIcon) bellIcon.innerHTML = SVG_ICONS.bell;
+  window.renderIcons();
 
   if (!profileContainer || !bellIcon || !avatar) return;
 
@@ -50,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
   badge.id = 'notifBadge';
   bellIcon.appendChild(badge);
 
-  // Notification Dropdown Container
+  // Notification Dropdown
   const notifDropdown = document.createElement('div');
   notifDropdown.className = 'notif-dropdown';
   notifDropdown.innerHTML = `
@@ -62,9 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
   profileContainer.appendChild(notifDropdown);
 
-  // Account Dropdown Container
+  // Account Dropdown
   const savedEmail = localStorage.getItem('parkEasyEmail') || 'Not signed in';
-  avatar.textContent = savedEmail !== 'Not signed in' ? savedEmail.charAt(0).toUpperCase() : '👤';
+  if (savedEmail !== 'Not signed in') {
+    avatar.textContent = savedEmail.charAt(0).toUpperCase();
+  } else {
+    avatar.innerHTML = SVG_ICONS.user;
+  }
 
   const accountDropdown = document.createElement('div');
   accountDropdown.className = 'account-dropdown';
@@ -73,12 +97,15 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="account-name" id="menuUserName">System Account</div>
       <div class="account-email" id="menuUserEmail">${savedEmail}</div>
     </div>
-    <a href="comply&Setting.html" class="account-item">⚙️ Account &amp; Settings</a>
-    <button type="button" class="account-item danger" id="menuLogoutBtn">↩️ Sign Out</button>
+    <a href="comply&Setting.html" class="account-item">
+      <span class="svg-icon">${SVG_ICONS.settings}</span> Account &amp; Settings
+    </a>
+    <button type="button" class="account-item danger" id="menuLogoutBtn">
+      <span class="svg-icon">${SVG_ICONS.logout}</span> Sign Out
+    </button>
   `;
   profileContainer.appendChild(accountDropdown);
 
-  // Render Notifications from Storage
   function renderNotifications() {
     const items = JSON.parse(localStorage.getItem('parkEasyNotifs') || '[]');
     const listEl = document.getElementById('notifList');
@@ -101,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Global helper to push a notification from any page or Firebase event
   window.pushNotification = function (title, message) {
     const items = JSON.parse(localStorage.getItem('parkEasyNotifs') || '[]');
     const now = new Date();
@@ -111,34 +137,29 @@ document.addEventListener('DOMContentLoaded', () => {
     renderNotifications();
   };
 
-  // Toggle Notification Dropdown
   bellIcon.addEventListener('click', (e) => {
     e.stopPropagation();
     accountDropdown.classList.remove('open');
     notifDropdown.classList.toggle('open');
   });
 
-  // Toggle Account Dropdown
   avatar.addEventListener('click', (e) => {
     e.stopPropagation();
     notifDropdown.classList.remove('open');
     accountDropdown.classList.toggle('open');
   });
 
-  // Clear All Notifications
   document.getElementById('clearNotifsBtn').addEventListener('click', (e) => {
     e.stopPropagation();
     localStorage.removeItem('parkEasyNotifs');
     renderNotifications();
   });
 
-  // Sign Out Handler
   document.getElementById('menuLogoutBtn').addEventListener('click', () => {
     sessionStorage.removeItem('parkEasyLoggedIn');
     window.location.href = 'index.html';
   });
 
-  // Close Dropdowns When Clicking Outside
   document.addEventListener('click', (e) => {
     if (!profileContainer.contains(e.target)) {
       notifDropdown.classList.remove('open');
