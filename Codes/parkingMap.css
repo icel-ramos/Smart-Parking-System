@@ -297,17 +297,13 @@
   .controls-row { flex-direction: column; align-items: stretch; }
 }
 
-.slot-bottom {
+.slot-car {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.slot-car {
-  color: #f87171;
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
+  width: 100%;
+  min-height: 32px;
+  margin: 8px 0;
+  color: #f87171;
   opacity: 0.95;
 }
