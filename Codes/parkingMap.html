@@ -25,9 +25,6 @@
             </ul>
 
         </div>
-            <div class="logout-btn">
-                <a href="index.html">↩️ Logout</a>
-            </div>
     </aside>
 
     <header>
@@ -135,20 +132,9 @@
     </div>
   </footer>
 
-  <script>
-    function toggleSidebar() {
-      const sidebar = document.querySelector('.sidebar');
-      let overlay = document.querySelector('.sidebar-overlay');
-      if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.className = 'sidebar-overlay';
-        overlay.onclick = toggleSidebar;
-        document.body.appendChild(overlay);
-      }
-      sidebar.classList.toggle('open');
-      overlay.classList.toggle('open');
-    }
+  <script src="global.js"></script>
 
+  <script>
     (function initAccountMenu() {
       const profileContainer = document.querySelector('.user-profile');
       const avatar = document.querySelector('.avatar');
