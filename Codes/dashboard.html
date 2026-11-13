@@ -5,6 +5,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Smart Parking System</title>
+        <link rel="stylesheet" href="global.css">
         <link rel="stylesheet" href="Dashboard.css">
     </head>
 
@@ -34,8 +35,8 @@
     <!-- Main Content Dashboard -->
     <main class="main-content">
         <header>
+            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
             <h1>Dashboard</h1>
-            
             <div class="user-profile">
                 <span class="bell-icon">🔔</span>
                 <div class="avatar"></div>
@@ -123,5 +124,19 @@
         </div>
     </main>
 
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            let overlay = document.querySelector('.sidebar-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'sidebar-overlay';
+                overlay.onclick = toggleSidebar;
+                document.body.appendChild(overlay);
+            }
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+    </script>
     </body>
 </html>

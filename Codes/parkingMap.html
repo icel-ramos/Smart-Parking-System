@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Parking Map - Live Overview</title>
+  <link rel="stylesheet" href="global.css">
   <link rel="stylesheet" href="parkingMap.css">
 </head>
 <body>
@@ -32,8 +33,8 @@
     <!-- Main Content Dashboard -->
     <main class="main-content">
         <header>
+          <button class="menu-btn" onclick="toggleSidebar()">☰</button>
             <h1>Parking Map</h1>
-            
             <div class="user-profile">
                 <span class="bell-icon">🔔</span>
                 <div class="avatar"></div>
@@ -121,6 +122,19 @@
     <p class="footer-note">Selected Slot details (above) are updated dynamically. Use controls to override.</p>
   </main>
   <script>
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      let overlay = document.querySelector('.sidebar-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        overlay.onclick = toggleSidebar;
+        document.body.appendChild(overlay);
+      }
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    }
+
     const floorsData = {
     1: [
       { id: "1A-01", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Smart Parking Control Dashboard</title>
+  <link rel="stylesheet" href="global.css">
   <link rel="stylesheet" href="infra&Hardware.css">
 </head>
 <body>
@@ -31,12 +32,12 @@
 
   <main class="dashboard">
     <header>
-            <h1>Infrastructure & Hardware</h1>
-            
-            <div class="user-profile">
-                <span class="bell-icon">🔔</span>
-                <div class="avatar"></div>
-            </div>
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+      <h1>Infrastructure & Hardware</h1>
+      <div class="user-profile">
+        <span class="bell-icon">🔔</span>
+        <div class="avatar"></div>
+      </div>
 
         </header>
     <!-- GATE CONTROL SECTION -->
@@ -247,6 +248,19 @@
     </section>
   </main>
   <script>
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      let overlay = document.querySelector('.sidebar-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        overlay.onclick = toggleSidebar;
+        document.body.appendChild(overlay);
+      }
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    }
+
     // Gate Logic
     function setGateMode(gate, mode) {
       const autoBtn = document.getElementById(`${gate}-auto`);
