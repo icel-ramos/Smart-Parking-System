@@ -198,9 +198,16 @@
       document.getElementById("statDuration").textContent = currentSlot.duration;
       const totalFullEl = document.getElementById("statTotalFull");
       totalFullEl.textContent = `${occupiedCount} / ${slots.length}`;
-      totalFullEl.className = (occupiedCount === slots.length && slots.length > 0)
-        ? "stat-value text-red"
-        : "stat-value";
+
+      const occupancyRatio = slots.length > 0 ? occupiedCount / slots.length : 0;
+
+      if (occupancyRatio >= 1) {
+        totalFullEl.className = "stat-value text-red";
+      } else if (occupancyRatio >= 0.75) {
+        totalFullEl.className = "stat-value text-yellow";
+      } else {
+        totalFullEl.className = "stat-value";
+      }
 
       document.getElementById("btnOverrideText").textContent =
         currentSlot.forced ? "Release Manual Override" : "Force Occupied Status";

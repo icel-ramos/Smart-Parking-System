@@ -27,6 +27,10 @@
   --pill-inactive: #f1f5f9;
 }
 
+.text-yellow {
+  color: #f59e0b !important;
+}
+
 * {
   margin: 0;
   padding: 0;
