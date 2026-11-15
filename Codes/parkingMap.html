@@ -42,7 +42,7 @@
       </div>
       <div class="live-badge">
         <span class="live-dot"></span>
-        <span>Live &bull; Updated just now</span>
+        <span id="liveSyncText">Connecting to Firebase...</span>
       </div>
     </div>
 
@@ -69,10 +69,6 @@
           <span>ONE WAY LANE &rarr;</span>
           <div class="dash-line"></div>
         </div>
-      </div>
-
-        <!-- Bottom Row -->
-        <div class="slot-row" id="bottomRow"></div>
       </div>
 
       <!-- Bottom Telemetry & Controls -->
@@ -112,7 +108,7 @@
       </div>
     </div>
 
-    <p class="footer-note">Selected Slot details (above) are updated dynamically. Use controls to override.</p>
+    <p class="footer-note">Selected Slot details (above) are synced in real time via Firebase Realtime Database.</p>
   </main>
 
   <footer class="site-footer">
@@ -127,50 +123,68 @@
   <script>
     const floorsData = {
       1: [
-        { id: "1A-01", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },
-        { id: "1A-02", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },
-        { id: "1A-03", status: "available", forced: false, entry: "--:--", duration: "0m 0s" },
-        { id: "1A-04", status: "available", forced: false, entry: "--:--", duration: "0m 0s" }
+        { id: "1A-01", status: "available", forced: false, entry: "--:--", entryTimeMs: 0, duration: "0m 0s" },
+        { id: "1A-02", status: "available", forced: false, entry: "--:--", entryTimeMs: 0, duration: "0m 0s" },
+        { id: "1A-03", status: "available", forced: false, entry: "--:--", entryTimeMs: 0, duration: "0m 0s" },
+        { id: "1A-04", status: "available", forced: false, entry: "--:--", entryTimeMs: 0, duration: "0m 0s" }
       ]
     };
 
     let currentFloor = 1;
     let selectedIndex = 3; // Default to 1A-04
 
-  function renderDashboard() {
-    const slots = floorsData[currentFloor];
-    const topRow = document.getElementById("topRow");
-    topRow.innerHTML = "";
+    function formatElapsed(startMs) {
+      if (!startMs) return "0m 0s";
+      const totalSeconds = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
 
-    slots.forEach((slot, index) => {
-      const box = document.createElement("div");
-      const stateClass = slot.forced ? "forced" : slot.status;
-      const isSelected = index === selectedIndex ? "selected" : "";
-      
-      box.className = `slot-box ${stateClass} ${isSelected}`;
-      box.onclick = () => selectSlot(index);
+      if (hours > 0) {
+        return `${hours}h ${minutes}m ${seconds}s`;
+      }
+      return `${minutes}m ${seconds}s`;
+    }
 
-      const dotColor = slot.status === "occupied" ? "red" : "green";
-      const statusLabel = slot.status === "occupied" ? "Occupied" : "Available";
-      const carMarkup = slot.status === "occupied"
-        ? `<div class="slot-car" data-icon="car"></div>`
-        : `<div class="slot-car"></div>`;
+    function getCurrentTimeStr() {
+      const now = new Date();
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
 
-      box.innerHTML = `
-        <div class="slot-status">
-          <span class="dot ${dotColor}"></span>
-          <span>${statusLabel}</span>
-        </div>
-        ${carMarkup}
-        <div class="slot-id">${slot.id}</div>
-      `;
+    function renderDashboard() {
+      const slots = floorsData[currentFloor];
+      const topRow = document.getElementById("topRow");
+      topRow.innerHTML = "";
 
-      topRow.appendChild(box);
-    });
+      slots.forEach((slot, index) => {
+        const box = document.createElement("div");
+        const stateClass = slot.forced ? "forced" : slot.status;
+        const isSelected = index === selectedIndex ? "selected" : "";
+        
+        box.className = `slot-box ${stateClass} ${isSelected}`;
+        box.onclick = () => selectSlot(index);
 
-    if (window.renderIcons) window.renderIcons();
-    updateTelemetry();
-  }
+        const dotColor = slot.status === "occupied" ? "red" : "green";
+        const statusLabel = slot.status === "occupied" ? "Occupied" : "Available";
+        const carMarkup = slot.status === "occupied"
+          ? `<div class="slot-car" data-icon="car"></div>`
+          : `<div class="slot-car"></div>`;
+
+        box.innerHTML = `
+          <div class="slot-status">
+            <span class="dot ${dotColor}"></span>
+            <span>${statusLabel}</span>
+          </div>
+          ${carMarkup}
+          <div class="slot-id">${slot.id}</div>
+        `;
+
+        topRow.appendChild(box);
+      });
+
+      if (window.renderIcons) window.renderIcons();
+      updateTelemetry();
+    }
 
     function updateTelemetry() {
       const slots = floorsData[currentFloor];
@@ -188,8 +202,8 @@
         beamEl.className = "stat-value text-green";
       }
 
-      document.getElementById("statEntry").textContent = currentSlot.entry;
-      document.getElementById("statDuration").textContent = currentSlot.duration;
+      document.getElementById("statEntry").textContent = currentSlot.entry || "--:--";
+      document.getElementById("statDuration").textContent = currentSlot.duration || "0m 0s";
       const totalFullEl = document.getElementById("statTotalFull");
       totalFullEl.textContent = `${occupiedCount} / ${slots.length}`;
 
@@ -212,67 +226,91 @@
       renderDashboard();
     }
 
-    function getCurrentTimeStr() {
-      const now = new Date();
-      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    }
+    function toggleOverride() {
+      const slot = floorsData[currentFloor][selectedIndex];
+      if (!slot.forced) {
+        const nowMs = Date.now();
+        const entryTime = (!slot.entry || slot.entry === "--:--") ? getCurrentTimeStr() : slot.entry;
 
-    function formatElapsed(startMs) {
-    if (!startMs) return "0m 0s";
-    const totalSeconds = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+        window.dbUpdate(`slots/${slot.id}`, {
+          forced: true,
+          status: "occupied",
+          mode: "manual",
+          light: "red",
+          entry: entryTime,
+          entryTimeMs: slot.entryTimeMs || nowMs
+        });
 
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ${seconds}s`;
-    }
-    return `${minutes}m ${seconds}s`;
-  }
+        if (window.pushNotification) {
+          window.pushNotification("Manual Override Active", `Slot ${slot.id} was manually forced to Occupied.`);
+        }
+      } else {
+        window.dbUpdate(`slots/${slot.id}`, {
+          forced: false,
+          status: "available",
+          mode: "auto",
+          light: "green",
+          entry: "--:--",
+          entryTimeMs: 0
+        });
 
-  function toggleOverride() {
-    const slot = floorsData[currentFloor][selectedIndex];
-    if (!slot.forced) {
-      slot.forced = true;
-      slot.status = "occupied";
-      if (slot.entry === "--:--") {
-        slot.entry = getCurrentTimeStr();
-        slot.entryTimeMs = Date.now();
-        slot.duration = "0m 0s";
-      }
-      if (window.pushNotification) {
-        window.pushNotification("Manual Override Active", `Slot ${slot.id} was manually forced to Occupied.`);
-      }
-    } else {
-      slot.forced = false;
-      slot.status = "available";
-      slot.entry = "--:--";
-      slot.entryTimeMs = null;
-      slot.duration = "0m 0s";
-      if (window.pushNotification) {
-        window.pushNotification("Manual Override Released", `Slot ${slot.id} returned to Available.`);
+        if (window.pushNotification) {
+          window.pushNotification("Manual Override Released", `Slot ${slot.id} returned to Available.`);
+        }
       }
     }
-    renderDashboard();
-  }
 
-  // Live 1-second timer to update duration for all occupied slots
-  setInterval(() => {
-    const slots = floorsData[currentFloor];
-    let anyUpdated = false;
+    // Listen to live Firebase /slots updates
+    window.dbListen("slots", (slotsObj) => {
+      if (!slotsObj) return;
+      const orderedIds = ["1A-01", "1A-02", "1A-03", "1A-04"];
+      floorsData[1] = orderedIds.map((id, idx) => {
+        const s = slotsObj[id] || {};
+        const status = (s.status || "available").toLowerCase();
+        let entryTimeMs = s.entryTimeMs || 0;
+        let entry = s.entry || "--:--";
 
-    slots.forEach(slot => {
-      if (slot.status === "occupied" && slot.entryTimeMs) {
-        slot.duration = formatElapsed(slot.entryTimeMs);
-        anyUpdated = true;
-      }
+        // If ESP32 or Firebase flips status to occupied without a timestamp, stamp it automatically
+        if (status === "occupied" && !entryTimeMs) {
+          entryTimeMs = Date.now();
+          entry = getCurrentTimeStr();
+          window.dbUpdate(`slots/${id}`, { entryTimeMs, entry });
+        }
+
+        return {
+          id,
+          slotNum: s.slotNum || (idx + 1),
+          status,
+          forced: Boolean(s.forced),
+          entry: status === "occupied" ? entry : "--:--",
+          entryTimeMs: status === "occupied" ? entryTimeMs : 0,
+          duration: status === "occupied" ? formatElapsed(entryTimeMs) : "0m 0s"
+        };
+      });
+
+      const syncEl = document.getElementById("liveSyncText");
+      if (syncEl) syncEl.innerHTML = "Live &bull; Synced with Firebase";
+
+      renderDashboard();
     });
 
-    if (anyUpdated) {
-      const currentSlot = slots[selectedIndex];
-      document.getElementById("statDuration").textContent = currentSlot.duration;
-    }
-  }, 1000);
+    // Live 1-second timer to update duration for all occupied slots
+    setInterval(() => {
+      const slots = floorsData[currentFloor];
+      let anyUpdated = false;
+
+      slots.forEach(slot => {
+        if (slot.status === "occupied" && slot.entryTimeMs) {
+          slot.duration = formatElapsed(slot.entryTimeMs);
+          anyUpdated = true;
+        }
+      });
+
+      if (anyUpdated) {
+        const currentSlot = slots[selectedIndex];
+        document.getElementById("statDuration").textContent = currentSlot.duration;
+      }
+    }, 1000);
 
     renderDashboard();
   </script>

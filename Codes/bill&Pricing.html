@@ -56,13 +56,13 @@
       <div class="kpi-card">
         <div class="kpi-label">Today's Revenue</div>
         <div class="kpi-value" id="kpiToday">&#8369;0</div>
-        <div class="kpi-sub text-green" id="kpiTodaySub">0% vs yesterday</div>
+        <div class="kpi-sub text-green" id="kpiTodaySub">Synced live with Firebase</div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-label">Monthly Revenue</div>
         <div class="kpi-value" id="kpiMonth">&#8369;0</div>
-        <div class="kpi-sub text-green" id="kpiMonthSub">0% vs last month</div>
+        <div class="kpi-sub text-green" id="kpiMonthSub">Current month total</div>
       </div>
 
       <div class="kpi-card">
@@ -108,10 +108,10 @@
     <section class="card">
       <div class="card-header">
         <h3>Transactions</h3>
-        <span class="date-note" id="currentDateNote">All Records</span>
+        <span class="date-note" id="currentDateNote">Click a status badge to toggle Paid/Unpaid</span>
       </div>
 
-      <!-- Toolbar: Search, Status Filter, Export -->
+      <!-- Toolbar: Search, Status Filter, Add Ticket, Export -->
       <div class="tx-toolbar">
         <div class="search-box">
           <span class="search-icon" data-icon="search"></span>
@@ -124,6 +124,9 @@
             <option value="Paid">Paid Only</option>
             <option value="Unpaid">Unpaid Only</option>
           </select>
+          <button class="outline-btn" onclick="addTransactionPrompt()" style="display: inline-flex; align-items: center; gap: 6px;">
+            + New Ticket
+          </button>
           <button class="outline-btn" onclick="exportCSV()" style="display: inline-flex; align-items: center; gap: 6px;">
             <span data-icon="download"></span> Export
           </button>
@@ -170,20 +173,18 @@
 
   <script src="global.js"></script>
   <script>
-    // 1. Parking Rates Data (Zeroed out for Firebase)
+    // 1. Parking Rates Data (Synced with /rates in Firebase)
     const ratesData = [
-      { id: "2w", type: "2 Wheelers", firstHour: "0.00", extraHour: "0.00", dailyMax: "0.00", overnight: "0.00", isEditing: false },
-      { id: "4w", type: "4 Wheelers", firstHour: "0.00", extraHour: "0.00", dailyMax: "0.00", overnight: "0.00", isEditing: false }
+      { id: "2w", type: "2 Wheelers", firstHour: "20.00", extraHour: "10.00", dailyMax: "100.00", overnight: "80.00", isEditing: false },
+      { id: "4w", type: "4 Wheelers", firstHour: "40.00", extraHour: "20.00", dailyMax: "200.00", overnight: "150.00", isEditing: false }
     ];
 
-    // 2. Transactions Data (Cleared for Firebase)
-    const transactionsData = [];
-
+    // 2. Transactions Data (Synced with /transactions in Firebase)
+    let transactionsData = [];
     let currentPage = 1;
     const rowsPerPage = 5;
-    let filteredTransactions = [...transactionsData];
+    let filteredTransactions = [];
 
-    // Render Parking Rates Table
     function renderRates() {
       const tbody = document.getElementById("ratesBody");
       tbody.innerHTML = "";
@@ -236,19 +237,98 @@
       const dailyVal = parseFloat(document.getElementById(`daily-${index}`).value) || 0;
       const nightVal = parseFloat(document.getElementById(`night-${index}`).value) || 0;
 
-      ratesData[index].firstHour = firstVal.toFixed(2);
-      ratesData[index].extraHour = extraVal.toFixed(2);
-      ratesData[index].dailyMax = dailyVal.toFixed(2);
-      ratesData[index].overnight = nightVal.toFixed(2);
-      ratesData[index].isEditing = false;
+      const rate = ratesData[index];
+      rate.firstHour = firstVal.toFixed(2);
+      rate.extraHour = extraVal.toFixed(2);
+      rate.dailyMax = dailyVal.toFixed(2);
+      rate.overnight = nightVal.toFixed(2);
+      rate.isEditing = false;
+
+      window.dbUpdate(`rates/${rate.id}`, {
+        id: rate.id,
+        type: rate.type,
+        firstHour: rate.firstHour,
+        extraHour: rate.extraHour,
+        dailyMax: rate.dailyMax,
+        overnight: rate.overnight
+      });
 
       renderRates();
       if (window.pushNotification) {
-        window.pushNotification("Rates Updated", `${ratesData[index].type} pricing was updated.`);
+        window.pushNotification("Rates Updated", `${rate.type} pricing was saved to Firebase.`);
       }
     }
 
-    // Render Transactions Table & Pagination
+    // Listen to Firebase /rates
+    window.dbListen("rates", (ratesObj) => {
+      if (!ratesObj) return;
+      ["2w", "4w"].forEach((key, idx) => {
+        if (ratesObj[key] && !ratesData[idx].isEditing) {
+          ratesData[idx].firstHour = ratesObj[key].firstHour || "0.00";
+          ratesData[idx].extraHour = ratesObj[key].extraHour || "0.00";
+          ratesData[idx].dailyMax = ratesObj[key].dailyMax || "0.00";
+          ratesData[idx].overnight = ratesObj[key].overnight || "0.00";
+        }
+      });
+      renderRates();
+    });
+
+    // Listen to Firebase /transactions
+    window.dbListen("transactions", (txObj) => {
+      if (!txObj) {
+        transactionsData = [];
+      } else {
+        transactionsData = Object.values(txObj).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      }
+      filterTransactions();
+      updateKPIs();
+    });
+
+    function addTransactionPrompt() {
+      const plate = prompt("Enter vehicle plate number (e.g., ABC 1234):");
+      if (!plate || !plate.trim()) return;
+
+      const vehicleChoice = prompt("Enter vehicle type (4 Wheelers or 2 Wheelers):", "4 Wheelers") || "4 Wheelers";
+      const is2W = vehicleChoice.toLowerCase().includes("2");
+      const defaultRate = is2W ? ratesData[0].firstHour : ratesData[1].firstHour;
+
+      const amountInput = prompt("Enter parking fee amount (PHP):", defaultRate) || defaultRate;
+      const statusInput = prompt("Payment status (Paid or Unpaid):", "Paid") || "Paid";
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const ticketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
+
+      const newTx = {
+        id: ticketId,
+        plate: plate.trim().toUpperCase(),
+        vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+        timeIn: timeStr,
+        timeOut: statusInput.toLowerCase() === "paid" ? timeStr : "--:--",
+        amount: (parseFloat(amountInput) || 0).toFixed(2),
+        status: statusInput.toLowerCase() === "unpaid" ? "Unpaid" : "Paid",
+        timestamp: Date.now()
+      };
+
+      window.dbUpdate(`transactions/${ticketId}`, newTx);
+      if (window.pushNotification) {
+        window.pushNotification("New Transaction Recorded", `Ticket ${ticketId} (${newTx.plate}) added.`);
+      }
+    }
+
+    function toggleTxStatus(ticketId) {
+      const tx = transactionsData.find(t => t.id === ticketId);
+      if (!tx) return;
+      const nextStatus = tx.status === "Paid" ? "Unpaid" : "Paid";
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      window.dbUpdate(`transactions/${ticketId}`, {
+        status: nextStatus,
+        timeOut: nextStatus === "Paid" ? timeStr : "--:--"
+      });
+    }
+
     function renderTransactions() {
       const tbody = document.getElementById("txBody");
       tbody.innerHTML = "";
@@ -257,7 +337,7 @@
         tbody.innerHTML = `
           <tr>
             <td colspan="7" style="text-align: center; color: #64748b; padding: 28px;">
-              No transactions recorded yet.
+              No transactions recorded yet. Click "+ New Ticket" to record a vehicle.
             </td>
           </tr>
         `;
@@ -281,7 +361,11 @@
           <td>${tx.timeIn}</td>
           <td>${tx.timeOut}</td>
           <td>&#8369;${tx.amount}</td>
-          <td><span class="badge ${badgeClass}">${tx.status}</span></td>
+          <td>
+            <span class="badge ${badgeClass}" style="cursor: pointer;" title="Click to toggle Paid/Unpaid" onclick="toggleTxStatus('${tx.id}')">
+              ${tx.status}
+            </span>
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -317,7 +401,6 @@
       renderTransactions();
     }
 
-    // Search & Filter
     function filterTransactions() {
       const query = document.getElementById("searchInput").value.toLowerCase();
       const statusFilter = document.getElementById("txDateFilter").value;
@@ -334,7 +417,6 @@
 
     document.getElementById("txDateFilter").addEventListener("change", filterTransactions);
 
-    // Export to CSV
     function exportCSV() {
       if (filteredTransactions.length === 0) return;
       const headers = ["Ticket ID,Plate No.,Vehicle,Time In,Time Out,Amount,Status"];
@@ -352,13 +434,31 @@
       document.body.removeChild(link);
     }
 
-    // KPI Period Switcher (Zeroed out for Firebase)
     function updateKPIs() {
-      document.getElementById("kpiToday").innerHTML = "&#8369;0";
-      document.getElementById("kpiTodaySub").textContent = "0% vs previous period";
+      let paidTotal = 0;
+      let paidCount = 0;
+      let unpaidTotal = 0;
+      let unpaidCount = 0;
+
+      transactionsData.forEach(tx => {
+        const amt = parseFloat(tx.amount) || 0;
+        if (tx.status === "Paid") {
+          paidTotal += amt;
+          paidCount++;
+        } else {
+          unpaidTotal += amt;
+          unpaidCount++;
+        }
+      });
+
+      document.getElementById("kpiToday").innerHTML = "&#8369;" + paidTotal.toFixed(0);
+      document.getElementById("kpiMonth").innerHTML = "&#8369;" + paidTotal.toFixed(0);
+      document.getElementById("kpiTx").textContent = transactionsData.length;
+      document.getElementById("kpiTxSub").textContent = `${paidCount} paid transactions`;
+      document.getElementById("kpiPending").innerHTML = "&#8369;" + unpaidTotal.toFixed(0);
+      document.getElementById("kpiPendingSub").textContent = `${unpaidCount} unpaid transactions`;
     }
 
-    // Initial Render
     renderRates();
     renderTransactions();
     updateKPIs();

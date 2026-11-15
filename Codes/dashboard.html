@@ -9,7 +9,7 @@
 </head>
 <body>
 
-  <!-- Sidebar Navigation (No Emojis, No Logout Button) -->
+  <!-- Sidebar Navigation -->
   <aside class="sidebar">
     <div class="brand-logo">
       <span data-icon="logo"></span>Park Easy
@@ -63,7 +63,7 @@
     <!-- Section: Parking Statistics -->
     <h2 class="section-title">
       Parking Statistics
-      <select class="dropdown-inline" id="statsPeriodSelect">
+      <select class="dropdown-inline" id="statsPeriodSelect" onchange="renderStats()">
         <option value="today">today</option>
         <option value="week">this week</option>
       </select>
@@ -78,7 +78,7 @@
         </div>
         <div class="stat-row">
           <span>Revenue generated</span>
-          <span class="stat-value" id="stat2WRev">₱0</span>
+          <span class="stat-value" id="stat2WRev">&#8369;0</span>
         </div>
       </div>
 
@@ -90,7 +90,7 @@
         </div>
         <div class="stat-row">
           <span>Revenue generated</span>
-          <span class="stat-value" id="stat4WRev">₱0</span>
+          <span class="stat-value" id="stat4WRev">&#8369;0</span>
         </div>
       </div>
 
@@ -102,7 +102,7 @@
         </div>
         <div class="stat-row">
           <span>Revenue generated</span>
-          <span class="stat-value" id="statTotalRev">₱0</span>
+          <span class="stat-value" id="statTotalRev">&#8369;0</span>
         </div>
       </div>
     </div>
@@ -152,7 +152,8 @@
 
   <script src="global.js"></script>
   <script>
-    // Chart Dataset (Starts at 0; Firebase can overwrite window.chartData later)
+    let allTransactions = [];
+
     window.chartData = {
       today: {
         labels: ['8 AM', '10 AM', '12 PM', '2 PM', '4 PM', '6 PM', '8 PM'],
@@ -165,6 +166,93 @@
         revenue: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] }
       }
     };
+
+    // 1. Live Ground Floor Occupancy from Firebase /slots
+    window.dbListen('slots', (slotsObj) => {
+      if (!slotsObj) return;
+      const slotsList = Object.values(slotsObj);
+      const total = slotsList.length || 4;
+      const occupied = slotsList.filter(s => (s.status || '').toLowerCase() === 'occupied').length;
+      const available = Math.max(0, total - occupied);
+      const pct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+
+      document.getElementById('floorProgressBar').style.width = pct + '%';
+      document.getElementById('dashOccupied').textContent = occupied;
+      document.getElementById('dashAvailable').textContent = available;
+      document.getElementById('dashTotal').textContent = total;
+    });
+
+    // 2. Live Statistics & Graphical Summary from Firebase /transactions
+    window.dbListen('transactions', (txObj) => {
+      allTransactions = txObj ? Object.values(txObj) : [];
+      recomputeAnalytics();
+      renderStats();
+      updateChart();
+    });
+
+    function recomputeAnalytics() {
+      const todayParking2W = [0, 0, 0, 0, 0, 0, 0];
+      const todayParking4W = [0, 0, 0, 0, 0, 0, 0];
+      const todayRev2W = [0, 0, 0, 0, 0, 0, 0];
+      const todayRev4W = [0, 0, 0, 0, 0, 0, 0];
+
+      const weekParking2W = [0, 0, 0, 0, 0, 0, 0];
+      const weekParking4W = [0, 0, 0, 0, 0, 0, 0];
+      const weekRev2W = [0, 0, 0, 0, 0, 0, 0];
+      const weekRev4W = [0, 0, 0, 0, 0, 0, 0];
+
+      allTransactions.forEach((tx, idx) => {
+        const is2W = (tx.vehicle || '').toLowerCase().includes('2');
+        const amt = tx.status === 'Paid' ? (parseFloat(tx.amount) || 0) : 0;
+        const slotBucket = idx % 7;
+
+        const createdDate = tx.timestamp ? new Date(tx.timestamp) : new Date();
+        const dayIdx = (createdDate.getDay() + 6) % 7; // Mon=0 .. Sun=6
+
+        if (is2W) {
+          todayParking2W[slotBucket] += 1;
+          todayRev2W[slotBucket] += amt;
+          weekParking2W[dayIdx] += 1;
+          weekRev2W[dayIdx] += amt;
+        } else {
+          todayParking4W[slotBucket] += 1;
+          todayRev4W[slotBucket] += amt;
+          weekParking4W[dayIdx] += 1;
+          weekRev4W[dayIdx] += amt;
+        }
+      });
+
+      window.chartData.today.parking = { twoW: todayParking2W, fourW: todayParking4W };
+      window.chartData.today.revenue = { twoW: todayRev2W, fourW: todayRev4W };
+      window.chartData.week.parking = { twoW: weekParking2W, fourW: weekParking4W };
+      window.chartData.week.revenue = { twoW: weekRev2W, fourW: weekRev4W };
+    }
+
+    function renderStats() {
+      let twoWCount = 0;
+      let twoWRev = 0;
+      let fourWCount = 0;
+      let fourWRev = 0;
+
+      allTransactions.forEach(tx => {
+        const is2W = (tx.vehicle || '').toLowerCase().includes('2');
+        const amt = tx.status === 'Paid' ? (parseFloat(tx.amount) || 0) : 0;
+        if (is2W) {
+          twoWCount++;
+          twoWRev += amt;
+        } else {
+          fourWCount++;
+          fourWRev += amt;
+        }
+      });
+
+      document.getElementById('stat2WCount').textContent = twoWCount;
+      document.getElementById('stat2WRev').textContent = '₱' + twoWRev.toFixed(0);
+      document.getElementById('stat4WCount').textContent = fourWCount;
+      document.getElementById('stat4WRev').textContent = '₱' + fourWRev.toFixed(0);
+      document.getElementById('statTotalCount').textContent = twoWCount + fourWCount;
+      document.getElementById('statTotalRev').textContent = '₱' + (twoWRev + fourWRev).toFixed(0);
+    }
 
     function buildSvgPath(values, maxVal) {
       const width = 600;
