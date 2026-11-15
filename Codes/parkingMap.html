@@ -56,24 +56,20 @@
         </div>
       </div>
 
-      <!-- Dark Sensor Canvas -->
+      <!-- Dark Sensor Canvas (Single Row of 4 Bays) -->
       <div class="parking-canvas">
         <div class="zone-label">ZONE A</div>
-
-        <!-- Top Row -->
+        
+        <!-- Single Row of 4 Slots -->
         <div class="slot-row" id="topRow"></div>
 
-        <!-- One Way Lane -->
+        <!-- One Way Driveway Lane -->
         <div class="lane-divider">
           <div class="dash-line"></div>
           <span>ONE WAY LANE &rarr;</span>
           <div class="dash-line"></div>
         </div>
-        <div class="lane-divider">
-          <div class="dash-line"></div>
-          <span>ONE WAY LANE &rarr;</span>
-          <div class="dash-line"></div>
-        </div>
+      </div>
 
         <!-- Bottom Row -->
         <div class="slot-row" id="bottomRow"></div>
@@ -141,13 +137,10 @@
     let currentFloor = 1;
     let selectedIndex = 3; // Default to 1A-04
 
-    function renderDashboard() {
+  function renderDashboard() {
     const slots = floorsData[currentFloor];
     const topRow = document.getElementById("topRow");
-    const bottomRow = document.getElementById("bottomRow");
-    
     topRow.innerHTML = "";
-    bottomRow.innerHTML = "";
 
     slots.forEach((slot, index) => {
       const box = document.createElement("div");
@@ -172,11 +165,7 @@
         <div class="slot-id">${slot.id}</div>
       `;
 
-      if (index < 5) {
-        topRow.appendChild(box);
-      } else {
-        bottomRow.appendChild(box);
-      }
+      topRow.appendChild(box);
     });
 
     if (window.renderIcons) window.renderIcons();
