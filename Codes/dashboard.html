@@ -36,109 +36,225 @@
   <!-- Main Content Dashboard -->
   <main class="main-content">
 
-    <!-- Section: Current Details -->
-    <h2 class="section-title">Current Parking Lot Details</h2>
-
-    <div class="dashboard-grid">
-      <div class="card">
-        <div class="card-title">Ground Floor</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="floorProgressBar" style="width: 0%;"></div>
-        </div>
-        <div class="data-row">
-          <span><span class="status-dot dot-occupied"></span>Occupied</span>
-          <strong id="dashOccupied">0</strong>
-        </div>
-        <div class="data-row">
-          <span><span class="status-dot dot-available"></span>Available</span>
-          <strong id="dashAvailable">4</strong>
-        </div>
-        <div class="data-row">
-          <span>Total</span>
-          <span id="dashTotal">4</span>
-        </div>
+    <!-- Compact Header & Global Time Filter -->
+    <div class="dash-toolbar">
+      <div class="dash-toolbar-left">
+        <h2>Facility Operations Overview</h2>
+        <p>Real-time bay occupancy, active sessions, and revenue performance</p>
+      </div>
+      <div class="period-control">
+        <span>Reporting Period:</span>
+        <select class="dropdown-inline" id="globalPeriodSelect" onchange="refreshDashboard()">
+          <option value="today">Today (Hourly)</option>
+          <option value="week">This Week (Daily)</option>
+          <option value="all">All Time</option>
+        </select>
       </div>
     </div>
 
-    <!-- Section: Parking Statistics -->
-    <h2 class="section-title">
-      Parking Statistics
-      <select class="dropdown-inline" id="statsPeriodSelect" onchange="renderStats()">
-        <option value="today">today</option>
-        <option value="week">this week</option>
-      </select>
-    </h2>
-
-    <div class="dashboard-grid">
-      <div class="card">
-        <div class="card-title">2 Wheelers</div>
-        <div class="stat-row">
-          <span>Total number of 2 wheelers parked</span>
-          <span class="stat-value" id="stat2WCount">0</span>
+    <!-- 4-Card High-Density KPI Strip -->
+    <section class="kpi-strip">
+      <!-- Card 1: Physical Bay Occupancy (/slots) -->
+      <div class="kpi-box">
+        <div>
+          <div class="kpi-top">
+            <span class="kpi-label">Live Bay Occupancy</span>
+            <span class="kpi-tag live">Floor 1</span>
+          </div>
+          <div class="kpi-main-val"><span id="dashOccupied">0</span> / <span id="dashTotal">4</span> Bays</div>
+          <div class="progress-bar-container">
+            <div class="progress-bar" id="floorProgressBar" style="width: 0%;"></div>
+          </div>
         </div>
-        <div class="stat-row">
-          <span>Revenue generated</span>
-          <span class="stat-value" id="stat2WRev">&#8369;0</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">4 Wheelers</div>
-        <div class="stat-row">
-          <span>Total number of 4 wheelers parked</span>
-          <span class="stat-value" id="stat4WCount">0</span>
-        </div>
-        <div class="stat-row">
-          <span>Revenue generated</span>
-          <span class="stat-value" id="stat4WRev">&#8369;0</span>
+        <div class="mini-bays" id="miniBaysContainer">
+          <span class="mini-bay available">1A-01</span>
+          <span class="mini-bay available">1A-02</span>
+          <span class="mini-bay available">1A-03</span>
+          <span class="mini-bay available">1A-04</span>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Total</div>
-        <div class="stat-row">
-          <span>Total Number Vehicles Parked</span>
-          <span class="stat-value" id="statTotalCount">0</span>
+      <!-- Card 2: Currently Parked Vehicles (Active Unpaid Tickets) -->
+      <div class="kpi-box">
+        <div>
+          <div class="kpi-top">
+            <span class="kpi-label">Currently Parked</span>
+            <span class="kpi-tag">Active Tickets</span>
+          </div>
+          <div class="kpi-main-val" id="kpiActiveTotal">0 Vehicles</div>
         </div>
-        <div class="stat-row">
-          <span>Revenue generated</span>
-          <span class="stat-value" id="statTotalRev">&#8369;0</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section: Interactive Graphical Summary -->
-    <h2 class="section-title">
-      Graphical Summary
-      <select class="dropdown-inline" id="chartMetricSelect" onchange="updateChart()">
-        <option value="parking">parking</option>
-        <option value="revenue">revenue</option>
-      </select>
-      <select class="dropdown-inline" id="chartPeriodSelect" onchange="updateChart()">
-        <option value="today">today</option>
-        <option value="week">this week</option>
-      </select>
-    </h2>
-
-    <div class="chart-card">
-      <div class="mock-chart" id="interactiveChart">
-        <svg class="chart-svg-bg" viewBox="0 0 600 300" preserveAspectRatio="none">
-          <path id="path2W" d="M0,295 L600,295" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
-          <path id="path4W" d="M0,295 L600,295" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
-        </svg>
-
-        <div class="tooltip-line" id="chartTooltipLine" style="display: none;"></div>
-        <div class="chart-tooltip" id="chartTooltip" style="display: none;">
-          <strong id="tooltipLabel">--:--</strong><br>
-          <span style="color:#3b82f6;" id="tooltip4W">4W: 0</span> |
-          <span style="color:#f59e0b;" id="tooltip2W">2W: 0</span>
+        <div class="kpi-sub-row">
+          <span>2W: <strong id="kpiActive2W">0</strong> &bull; 4W: <strong id="kpiActive4W">0</strong></span>
+          <span>Available: <strong id="dashAvailable">4</strong></span>
         </div>
       </div>
-      <div class="chart-legend">
-        <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b;"></div> 2 wheelers</div>
-        <div class="legend-item"><div class="legend-color" style="background-color: #3b82f6;"></div> 4 wheelers</div>
+
+      <!-- Card 3: Total Sessions Recorded in Period (Historical + Active) -->
+      <div class="kpi-box">
+        <div>
+          <div class="kpi-top">
+            <span class="kpi-label">Total Logged Visits</span>
+            <span class="kpi-tag" id="kpiPeriodBadge">Today</span>
+          </div>
+          <div class="kpi-main-val" id="kpiLoggedTotal">0 Visits</div>
+        </div>
+        <div class="kpi-sub-row">
+          <span>Completed: <strong id="kpiCompletedCount">0</strong></span>
+          <span>2W: <strong id="kpiLogged2W">0</strong> | 4W: <strong id="kpiLogged4W">0</strong></span>
+        </div>
       </div>
-    </div>
+
+      <!-- Card 4: Collected Revenue vs Pending Fees -->
+      <div class="kpi-box">
+        <div>
+          <div class="kpi-top">
+            <span class="kpi-label">Collected Revenue</span>
+            <span class="kpi-tag" id="kpiRevBadge">Today</span>
+          </div>
+          <div class="kpi-main-val" id="kpiCollectedRev">&#8369;0</div>
+        </div>
+        <div class="kpi-sub-row">
+          <span>Pending (Unpaid):</span>
+          <strong id="kpiPendingRev" style="color: #d97706;">&#8369;0</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main 2-Column Workspace -->
+    <section class="workspace-grid">
+
+      <!-- Left Column: Graphical Summary with Proper X & Y Axes -->
+      <div class="panel-card">
+        <div>
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Graphical Summary</h3>
+              <p class="panel-subtitle" id="chartSubtitle">Hourly vehicle arrivals (Today)</p>
+            </div>
+            <div class="chart-controls">
+              <select class="dropdown-inline" id="chartMetricSelect" onchange="updateChart()">
+                <option value="revenue">Revenue (&#8369;)</option>
+                <option value="parking">Vehicles Logged</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="chart-wrapper" id="interactiveChart">
+            <svg class="chart-svg" viewBox="0 0 620 230">
+              <defs>
+                <linearGradient id="grad4W" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.22"/>
+                  <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"/>
+                </linearGradient>
+                <linearGradient id="grad2W" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.22"/>
+                  <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Y-Axis Gridlines & Labels (Rendered by JS) -->
+              <g id="chartGridGroup"></g>
+
+              <!-- Shaded Area Fills -->
+              <path id="area4W" d="" fill="url(#grad4W)"/>
+              <path id="area2W" d="" fill="url(#grad2W)"/>
+
+              <!-- Data Lines -->
+              <path id="path2W" d="" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path id="path4W" d="" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+              <!-- Data Dots & X-Axis Labels (Rendered by JS) -->
+              <g id="chartDotsGroup"></g>
+              <g id="chartXAxisGroup"></g>
+
+              <!-- Hover Vertical Indicator Line -->
+              <line id="chartHoverLine" class="chart-hover-line" x1="0" y1="15" x2="0" y2="195" style="display: none;"/>
+            </svg>
+
+            <div class="chart-tooltip" id="chartTooltip" style="display: none;">
+              <strong id="tooltipLabel">--:--</strong><br>
+              <span style="color:#60a5fa;" id="tooltip4W">4W: 0</span> &bull;
+              <span style="color:#fbbf24;" id="tooltip2W">2W: 0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-footer">
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#3b82f6;"></span> 4 Wheelers</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> 2 Wheelers</span>
+          </div>
+          <span id="chartPeakNote">Hover or tap points to inspect exact time and value</span>
+        </div>
+      </div>
+
+      <!-- Right Column: Compact Breakdown Matrix & Recent Tickets -->
+      <div class="panel-card">
+        <div>
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Vehicle &amp; Revenue Breakdown</h3>
+              <p class="panel-subtitle">Separates currently parked vehicles from period totals</p>
+            </div>
+          </div>
+
+          <div class="breakdown-table-wrap">
+            <table class="breakdown-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th class="num" title="Vehicles currently inside (Unpaid)">Active Now</th>
+                  <th class="num" title="Total sessions logged during selected period">Logged Visits</th>
+                  <th class="num">Paid Rev</th>
+                  <th class="num">Pending</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="veh-badge"><span class="veh-dot" style="background:#f59e0b;"></span> 2 Wheelers</span>
+                  </td>
+                  <td class="num" id="tbl2WActive">0</td>
+                  <td class="num" id="tbl2WLogged">0</td>
+                  <td class="num" id="tbl2WRev">&#8369;0</td>
+                  <td class="num" id="tbl2WPending">&#8369;0</td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="veh-badge"><span class="veh-dot" style="background:#3b82f6;"></span> 4 Wheelers</span>
+                  </td>
+                  <td class="num" id="tbl4WActive">0</td>
+                  <td class="num" id="tbl4WLogged">0</td>
+                  <td class="num" id="tbl4WRev">&#8369;0</td>
+                  <td class="num" id="tbl4WPending">&#8369;0</td>
+                </tr>
+                <tr class="total-row">
+                  <td>Total</td>
+                  <td class="num" id="tblTotalActive">0</td>
+                  <td class="num" id="tblTotalLogged">0</td>
+                  <td class="num" id="tblTotalRev">&#8369;0</td>
+                  <td class="num" id="tblTotalPending">&#8369;0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recent Ticket Activity Feed -->
+        <div class="mini-feed">
+          <div class="mini-feed-title">
+            <span>Latest Recorded Tickets</span>
+            <a href="bill&Pricing.html">View All &rarr;</a>
+          </div>
+          <div class="feed-list" id="recentTicketsFeed">
+            <div class="feed-item">
+              <span class="feed-meta">No ticket records yet.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
 
   </main>
 
@@ -154,9 +270,17 @@
   <script>
     let allTransactions = [];
 
+    // Chart SVG Coordinate Constants (Leaves room for Y-axis on left and X-axis on bottom)
+    const CHART_LEFT = 52;
+    const CHART_RIGHT = 602;
+    const CHART_TOP = 18;
+    const CHART_BOTTOM = 195;
+    const CHART_W = CHART_RIGHT - CHART_LEFT;
+    const CHART_H = CHART_BOTTOM - CHART_TOP;
+
     window.chartData = {
       today: {
-        labels: ['8 AM', '10 AM', '12 PM', '2 PM', '4 PM', '6 PM', '8 PM'],
+        labels: ['6AM', '9AM', '12PM', '3PM', '6PM', '9PM', '12AM'],
         parking: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] },
         revenue: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] }
       },
@@ -167,149 +291,344 @@
       }
     };
 
-    // 1. Live Ground Floor Occupancy from Firebase /slots
+    // 1. Live Ground Floor Occupancy & Mini Bay Pills (/slots)
     window.dbListen('slots', (slotsObj) => {
       if (!slotsObj) return;
-      const slotsList = Object.values(slotsObj);
-      const total = slotsList.length || 4;
-      const occupied = slotsList.filter(s => (s.status || '').toLowerCase() === 'occupied').length;
+      const orderedIds = ['1A-01', '1A-02', '1A-03', '1A-04'];
+      let occupied = 0;
+
+      const pillsHtml = orderedIds.map(id => {
+        const s = slotsObj[id] || {};
+        const isOcc = (s.status || '').toLowerCase() === 'occupied';
+        if (isOcc) occupied++;
+        return `<span class="mini-bay ${isOcc ? 'occupied' : 'available'}">${id}</span>`;
+      }).join('');
+
+      const total = orderedIds.length;
       const available = Math.max(0, total - occupied);
-      const pct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+      const pct = Math.round((occupied / total) * 100);
 
       document.getElementById('floorProgressBar').style.width = pct + '%';
       document.getElementById('dashOccupied').textContent = occupied;
       document.getElementById('dashAvailable').textContent = available;
       document.getElementById('dashTotal').textContent = total;
+      document.getElementById('miniBaysContainer').innerHTML = pillsHtml;
     });
 
-    // 2. Live Statistics & Graphical Summary from Firebase /transactions
+    // 2. Live Transactions & Revenue Analytics (/transactions)
     window.dbListen('transactions', (txObj) => {
-      allTransactions = txObj ? Object.values(txObj) : [];
-      recomputeAnalytics();
-      renderStats();
-      updateChart();
+      allTransactions = txObj
+        ? Object.values(txObj).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+        : [];
+      refreshDashboard();
     });
 
-    function recomputeAnalytics() {
-      const todayParking2W = [0, 0, 0, 0, 0, 0, 0];
-      const todayParking4W = [0, 0, 0, 0, 0, 0, 0];
-      const todayRev2W = [0, 0, 0, 0, 0, 0, 0];
-      const todayRev4W = [0, 0, 0, 0, 0, 0, 0];
-
-      const weekParking2W = [0, 0, 0, 0, 0, 0, 0];
-      const weekParking4W = [0, 0, 0, 0, 0, 0, 0];
-      const weekRev2W = [0, 0, 0, 0, 0, 0, 0];
-      const weekRev4W = [0, 0, 0, 0, 0, 0, 0];
-
-      allTransactions.forEach((tx, idx) => {
-        const is2W = (tx.vehicle || '').toLowerCase().includes('2');
-        const amt = tx.status === 'Paid' ? (parseFloat(tx.amount) || 0) : 0;
-        const slotBucket = idx % 7;
-
-        const createdDate = tx.timestamp ? new Date(tx.timestamp) : new Date();
-        const dayIdx = (createdDate.getDay() + 6) % 7; // Mon=0 .. Sun=6
-
-        if (is2W) {
-          todayParking2W[slotBucket] += 1;
-          todayRev2W[slotBucket] += amt;
-          weekParking2W[dayIdx] += 1;
-          weekRev2W[dayIdx] += amt;
-        } else {
-          todayParking4W[slotBucket] += 1;
-          todayRev4W[slotBucket] += amt;
-          weekParking4W[dayIdx] += 1;
-          weekRev4W[dayIdx] += amt;
-        }
-      });
-
-      window.chartData.today.parking = { twoW: todayParking2W, fourW: todayParking4W };
-      window.chartData.today.revenue = { twoW: todayRev2W, fourW: todayRev4W };
-      window.chartData.week.parking = { twoW: weekParking2W, fourW: weekParking4W };
-      window.chartData.week.revenue = { twoW: weekRev2W, fourW: weekRev4W };
+    function parseTxHour(tx) {
+      if (tx.timeIn && tx.timeIn.includes(':')) {
+        const h = parseInt(tx.timeIn.split(':')[0], 10);
+        if (!isNaN(h)) return h;
+      }
+      if (tx.timestamp) {
+        return new Date(tx.timestamp).getHours();
+      }
+      return new Date().getHours();
     }
 
-    function renderStats() {
-      let twoWCount = 0;
-      let twoWRev = 0;
-      let fourWCount = 0;
-      let fourWRev = 0;
+    function isSameDay(ts, now) {
+      if (!ts) return true;
+      const d = new Date(ts);
+      return d.getFullYear() === now.getFullYear() &&
+             d.getMonth() === now.getMonth() &&
+             d.getDate() === now.getDate();
+    }
+
+    function isWithinThisWeek(ts, now) {
+      if (!ts) return true;
+      const diffMs = now.getTime() - ts;
+      return diffMs >= 0 && diffMs <= 7 * 24 * 60 * 60 * 1000;
+    }
+
+    function refreshDashboard() {
+      const period = document.getElementById('globalPeriodSelect').value;
+      const periodLabel = period === 'today' ? 'Today' : (period === 'week' ? 'This Week' : 'All Time');
+      document.getElementById('kpiPeriodBadge').textContent = periodLabel;
+      document.getElementById('kpiRevBadge').textContent = periodLabel;
+
+      const now = new Date();
+
+      // Reset chart arrays
+      const tP2 = [0, 0, 0, 0, 0, 0, 0], tP4 = [0, 0, 0, 0, 0, 0, 0];
+      const tR2 = [0, 0, 0, 0, 0, 0, 0], tR4 = [0, 0, 0, 0, 0, 0, 0];
+      const wP2 = [0, 0, 0, 0, 0, 0, 0], wP4 = [0, 0, 0, 0, 0, 0, 0];
+      const wR2 = [0, 0, 0, 0, 0, 0, 0], wR4 = [0, 0, 0, 0, 0, 0, 0];
+
+      // Counters for breakdown table & KPIs
+      let active2W = 0, active4W = 0;
+      let logged2W = 0, logged4W = 0;
+      let completedCount = 0;
+      let rev2W = 0, rev4W = 0;
+      let pend2W = 0, pend4W = 0;
 
       allTransactions.forEach(tx => {
         const is2W = (tx.vehicle || '').toLowerCase().includes('2');
-        const amt = tx.status === 'Paid' ? (parseFloat(tx.amount) || 0) : 0;
-        if (is2W) {
-          twoWCount++;
-          twoWRev += amt;
-        } else {
-          fourWCount++;
-          fourWRev += amt;
+        const isPaid = tx.status === 'Paid';
+        const amt = parseFloat(tx.amount) || 0;
+        const ts = tx.timestamp || now.getTime();
+
+        // Active (Currently Parked = Unpaid ticket)
+        if (!isPaid) {
+          if (is2W) active2W++;
+          else active4W++;
+        }
+
+        // Populate Today Hourly Chart (Buckets: 6AM, 9AM, 12PM, 3PM, 6PM, 9PM, 12AM)
+        if (isSameDay(ts, now)) {
+          const hour = parseTxHour(tx);
+          const hourBucket = Math.min(6, Math.max(0, Math.floor((hour - 4) / 3)));
+          if (is2W) {
+            tP2[hourBucket] += 1;
+            if (isPaid) tR2[hourBucket] += amt;
+          } else {
+            tP4[hourBucket] += 1;
+            if (isPaid) tR4[hourBucket] += amt;
+          }
+        }
+
+        // Populate Weekly Chart (Mon=0 .. Sun=6)
+        if (isWithinThisWeek(ts, now)) {
+          const d = new Date(ts);
+          const dayIdx = (d.getDay() + 6) % 7;
+          if (is2W) {
+            wP2[dayIdx] += 1;
+            if (isPaid) wR2[dayIdx] += amt;
+          } else {
+            wP4[dayIdx] += 1;
+            if (isPaid) wR4[dayIdx] += amt;
+          }
+        }
+
+        // Filter for Selected Reporting Period
+        const inPeriod =
+          period === 'all' ||
+          (period === 'today' && isSameDay(ts, now)) ||
+          (period === 'week' && isWithinThisWeek(ts, now));
+
+        if (inPeriod) {
+          if (is2W) {
+            logged2W++;
+            if (isPaid) {
+              rev2W += amt;
+              completedCount++;
+            } else {
+              pend2W += amt;
+            }
+          } else {
+            logged4W++;
+            if (isPaid) {
+              rev4W += amt;
+              completedCount++;
+            } else {
+              pend4W += amt;
+            }
+          }
         }
       });
 
-      document.getElementById('stat2WCount').textContent = twoWCount;
-      document.getElementById('stat2WRev').textContent = '₱' + twoWRev.toFixed(0);
-      document.getElementById('stat4WCount').textContent = fourWCount;
-      document.getElementById('stat4WRev').textContent = '₱' + fourWRev.toFixed(0);
-      document.getElementById('statTotalCount').textContent = twoWCount + fourWCount;
-      document.getElementById('statTotalRev').textContent = '₱' + (twoWRev + fourWRev).toFixed(0);
+      window.chartData.today.parking = { twoW: tP2, fourW: tP4 };
+      window.chartData.today.revenue = { twoW: tR2, fourW: tR4 };
+      window.chartData.week.parking = { twoW: wP2, fourW: wP4 };
+      window.chartData.week.revenue = { twoW: wR2, fourW: wR4 };
+
+      // Update Top KPI Strip
+      const totalActive = active2W + active4W;
+      const totalLogged = logged2W + logged4W;
+      const totalRev = rev2W + rev4W;
+      const totalPend = pend2W + pend4W;
+
+      document.getElementById('kpiActiveTotal').textContent = `${totalActive} Vehicle${totalActive === 1 ? '' : 's'}`;
+      document.getElementById('kpiActive2W').textContent = active2W;
+      document.getElementById('kpiActive4W').textContent = active4W;
+
+      document.getElementById('kpiLoggedTotal').textContent = `${totalLogged} Visit${totalLogged === 1 ? '' : 's'}`;
+      document.getElementById('kpiCompletedCount').textContent = completedCount;
+      document.getElementById('kpiLogged2W').textContent = logged2W;
+      document.getElementById('kpiLogged4W').textContent = logged4W;
+
+      document.getElementById('kpiCollectedRev').textContent = '₱' + totalRev.toFixed(0);
+      document.getElementById('kpiPendingRev').textContent = '₱' + totalPend.toFixed(0);
+
+      // Update Breakdown Matrix Table
+      document.getElementById('tbl2WActive').textContent = active2W;
+      document.getElementById('tbl2WLogged').textContent = logged2W;
+      document.getElementById('tbl2WRev').textContent = '₱' + rev2W.toFixed(0);
+      document.getElementById('tbl2WPending').textContent = '₱' + pend2W.toFixed(0);
+
+      document.getElementById('tbl4WActive').textContent = active4W;
+      document.getElementById('tbl4WLogged').textContent = logged4W;
+      document.getElementById('tbl4WRev').textContent = '₱' + rev4W.toFixed(0);
+      document.getElementById('tbl4WPending').textContent = '₱' + pend4W.toFixed(0);
+
+      document.getElementById('tblTotalActive').textContent = totalActive;
+      document.getElementById('tblTotalLogged').textContent = totalLogged;
+      document.getElementById('tblTotalRev').textContent = '₱' + totalRev.toFixed(0);
+      document.getElementById('tblTotalPending').textContent = '₱' + totalPend.toFixed(0);
+
+      renderRecentFeed();
+      updateChart();
     }
 
-    function buildSvgPath(values, maxVal) {
-      const width = 600;
-      const height = 280;
-      const stepX = width / (values.length - 1);
-      return values.map((v, i) => {
-        const x = (i * stepX).toFixed(1);
-        const y = (290 - (maxVal > 0 ? (v / maxVal) * height : 0)).toFixed(1);
-        return (i === 0 ? 'M' : 'L') + x + ',' + y;
-      }).join(' ');
+    function renderRecentFeed() {
+      const container = document.getElementById('recentTicketsFeed');
+      const recent = allTransactions.slice(0, 3);
+      if (recent.length === 0) {
+        container.innerHTML = `<div class="feed-item"><span class="feed-meta">No tickets recorded yet. Add one in Billing &amp; Pricing.</span></div>`;
+        return;
+      }
+
+      container.innerHTML = recent.map(tx => {
+        const isPaid = tx.status === 'Paid';
+        return `
+          <div class="feed-item">
+            <div class="feed-left">
+              <span class="feed-plate">${tx.plate}</span>
+              <span class="feed-meta">${tx.vehicle} &bull; In: ${tx.timeIn || '--:--'}</span>
+            </div>
+            <div class="feed-right">
+              &#8369;${parseFloat(tx.amount || 0).toFixed(0)}
+              <span class="feed-status ${isPaid ? 'paid' : 'unpaid'}">${tx.status}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getChartPeriodKey() {
+      const globalPeriod = document.getElementById('globalPeriodSelect').value;
+      return globalPeriod === 'today' ? 'today' : 'week';
     }
 
     function updateChart() {
       const metric = document.getElementById('chartMetricSelect').value;
-      const period = document.getElementById('chartPeriodSelect').value;
-      const current = window.chartData[period];
+      const periodKey = getChartPeriodKey();
+      const current = window.chartData[periodKey];
       const series = current[metric];
+      const isRev = metric === 'revenue';
 
-      const maxVal = Math.max(...series.twoW, ...series.fourW, 10);
-      document.getElementById('path2W').setAttribute('d', buildSvgPath(series.twoW, maxVal));
-      document.getElementById('path4W').setAttribute('d', buildSvgPath(series.fourW, maxVal));
+      document.getElementById('chartSubtitle').textContent =
+        `${isRev ? 'Collected revenue (₱)' : 'Vehicles logged'} by ${periodKey === 'today' ? 'time of day (Today)' : 'day of week (This Week)'}`;
+
+      const rawMax = Math.max(...series.twoW, ...series.fourW);
+      const maxVal = isRev
+        ? Math.max(Math.ceil(rawMax / 50) * 50, 100)
+        : Math.max(Math.ceil(rawMax / 2) * 2, 4);
+
+      // 1. Render 5 Horizontal Gridlines + Y-Axis Value Labels
+      const gridGroup = document.getElementById('chartGridGroup');
+      let gridHtml = '';
+      const steps = 4;
+      for (let i = 0; i <= steps; i++) {
+        const ratio = i / steps;
+        const y = (CHART_BOTTOM - ratio * CHART_H).toFixed(1);
+        const val = Math.round(ratio * maxVal);
+        const label = isRev ? `₱${val}` : `${val}`;
+        const lineClass = i === 0 ? 'axis-baseline' : 'grid-line';
+
+        gridHtml += `
+          <line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" class="${lineClass}"/>
+          <text x="${CHART_LEFT - 8}" y="${Number(y) + 3.5}" class="axis-label-y">${label}</text>
+        `;
+      }
+      gridGroup.innerHTML = gridHtml;
+
+      // 2. Compute Coordinates for 2W and 4W
+      const count = current.labels.length;
+      const stepX = CHART_W / (count - 1);
+
+      const pts2W = series.twoW.map((v, i) => ({
+        x: +(CHART_LEFT + i * stepX).toFixed(1),
+        y: +(CHART_BOTTOM - (v / maxVal) * CHART_H).toFixed(1),
+        v
+      }));
+
+      const pts4W = series.fourW.map((v, i) => ({
+        x: +(CHART_LEFT + i * stepX).toFixed(1),
+        y: +(CHART_BOTTOM - (v / maxVal) * CHART_H).toFixed(1),
+        v
+      }));
+
+      const toLine = pts => pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+      const toArea = pts => `${toLine(pts)} L${pts[pts.length - 1].x},${CHART_BOTTOM} L${pts[0].x},${CHART_BOTTOM} Z`;
+
+      document.getElementById('path2W').setAttribute('d', toLine(pts2W));
+      document.getElementById('path4W').setAttribute('d', toLine(pts4W));
+      document.getElementById('area2W').setAttribute('d', toArea(pts2W));
+      document.getElementById('area4W').setAttribute('d', toArea(pts4W));
+
+      // 3. Render X-Axis Time/Day Labels & Data Point Dots
+      const xAxisGroup = document.getElementById('chartXAxisGroup');
+      const dotsGroup = document.getElementById('chartDotsGroup');
+
+      let xHtml = '';
+      let dotsHtml = '';
+
+      current.labels.forEach((lbl, i) => {
+        const x = (CHART_LEFT + i * stepX).toFixed(1);
+        xHtml += `<text x="${x}" y="${CHART_BOTTOM + 18}" class="axis-label-x">${lbl}</text>`;
+        dotsHtml += `
+          <circle cx="${pts2W[i].x}" cy="${pts2W[i].y}" r="3.5" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+          <circle cx="${pts4W[i].x}" cy="${pts4W[i].y}" r="3.5" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+        `;
+      });
+
+      xAxisGroup.innerHTML = xHtml;
+      dotsGroup.innerHTML = dotsHtml;
     }
 
-    // Interactive Hover Tooltip
+    // Interactive Hover & Touch Inspection on Chart
     const chartBox = document.getElementById('interactiveChart');
     const tooltip = document.getElementById('chartTooltip');
-    const tooltipLine = document.getElementById('chartTooltipLine');
+    const hoverLine = document.getElementById('chartHoverLine');
 
-    chartBox.addEventListener('mousemove', (e) => {
+    function handleChartPointer(clientX) {
       const rect = chartBox.getBoundingClientRect();
-      const relX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-      const pct = (relX / rect.width) * 100;
+      const scaleX = 620 / rect.width;
+      const svgX = (clientX - rect.left) * scaleX;
 
+      const clampedSvgX = Math.max(CHART_LEFT, Math.min(svgX, CHART_RIGHT));
+      const periodKey = getChartPeriodKey();
       const metric = document.getElementById('chartMetricSelect').value;
-      const period = document.getElementById('chartPeriodSelect').value;
-      const current = window.chartData[period];
+      const current = window.chartData[periodKey];
       const series = current[metric];
 
-      const idx = Math.round((relX / rect.width) * (current.labels.length - 1));
+      const idx = Math.round(((clampedSvgX - CHART_LEFT) / CHART_W) * (current.labels.length - 1));
+      const snapSvgX = CHART_LEFT + idx * (CHART_W / (current.labels.length - 1));
+      const pctLeft = (snapSvgX / 620) * 100;
       const prefix = metric === 'revenue' ? '₱' : '';
+      const suffix = metric === 'revenue' ? '' : ' vehicles';
 
-      tooltipLine.style.display = 'block';
+      hoverLine.setAttribute('x1', snapSvgX);
+      hoverLine.setAttribute('x2', snapSvgX);
+      hoverLine.style.display = 'block';
+
       tooltip.style.display = 'block';
-      tooltipLine.style.left = pct + '%';
-      tooltip.style.left = Math.min(Math.max(pct, 12), 88) + '%';
+      tooltip.style.left = Math.min(Math.max(pctLeft, 14), 86) + '%';
 
       document.getElementById('tooltipLabel').textContent = current.labels[idx];
-      document.getElementById('tooltip4W').textContent = '4W: ' + prefix + series.fourW[idx];
-      document.getElementById('tooltip2W').textContent = '2W: ' + prefix + series.twoW[idx];
-    });
+      document.getElementById('tooltip4W').textContent = `4W: ${prefix}${series.fourW[idx]}${suffix}`;
+      document.getElementById('tooltip2W').textContent = `2W: ${prefix}${series.twoW[idx]}${suffix}`;
+    }
+
+    chartBox.addEventListener('mousemove', (e) => handleChartPointer(e.clientX));
+    chartBox.addEventListener('touchstart', (e) => {
+      if (e.touches[0]) handleChartPointer(e.touches[0].clientX);
+    }, { passive: true });
 
     chartBox.addEventListener('mouseleave', () => {
-      tooltipLine.style.display = 'none';
+      hoverLine.style.display = 'none';
       tooltip.style.display = 'none';
     });
 
-    updateChart();
+    refreshDashboard();
   </script>
 </body>
 </html>
