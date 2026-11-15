@@ -48,7 +48,7 @@
               <span class="icon-box" data-icon="barrier"></span>
               <span>Entry Gate</span>
             </div>
-            <span class="badge open" id="entry-status">Open</span>
+            <span class="badge closed" id="entry-status">Closed</span>
           </div>
 
           <div class="btn-row">
@@ -71,7 +71,7 @@
               <span class="icon-box" data-icon="exit"></span>
               <span>Exit Gate</span>
             </div>
-            <span class="badge open" id="exit-status">Open</span>
+            <span class="badge closed" id="exit-status">Closed</span>
           </div>
 
           <div class="btn-row">
@@ -97,7 +97,7 @@
       </div>
 
       <div class="grid-2" id="slots-container">
-        <!-- Populated via JavaScript -->
+        <!-- Populated via Firebase -->
       </div>
     </section>
 
@@ -141,7 +141,7 @@
             </tr>
           </thead>
           <tbody id="deviceTableBody">
-            <!-- Populated via JavaScript -->
+            <!-- Populated via Firebase -->
           </tbody>
         </table>
       </div>
@@ -158,13 +158,17 @@
 
   <script src="global.js"></script>
   <script>
-    // Gate Logic
-    function setGateMode(gate, mode) {
+    // 1. Live Gate Control Logic (Synced with /gates in Firebase)
+    function applyGateUI(gate, mode, state) {
       const autoBtn = document.getElementById(`${gate}-auto`);
       const manualBtn = document.getElementById(`${gate}-manual`);
       const openBtn = document.getElementById(`${gate}-open`);
       const closeBtn = document.getElementById(`${gate}-close`);
       const note = document.getElementById(`${gate}-note`);
+      const statusBadge = document.getElementById(`${gate}-status`);
+
+      statusBadge.textContent = state;
+      statusBadge.className = state === 'Open' ? 'badge open' : 'badge closed';
 
       if (mode === 'auto') {
         autoBtn.classList.add('active-blue');
@@ -180,41 +184,48 @@
         openBtn.disabled = false;
         closeBtn.disabled = false;
         note.textContent = 'Manual control mode activated';
-        const isOpen = document.getElementById(`${gate}-status`).textContent === 'Open';
-        setGateState(gate, isOpen ? 'Open' : 'Closed');
+
+        if (state === 'Open') {
+          openBtn.classList.add('active-green');
+          closeBtn.classList.remove('active-red');
+        } else {
+          closeBtn.classList.add('active-red');
+          openBtn.classList.remove('active-green');
+        }
       }
+    }
+
+    function setGateMode(gate, mode) {
+      window.dbUpdate(`gates/${gate}`, { mode });
     }
 
     function setGateState(gate, state) {
-      const statusBadge = document.getElementById(`${gate}-status`);
-      const openBtn = document.getElementById(`${gate}-open`);
-      const closeBtn = document.getElementById(`${gate}-close`);
-
-      statusBadge.textContent = state;
-      if (state === 'Open') {
-        statusBadge.className = 'badge open';
-        openBtn.classList.add('active-green');
-        closeBtn.classList.remove('active-red');
-      } else {
-        statusBadge.className = 'badge closed';
-        closeBtn.classList.add('active-red');
-        openBtn.classList.remove('active-green');
+      window.dbUpdate(`gates/${gate}`, { state });
+      if (window.pushNotification) {
+        const gateTitle = gate === 'entry' ? 'Entry Gate' : 'Exit Gate';
+        window.pushNotification(`${gateTitle} ${state}`, `${gateTitle} was manually set to ${state}.`);
       }
     }
 
-    // 4 Parking Slots Data & Logic
-    const slots = [
-      { id: 1, status: 'Available', mode: 'auto', light: 'green' },
-      { id: 2, status: 'Available', mode: 'auto', light: 'green' },
-      { id: 3, status: 'Available', mode: 'auto', light: 'green' },
-      { id: 4, status: 'Available', mode: 'auto', light: 'green' }
+    window.dbListen('gates', (gatesData) => {
+      if (!gatesData) return;
+      if (gatesData.entry) applyGateUI('entry', gatesData.entry.mode || 'auto', gatesData.entry.state || 'Closed');
+      if (gatesData.exit) applyGateUI('exit', gatesData.exit.mode || 'auto', gatesData.exit.state || 'Closed');
+    });
+
+    // 2. Live 4 Parking Slots LED Logic (Synced with /slots in Firebase)
+    let slots = [
+      { key: '1A-01', id: 1, status: 'Available', mode: 'auto', light: 'green' },
+      { key: '1A-02', id: 2, status: 'Available', mode: 'auto', light: 'green' },
+      { key: '1A-03', id: 3, status: 'Available', mode: 'auto', light: 'green' },
+      { key: '1A-04', id: 4, status: 'Available', mode: 'auto', light: 'green' }
     ];
 
     function renderSlots() {
       const container = document.getElementById('slots-container');
       container.innerHTML = slots.map((slot, index) => {
         const isAuto = slot.mode === 'auto';
-        const dotColor = slot.status === 'Occupied' ? 'red' : 'green';
+        const dotColor = slot.status === 'Available' ? 'green' : 'red';
         const greenClass = !isAuto && slot.light === 'green' ? 'active-green' : '';
         const redClass = !isAuto && slot.light === 'red' ? 'active-red' : '';
 
@@ -223,7 +234,7 @@
             <div class="card-header">
               <div class="card-title-group">
                 <span class="dot ${dotColor}"></span>
-                <span>Slot ${slot.id}</span>
+                <span>Slot ${slot.id} (${slot.key})</span>
               </div>
               <span class="status-text">${slot.status}</span>
             </div>
@@ -243,18 +254,53 @@
     }
 
     function setSlotMode(index, mode) {
-      slots[index].mode = mode;
-      renderSlots();
+      const slot = slots[index];
+      const updates = { mode };
+      if (mode === 'auto') {
+        updates.forced = false;
+      }
+      window.dbUpdate(`slots/${slot.key}`, updates);
     }
 
     function setSlotLight(index, color) {
-      slots[index].light = color;
-      slots[index].status = color === 'green' ? 'Available' : 'Occupied';
-      renderSlots();
+      const slot = slots[index];
+      const isOccupied = color === 'red';
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      window.dbUpdate(`slots/${slot.key}`, {
+        light: color,
+        status: isOccupied ? 'occupied' : 'available',
+        forced: isOccupied,
+        entry: isOccupied ? timeStr : '--:--',
+        entryTimeMs: isOccupied ? Date.now() : 0
+      });
     }
 
-    // Connected Hardware Devices (Cleared for Firebase)
-    const devices = [];
+    window.dbListen('slots', (slotsData) => {
+      if (!slotsData) return;
+      const orderedKeys = ['1A-01', '1A-02', '1A-03', '1A-04'];
+      slots = orderedKeys.map((key, idx) => {
+        const s = slotsData[key] || {};
+        const rawStatus = (s.status || 'available').toLowerCase();
+        let displayStatus = 'Available';
+        if (rawStatus === 'occupied') displayStatus = 'Occupied';
+        else if (rawStatus === 'reserved') displayStatus = 'Reserved';
+        else if (rawStatus === 'maintenance') displayStatus = 'Maintenance';
+
+        return {
+          key,
+          id: s.slotNum || (idx + 1),
+          status: displayStatus,
+          mode: s.mode || 'auto',
+          light: s.light || (rawStatus === 'available' ? 'green' : 'red')
+        };
+      });
+      renderSlots();
+    });
+
+    // 3. Connected Hardware Devices Table (Synced with /devices in Firebase)
+    let devices = [];
 
     function filterDevices() {
       const typeFilter = document.getElementById('typeFilter').value;
@@ -274,7 +320,7 @@
         tbody.innerHTML = `
           <tr>
             <td colspan="5" style="text-align: center; color: #64748b; padding: 28px;">
-              No hardware devices connected yet.
+              No hardware devices matching your filter.
             </td>
           </tr>
         `;
@@ -285,7 +331,7 @@
         let colorClass = 'green';
         if (d.health === 0) colorClass = 'red';
         else if (d.health < 80) colorClass = 'yellow';
-        const badgeClass = d.status.toLowerCase();
+        const badgeClass = (d.status || 'Online').toLowerCase();
 
         return `
           <tr>
@@ -303,11 +349,35 @@
               </div>
             </td>
             <td><span class="badge ${badgeClass}">${d.status}</span></td>
-            <td><button class="action-btn">Configure</button></td>
+            <td><button class="action-btn" onclick="configureDevice('${d.id}')">Configure</button></td>
           </tr>
         `;
       }).join('');
     }
+
+    function configureDevice(deviceId) {
+      const dev = devices.find(d => d.id === deviceId);
+      if (!dev) return;
+
+      const nextStatus = dev.status === 'Online' ? 'Offline' : 'Online';
+      const nextHealth = nextStatus === 'Online' ? 100 : 0;
+
+      if (confirm(`Toggle ${dev.name} (${dev.id}) status to ${nextStatus}?`)) {
+        window.dbUpdate(`devices/${deviceId}`, {
+          status: nextStatus,
+          health: nextHealth
+        });
+      }
+    }
+
+    window.dbListen('devices', (devicesObj) => {
+      if (!devicesObj) {
+        devices = [];
+      } else {
+        devices = Object.values(devicesObj);
+      }
+      filterDevices();
+    });
 
     renderSlots();
     filterDevices();

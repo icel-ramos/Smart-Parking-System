@@ -270,7 +270,7 @@
                 <div class="notify-sub">Alert immediately when a gate fails to open or close.</div>
               </div>
               <label class="switch">
-                <input type="checkbox" data-default="false">
+                <input type="checkbox" id="notifGateFailure" data-default="false">
                 <span class="slider"></span>
               </label>
             </div>
@@ -281,7 +281,7 @@
                 <div class="notify-sub">Notify when hardware is disconnected for over 2 minutes.</div>
               </div>
               <label class="switch">
-                <input type="checkbox" data-default="false">
+                <input type="checkbox" id="notifDeviceOffline" data-default="false">
                 <span class="slider"></span>
               </label>
             </div>
@@ -292,7 +292,7 @@
                 <div class="notify-sub">Send an alert when available capacity reaches zero.</div>
               </div>
               <label class="switch">
-                <input type="checkbox" data-default="false">
+                <input type="checkbox" id="notifLotFull" data-default="false">
                 <span class="slider"></span>
               </label>
             </div>
@@ -323,6 +323,8 @@
 
   <script src="global.js"></script>
   <script>
+    let usersList = [];
+
     function switchTab(tabId, btnElement) {
       document.querySelectorAll('.tab-panel').forEach(panel => {
         panel.classList.remove('active');
@@ -359,7 +361,7 @@
         pill.innerHTML = '<span class="dot"></span> Valid';
 
         const docTitle = activeDocRow.querySelector('.doc-title').textContent;
-        showStatusMessage('Document "' + fileName + '" staged. Click Save Changes to confirm.');
+        showStatusMessage('Document "' + fileName + '" staged. Click Save Changes to sync to Firebase.');
         if (window.pushNotification) {
           window.pushNotification('Document Uploaded', fileName + ' uploaded for ' + docTitle + '.');
         }
@@ -373,24 +375,36 @@
       const expiryInput = prompt('Enter expiry date (optional, e.g., December 31, 2026):', '-');
       const expiryText = expiryInput && expiryInput.trim() ? expiryInput.trim() : '-';
 
+      appendDocRow({
+        title: docName.trim(),
+        file: 'No document uploaded',
+        expiry: expiryText,
+        status: 'none'
+      });
+
+      showStatusMessage('Added "' + docName.trim() + '". Click Save Changes to sync to Firebase.');
+    }
+
+    function appendDocRow(doc) {
       const docList = document.getElementById('complianceDocList');
+      const isValid = doc.status === 'valid';
       const row = document.createElement('div');
       row.className = 'doc-row';
-      row.dataset.status = 'none';
+      row.dataset.status = doc.status || 'none';
       row.innerHTML = `
         <div class="doc-info">
           <div class="doc-icon" data-icon="file"></div>
           <div>
-            <div class="doc-title">${docName.trim()}</div>
-            <div class="doc-file">No document uploaded</div>
+            <div class="doc-title">${doc.title}</div>
+            <div class="doc-file">${doc.file}</div>
           </div>
         </div>
         <div class="doc-expiry">
           <span class="expiry-label">EXPIRY DATE</span>
-          <span class="expiry-date">${expiryText}</span>
+          <span class="expiry-date">${doc.expiry}</span>
         </div>
         <div class="doc-actions">
-          <span class="status-pill exp-none">Not Uploaded</span>
+          <span class="status-pill ${isValid ? 'valid' : 'exp-none'}">${isValid ? '<span class="dot"></span> Valid' : 'Not Uploaded'}</span>
           <button type="button" class="btn-outline-sm" onclick="triggerUpload(this)" style="display: inline-flex; align-items: center; gap: 6px;">
             <span data-icon="upload"></span> Upload
           </button>
@@ -398,11 +412,42 @@
       `;
       docList.appendChild(row);
       if (window.renderIcons) window.renderIcons();
+    }
 
-      showStatusMessage('Added "' + docName.trim() + '". Upload a file or click Save Changes.');
-      if (window.pushNotification) {
-        window.pushNotification('Compliance Requirement Added', docName.trim() + ' was added to the checklist.');
+    function renderUsersTable() {
+      const tbody = document.getElementById('usersTableBody');
+      if (!usersList || usersList.length === 0) {
+        tbody.innerHTML = `
+          <tr id="emptyUsersRow">
+            <td colspan="5" class="text-muted" style="text-align: center; padding: 28px;">
+              No users registered yet.
+            </td>
+          </tr>
+        `;
+        return;
       }
+
+      tbody.innerHTML = usersList.map(u => {
+        const initials = u.name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
+        let roleClass = 'role-operator';
+        if (u.role.toLowerCase() === 'admin') roleClass = 'role-admin';
+        if (u.role.toLowerCase() === 'cashier') roleClass = 'role-cashier';
+
+        return `
+          <tr>
+            <td>
+              <div class="user-cell">
+                <span class="user-initials bg-blue-soft">${initials}</span>
+                <span class="user-name">${u.name}</span>
+              </div>
+            </td>
+            <td class="text-muted">${u.email}</td>
+            <td><span class="role-badge ${roleClass}">${u.role}</span></td>
+            <td><span class="active-indicator"><span class="dot"></span> Active</span></td>
+            <td class="text-muted">${u.lastActive || 'Active'}</td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function addNewUser() {
@@ -413,47 +458,58 @@
       if (!email || !email.trim()) return;
 
       const role = prompt('Enter role (Admin, Operator, or Cashier):', 'Operator') || 'Operator';
-      const cleanRole = role.trim();
-      const initials = name.trim().split(' ').map(part => part[0]).join('').toUpperCase().slice(0, 2);
+      usersList.push({
+        name: name.trim(),
+        email: email.trim(),
+        role: role.trim(),
+        lastActive: 'Just now'
+      });
 
-      let roleClass = 'role-operator';
-      if (cleanRole.toLowerCase() === 'admin') roleClass = 'role-admin';
-      if (cleanRole.toLowerCase() === 'cashier') roleClass = 'role-cashier';
-
-      const emptyRow = document.getElementById('emptyUsersRow');
-      if (emptyRow) emptyRow.remove();
-
-      const tbody = document.getElementById('usersTableBody');
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <div class="user-cell">
-            <span class="user-initials bg-blue-soft">${initials}</span>
-            <span class="user-name">${name.trim()}</span>
-          </div>
-        </td>
-        <td class="text-muted">${email.trim()}</td>
-        <td><span class="role-badge ${roleClass}">${cleanRole}</span></td>
-        <td><span class="active-indicator"><span class="dot"></span> Active</span></td>
-        <td class="text-muted">Just now</td>
-      `;
-      tbody.appendChild(tr);
-      showStatusMessage('User "' + name.trim() + '" added. Click Save Changes to confirm.');
-      if (window.pushNotification) {
-        window.pushNotification('User Added', name.trim() + ' (' + cleanRole + ') was added.');
-      }
+      renderUsersTable();
+      showStatusMessage('User "' + name.trim() + '" staged. Click Save Changes to sync to Firebase.');
     }
 
     function saveChanges() {
+      const general = {
+        lotName: document.getElementById('lotName').value.trim(),
+        contactNum: document.getElementById('contactNum').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        openTime: document.getElementById('openTime').value,
+        closeTime: document.getElementById('closeTime').value,
+        numFloors: document.getElementById('numFloors').value,
+        currency: document.getElementById('currency').value
+      };
+
+      const docs = Array.from(document.querySelectorAll('#complianceDocList .doc-row')).map(row => ({
+        title: row.querySelector('.doc-title').textContent,
+        file: row.querySelector('.doc-file').textContent,
+        expiry: row.querySelector('.expiry-date').textContent,
+        status: row.dataset.status || 'none'
+      }));
+
+      const notifications = {
+        gateFailure: document.getElementById('notifGateFailure').checked,
+        deviceOffline: document.getElementById('notifDeviceOffline').checked,
+        lotFull: document.getElementById('notifLotFull').checked
+      };
+
+      window.dbSet('settings', {
+        general,
+        docs,
+        users: usersList,
+        notifications
+      });
+
       document.querySelectorAll('#generalForm input, #generalForm select').forEach(el => {
         el.dataset.default = el.value;
       });
       document.querySelectorAll('.notify-list input[type="checkbox"]').forEach(chk => {
         chk.dataset.default = chk.checked ? 'true' : 'false';
       });
-      showStatusMessage('All changes saved successfully.', true);
+
+      showStatusMessage('All changes saved to Firebase Realtime Database.', true);
       if (window.pushNotification) {
-        window.pushNotification('Settings Saved', 'Facility compliance and configuration settings were updated.');
+        window.pushNotification('Settings Saved', 'Facility compliance and configuration settings were synced to the cloud.');
       }
     }
 
@@ -475,6 +531,50 @@
       statusEl.style.color = isSuccess ? '#15803d' : '#64748b';
       statusEl.style.fontWeight = isSuccess ? '600' : '400';
     }
+
+    // Load saved facility settings from Firebase /settings
+    window.dbListen('settings', (data) => {
+      if (!data) return;
+
+      if (data.general) {
+        const g = data.general;
+        const fields = ['lotName', 'contactNum', 'address', 'openTime', 'closeTime', 'numFloors', 'currency'];
+        fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && g[id] !== undefined) {
+            el.value = g[id];
+            el.dataset.default = g[id];
+          }
+        });
+      }
+
+      if (Array.isArray(data.docs) && data.docs.length > 0) {
+        const docList = document.getElementById('complianceDocList');
+        docList.innerHTML = '';
+        data.docs.forEach(d => appendDocRow(d));
+      }
+
+      if (Array.isArray(data.users)) {
+        usersList = data.users;
+        renderUsersTable();
+      }
+
+      if (data.notifications) {
+        const n = data.notifications;
+        const map = {
+          notifGateFailure: Boolean(n.gateFailure),
+          notifDeviceOffline: Boolean(n.deviceOffline),
+          notifLotFull: Boolean(n.lotFull)
+        };
+        Object.entries(map).forEach(([id, val]) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.checked = val;
+            el.dataset.default = val ? 'true' : 'false';
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>

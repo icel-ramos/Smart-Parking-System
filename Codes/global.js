@@ -50,9 +50,96 @@ window.toggleSidebar = function () {
   overlay.classList.toggle('open');
 };
 
-// 3. Initialize Icons, Header Bell, and Account Menu
+// 3. Global Firebase Queue & Helper API (Available immediately to all pages)
+const _fbQueue = [];
+let _fbApi = null;
+
+window.dbListen = function (path, callback) {
+  if (_fbApi) {
+    _fbApi.listen(path, callback);
+  } else {
+    _fbQueue.push({ type: 'listen', path, callback });
+  }
+};
+
+window.dbUpdate = function (path, data) {
+  if (_fbApi) {
+    return _fbApi.update(path, data);
+  } else {
+    _fbQueue.push({ type: 'update', path, data });
+    return Promise.resolve();
+  }
+};
+
+window.dbSet = function (path, data) {
+  if (_fbApi) {
+    return _fbApi.set(path, data);
+  } else {
+    _fbQueue.push({ type: 'set', path, data });
+    return Promise.resolve();
+  }
+};
+
+// Load Firebase SDK & Initialize Realtime Database + Auth Guard
+(async function initFirebase() {
+  try {
+    const [{ initializeApp }, { getAuth, onAuthStateChanged, signOut }, { getDatabase, ref, onValue, update, set }] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"),
+      import("https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js")
+    ]);
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD4KDS_I3LwaFb8J-lJRTv_pmcV3uT8yt8",
+      authDomain: "park-easy-system.firebaseapp.com",
+      databaseURL: "https://park-easy-system-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "park-easy-system",
+      storageBucket: "park-easy-system.firebasestorage.app",
+      messagingSenderId: "870151045700",
+      appId: "1:870151045700:web:30341624d7860c107db211"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    _fbApi = {
+      listen: (path, cb) => onValue(ref(db, path), snap => cb(snap.val())),
+      update: (path, data) => update(ref(db, path), data),
+      set: (path, data) => set(ref(db, path), data),
+      signOutUser: () => signOut(auth)
+    };
+
+    // Process any page listeners queued while the SDK was loading
+    while (_fbQueue.length > 0) {
+      const item = _fbQueue.shift();
+      if (item.type === 'listen') _fbApi.listen(item.path, item.callback);
+      if (item.type === 'update') _fbApi.update(item.path, item.data);
+      if (item.type === 'set') _fbApi.set(item.path, item.data);
+    }
+
+    // Protect dashboard pages & sync logged-in admin email
+    onAuthStateChanged(auth, (user) => {
+      const isLoginPage = window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/');
+      if (!user && !isLoginPage) {
+        sessionStorage.removeItem('parkEasyLoggedIn');
+        window.location.href = 'index.html';
+        return;
+      }
+      if (user) {
+        const emailEl = document.getElementById('menuUserEmail');
+        const avatarEl = document.querySelector('.avatar');
+        if (emailEl) emailEl.textContent = user.email;
+        if (avatarEl && user.email) avatarEl.textContent = user.email.charAt(0).toUpperCase();
+      }
+    });
+  } catch (err) {
+    console.error("Firebase initialization error:", err);
+  }
+})();
+
+// 4. Initialize Icons, Header Bell, and Account Menu
 document.addEventListener('DOMContentLoaded', () => {
-  // Automatically replace menu button & bell emojis even if HTML wasn't updated yet
   const menuBtn = document.querySelector('.menu-btn');
   if (menuBtn) menuBtn.innerHTML = SVG_ICONS.menu;
 
@@ -84,8 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
   profileContainer.appendChild(notifDropdown);
 
   // Account Dropdown
-  const savedEmail = localStorage.getItem('parkEasyEmail') || 'Not signed in';
-  if (savedEmail !== 'Not signed in') {
+  const savedEmail = localStorage.getItem('parkEasyEmail') || 'Admin User';
+  if (savedEmail !== 'Admin User') {
     avatar.textContent = savedEmail.charAt(0).toUpperCase();
   } else {
     avatar.innerHTML = SVG_ICONS.user;
@@ -95,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
   accountDropdown.className = 'account-dropdown';
   accountDropdown.innerHTML = `
     <div class="account-header">
-      <div class="account-name" id="menuUserName">System Account</div>
+      <div class="account-name" id="menuUserName">System Administrator</div>
       <div class="account-email" id="menuUserEmail">${savedEmail}</div>
     </div>
     <a href="comply&Setting.html" class="account-item">
@@ -156,7 +243,10 @@ document.addEventListener('DOMContentLoaded', () => {
     renderNotifications();
   });
 
-  document.getElementById('menuLogoutBtn').addEventListener('click', () => {
+  document.getElementById('menuLogoutBtn').addEventListener('click', async () => {
+    if (_fbApi && _fbApi.signOutUser) {
+      await _fbApi.signOutUser();
+    }
     sessionStorage.removeItem('parkEasyLoggedIn');
     window.location.href = 'index.html';
   });
