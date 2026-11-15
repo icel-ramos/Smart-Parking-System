@@ -6,6 +6,93 @@
   <title>Parking Map - Live Overview</title>
   <link rel="stylesheet" href="global.css">
   <link rel="stylesheet" href="parkingMap.css">
+  <style>
+    /* Additional states for Reserved, Maintenance, and Multi-Action Controls */
+    .dot.amber { background-color: #f59e0b; box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); }
+    .dot.slate { background-color: #94a3b8; }
+
+    .slot-box.reserved {
+      border-color: rgba(245, 158, 11, 0.55);
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.14) 0%, rgba(15, 23, 42, 0.65) 100%);
+    }
+    .slot-box.maintenance {
+      border-color: rgba(148, 163, 184, 0.45);
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(30, 41, 59, 0.75),
+        rgba(30, 41, 59, 0.75) 10px,
+        rgba(51, 65, 85, 0.55) 10px,
+        rgba(51, 65, 85, 0.55) 20px
+      );
+    }
+
+    .slot-subnote {
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      text-align: center;
+      margin-top: 4px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      padding: 0 6px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 14px;
+    }
+
+    .action-btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .action-btn.btn-reserve {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+    .action-btn.btn-reserve:hover {
+      background: #dbeafe;
+    }
+
+    .action-btn.btn-maint {
+      background: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .action-btn.btn-maint:hover {
+      background: #fef3c7;
+    }
+
+    .action-btn.btn-settle {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+    .action-btn.btn-settle:hover {
+      background: #bbf7d0;
+    }
+
+    .action-btn.btn-clear {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .action-btn.btn-clear:hover {
+      background: #e2e8f0;
+    }
+
+    .text-amber { color: #d97706; }
+    .text-slate { color: #64748b; }
+  </style>
 </head>
 <body>
 
@@ -38,11 +125,7 @@
     <div class="overview-header">
       <div>
         <h2>Live parking overview</h2>
-        <p>Monitor every space and keep traffic moving.</p>
-      </div>
-      <div class="live-badge">
-        <span class="live-dot"></span>
-        <span id="liveSyncText">Connecting to Firebase...</span>
+        <p>Monitor bay availability, manage reservations, and handle slot maintenance.</p>
       </div>
     </div>
 
@@ -53,6 +136,8 @@
         <div class="legend">
           <div class="legend-item"><span class="dot green"></span> Available</div>
           <div class="legend-item"><span class="dot red"></span> Occupied</div>
+          <div class="legend-item"><span class="dot amber"></span> Reserved</div>
+          <div class="legend-item"><span class="dot slate"></span> Maintenance</div>
         </div>
       </div>
 
@@ -75,15 +160,19 @@
       <div class="telemetry-panel">
         <div class="stats-grid">
           <div class="stat-item">
-            <div class="stat-label">Selected Lot</div>
-            <div class="stat-value" id="statLot">1A-04</div>
+            <div class="stat-label">Selected Bay</div>
+            <div class="stat-value" id="statLot">1A-01</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">Beam Pathway</div>
-            <div class="stat-value text-green" id="statBeam">Clear</div>
+            <div class="stat-label">Bay Status</div>
+            <div class="stat-value text-green" id="statBeam">Available</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">Entry Time</div>
+            <div class="stat-label">Plate / Note</div>
+            <div class="stat-value" id="statNote">None</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Start Time</div>
             <div class="stat-value" id="statEntry">--:--</div>
           </div>
           <div class="stat-item">
@@ -91,24 +180,27 @@
             <div class="stat-value" id="statDuration">0m 0s</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">Total Full</div>
+            <div class="stat-label">Current Fee</div>
+            <div class="stat-value" id="statFee">&#8369;0.00</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Bays In Use</div>
             <div class="stat-value" id="statTotalFull">0 / 4</div>
           </div>
         </div>
 
         <div class="controls-row">
           <div class="control-group">
-            <div class="control-title">Attendant Manual Force Override</div>
-            <button class="action-btn" id="btnOverride" onclick="toggleOverride()">
-              <span data-icon="lock"></span>
-              <span id="btnOverrideText">Force Occupied Status</span>
-            </button>
+            <div class="control-title" id="controlGroupTitle">Bay Management Actions</div>
+            <div class="action-btn-group" id="slotActionButtons">
+              <!-- Populated dynamically based on selected slot state -->
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <p class="footer-note">Selected Slot details (above) are synced in real time via Firebase Realtime Database.</p>
+    <p class="footer-note">Select any parking bay above to reserve a vehicle, log a plate number, settle parking fees, or place a bay under maintenance.</p>
   </main>
 
   <footer class="site-footer">
@@ -121,17 +213,23 @@
 
   <script src="global.js"></script>
   <script>
+    // Standard pricing rates (synced from /rates so Reserved & Occupied bays accrue live fees)
+    const activeRates = {
+      "2w": { firstHour: 20, extraHour: 10, dailyMax: 100 },
+      "4w": { firstHour: 40, extraHour: 20, dailyMax: 200 }
+    };
+
     const floorsData = {
       1: [
-        { id: "1A-01", status: "available", forced: false, entry: "--:--", entryTimeMs: 0, duration: "0m 0s" },
-        { id: "1A-02", status: "available", forced: false, entry: "--:--", entryTimeMs: 0, duration: "0m 0s" },
-        { id: "1A-03", status: "available", forced: false, entry: "--:--", entryTimeMs: 0, duration: "0m 0s" },
-        { id: "1A-04", status: "available", forced: false, entry: "--:--", entryTimeMs: 0, duration: "0m 0s" }
+        { id: "1A-01", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "" },
+        { id: "1A-02", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "" },
+        { id: "1A-03", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "" },
+        { id: "1A-04", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "" }
       ]
     };
 
     let currentFloor = 1;
-    let selectedIndex = 3; // Default to 1A-04
+    let selectedIndex = 0; // Default to 1A-01
 
     function formatElapsed(startMs) {
       if (!startMs) return "0m 0s";
@@ -146,6 +244,28 @@
       return `${minutes}m ${seconds}s`;
     }
 
+    // Calculate live parking fee for Occupied and Reserved bays
+    function calculateAccruedFee(slot) {
+      if (slot.status !== "occupied" && slot.status !== "reserved") {
+        return 0;
+      }
+      const rateKey = (slot.vehicleType || "4w").toLowerCase().includes("2") ? "2w" : "4w";
+      const rate = activeRates[rateKey] || activeRates["4w"];
+
+      if (!slot.entryTimeMs) {
+        return rate.firstHour;
+      }
+
+      const elapsedHours = Math.max(0, (Date.now() - slot.entryTimeMs) / (1000 * 60 * 60));
+      const billableHours = Math.max(1, Math.ceil(elapsedHours));
+      let total = rate.firstHour + Math.max(0, billableHours - 1) * rate.extraHour;
+
+      if (rate.dailyMax > 0 && total > rate.dailyMax) {
+        total = rate.dailyMax;
+      }
+      return total;
+    }
+
     function getCurrentTimeStr() {
       const now = new Date();
       return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -158,24 +278,39 @@
 
       slots.forEach((slot, index) => {
         const box = document.createElement("div");
-        const stateClass = slot.forced ? "forced" : slot.status;
         const isSelected = index === selectedIndex ? "selected" : "";
-        
-        box.className = `slot-box ${stateClass} ${isSelected}`;
+        box.className = `slot-box ${slot.status} ${isSelected}`;
         box.onclick = () => selectSlot(index);
 
-        const dotColor = slot.status === "occupied" ? "red" : "green";
-        const statusLabel = slot.status === "occupied" ? "Occupied" : "Available";
-        const carMarkup = slot.status === "occupied"
-          ? `<div class="slot-car" data-icon="car"></div>`
-          : `<div class="slot-car"></div>`;
+        let dotColor = "green";
+        let statusLabel = "Available";
+        let centerMarkup = `<div class="slot-car"></div>`;
+        let subNote = "";
+
+        if (slot.status === "occupied") {
+          dotColor = "red";
+          statusLabel = "Occupied";
+          centerMarkup = `<div class="slot-car" data-icon="car"></div>`;
+          subNote = slot.plate ? `<div class="slot-subnote">${slot.plate}</div>` : "";
+        } else if (slot.status === "reserved") {
+          dotColor = "amber";
+          statusLabel = "Reserved";
+          centerMarkup = `<div class="slot-car" data-icon="lock"></div>`;
+          subNote = slot.plate ? `<div class="slot-subnote">${slot.plate}</div>` : `<div class="slot-subnote">Reserved</div>`;
+        } else if (slot.status === "maintenance") {
+          dotColor = "slate";
+          statusLabel = "Maintenance";
+          centerMarkup = `<div class="slot-car" data-icon="settings"></div>`;
+          subNote = slot.note ? `<div class="slot-subnote">${slot.note}</div>` : `<div class="slot-subnote">Unavailable</div>`;
+        }
 
         box.innerHTML = `
           <div class="slot-status">
             <span class="dot ${dotColor}"></span>
             <span>${statusLabel}</span>
           </div>
-          ${carMarkup}
+          ${centerMarkup}
+          ${subNote}
           <div class="slot-id">${slot.id}</div>
         `;
 
@@ -189,36 +324,105 @@
     function updateTelemetry() {
       const slots = floorsData[currentFloor];
       const currentSlot = slots[selectedIndex];
-      const occupiedCount = slots.filter(s => s.status === "occupied").length;
+      const unavailableCount = slots.filter(s => s.status !== "available").length;
 
       document.getElementById("statLot").textContent = currentSlot.id;
 
       const beamEl = document.getElementById("statBeam");
       if (currentSlot.status === "occupied") {
-        beamEl.textContent = "Blocked";
+        beamEl.textContent = "Occupied (Sensor)";
         beamEl.className = "stat-value text-red";
+      } else if (currentSlot.status === "reserved") {
+        beamEl.textContent = "Reserved (Billed)";
+        beamEl.className = "stat-value text-amber";
+      } else if (currentSlot.status === "maintenance") {
+        beamEl.textContent = "Under Maintenance";
+        beamEl.className = "stat-value text-slate";
       } else {
-        beamEl.textContent = "Clear";
+        beamEl.textContent = "Available (Clear)";
         beamEl.className = "stat-value text-green";
       }
 
-      document.getElementById("statEntry").textContent = currentSlot.entry || "--:--";
-      document.getElementById("statDuration").textContent = currentSlot.duration || "0m 0s";
+      const noteEl = document.getElementById("statNote");
+      if (currentSlot.status === "maintenance") {
+        noteEl.textContent = currentSlot.note || "Maintenance / Incident";
+      } else if (currentSlot.plate) {
+        const vLabel = (currentSlot.vehicleType || "4w").toUpperCase();
+        noteEl.textContent = `${currentSlot.plate} (${vLabel})`;
+      } else {
+        noteEl.textContent = "None";
+      }
+
+      const isBillable = currentSlot.status === "occupied" || currentSlot.status === "reserved";
+      document.getElementById("statEntry").textContent = isBillable ? (currentSlot.entry || "--:--") : "--:--";
+      document.getElementById("statDuration").textContent = isBillable ? (currentSlot.duration || "0m 0s") : "0m 0s";
+
+      const feeVal = calculateAccruedFee(currentSlot);
+      document.getElementById("statFee").innerHTML = `&#8369;${feeVal.toFixed(2)}`;
+
       const totalFullEl = document.getElementById("statTotalFull");
-      totalFullEl.textContent = `${occupiedCount} / ${slots.length}`;
+      totalFullEl.textContent = `${unavailableCount} / ${slots.length}`;
 
-      const occupancyRatio = slots.length > 0 ? occupiedCount / slots.length : 0;
-
+      const occupancyRatio = slots.length > 0 ? unavailableCount / slots.length : 0;
       if (occupancyRatio >= 1) {
         totalFullEl.className = "stat-value text-red";
       } else if (occupancyRatio >= 0.75) {
-        totalFullEl.className = "stat-value text-yellow";
+        totalFullEl.className = "stat-value text-amber";
       } else {
         totalFullEl.className = "stat-value";
       }
 
-      document.getElementById("btnOverrideText").textContent =
-        currentSlot.forced ? "Release Manual Override" : "Force Occupied Status";
+      renderActionButtons(currentSlot);
+    }
+
+    function renderActionButtons(slot) {
+      const btnContainer = document.getElementById("slotActionButtons");
+
+      if (slot.status === "available") {
+        btnContainer.innerHTML = `
+          <button class="action-btn btn-reserve" onclick="reserveSlot()">
+            <span data-icon="lock"></span>
+            <span>Reserve Bay (Standard Rate)</span>
+          </button>
+          <button class="action-btn btn-maint" onclick="setMaintenance()">
+            <span data-icon="settings"></span>
+            <span>Put Under Maintenance</span>
+          </button>
+        `;
+      } else if (slot.status === "reserved") {
+        btnContainer.innerHTML = `
+          <button class="action-btn btn-settle" onclick="markArrived()">
+            <span data-icon="car"></span>
+            <span>Vehicle Arrived (Mark Occupied)</span>
+          </button>
+          <button class="action-btn btn-clear" onclick="settleAndReleaseSlot()">
+            <span>Settle Fee &amp; Release Bay</span>
+          </button>
+          <button class="action-btn btn-maint" onclick="setMaintenance()">
+            <span>Switch to Maintenance</span>
+          </button>
+        `;
+      } else if (slot.status === "occupied") {
+        btnContainer.innerHTML = `
+          <button class="action-btn btn-reserve" onclick="assignPlateToOccupied()">
+            <span>${slot.plate ? 'Update Plate No.' : 'Assign Plate &amp; Ticket'}</span>
+          </button>
+          <button class="action-btn btn-settle" onclick="settleAndReleaseSlot()">
+            <span>Settle Fee &amp; Check Out</span>
+          </button>
+          <button class="action-btn btn-maint" onclick="setMaintenance()">
+            <span>Flag Bay Incident / Maintenance</span>
+          </button>
+        `;
+      } else if (slot.status === "maintenance") {
+        btnContainer.innerHTML = `
+          <button class="action-btn btn-settle" onclick="restoreAvailable()">
+            <span>Complete Maintenance (Restore Available)</span>
+          </button>
+        `;
+      }
+
+      if (window.renderIcons) window.renderIcons();
     }
 
     function selectSlot(index) {
@@ -226,52 +430,211 @@
       renderDashboard();
     }
 
-    function toggleOverride() {
+    // 1. Reserve a Bay (Charges standard rate immediately & creates active transaction)
+    function reserveSlot() {
       const slot = floorsData[currentFloor][selectedIndex];
-      if (!slot.forced) {
-        const nowMs = Date.now();
-        const entryTime = (!slot.entry || slot.entry === "--:--") ? getCurrentTimeStr() : slot.entry;
+      const plateInput = prompt(`Reserve Bay ${slot.id} - Enter Vehicle Plate Number:`, "");
+      if (plateInput === null) return;
 
-        window.dbUpdate(`slots/${slot.id}`, {
-          forced: true,
-          status: "occupied",
-          mode: "manual",
-          light: "red",
-          entry: entryTime,
-          entryTimeMs: slot.entryTimeMs || nowMs
-        });
+      const cleanPlate = plateInput.trim().toUpperCase() || "RESERVED";
+      const vehInput = prompt("Enter Vehicle Type (4W for 4 Wheelers, 2W for 2 Wheelers):", "4W") || "4W";
+      const is2W = vehInput.toLowerCase().includes("2");
+      const vehicleType = is2W ? "2w" : "4w";
+      const rateAmount = activeRates[vehicleType].firstHour.toFixed(2);
 
-        if (window.pushNotification) {
-          window.pushNotification("Manual Override Active", `Slot ${slot.id} was manually forced to Occupied.`);
-        }
-      } else {
-        window.dbUpdate(`slots/${slot.id}`, {
-          forced: false,
-          status: "available",
-          mode: "auto",
-          light: "green",
-          entry: "--:--",
-          entryTimeMs: 0
-        });
+      const nowMs = Date.now();
+      const timeStr = getCurrentTimeStr();
+      const ticketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
 
-        if (window.pushNotification) {
-          window.pushNotification("Manual Override Released", `Slot ${slot.id} returned to Available.`);
-        }
+      // Create an active Unpaid transaction so reservation is charged the standard rate
+      window.dbUpdate(`transactions/${ticketId}`, {
+        id: ticketId,
+        slotId: slot.id,
+        plate: cleanPlate,
+        vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+        timeIn: timeStr,
+        timeOut: "--:--",
+        amount: rateAmount,
+        status: "Unpaid",
+        type: "Reservation",
+        timestamp: nowMs
+      });
+
+      // Lock bay in manual mode with red LED so walk-in vehicles know it is taken
+      window.dbUpdate(`slots/${slot.id}`, {
+        status: "reserved",
+        forced: true,
+        mode: "manual",
+        light: "red",
+        plate: cleanPlate,
+        vehicleType,
+        ticketId,
+        note: "Reserved",
+        entry: timeStr,
+        entryTimeMs: nowMs
+      });
+
+      if (window.pushNotification) {
+        window.pushNotification("Bay Reserved", `Bay ${slot.id} reserved for ${cleanPlate} (Ticket ${ticketId}).`);
       }
     }
 
-    // Listen to live Firebase /slots updates
+    // 2. Transition Reserved Bay to Occupied when vehicle physically parks (keeps original billing timer)
+    function markArrived() {
+      const slot = floorsData[currentFloor][selectedIndex];
+      window.dbUpdate(`slots/${slot.id}`, {
+        status: "occupied",
+        note: "Parked"
+      });
+      if (window.pushNotification) {
+        window.pushNotification("Reserved Vehicle Arrived", `${slot.plate || 'Vehicle'} parked in Bay ${slot.id}.`);
+      }
+    }
+
+    // 3. Assign or update a Plate Number + Billing Ticket for a walk-in Occupied bay
+    function assignPlateToOccupied() {
+      const slot = floorsData[currentFloor][selectedIndex];
+      const plateInput = prompt(`Enter Plate Number for Bay ${slot.id}:`, slot.plate || "");
+      if (!plateInput || !plateInput.trim()) return;
+
+      const cleanPlate = plateInput.trim().toUpperCase();
+      const vehInput = prompt("Enter Vehicle Type (4W or 2W):", (slot.vehicleType || "4W").toUpperCase()) || "4W";
+      const is2W = vehInput.toLowerCase().includes("2");
+      const vehicleType = is2W ? "2w" : "4w";
+      const currentFee = calculateAccruedFee({ ...slot, vehicleType }).toFixed(2);
+
+      const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+      const timeIn = (slot.entry && slot.entry !== "--:--") ? slot.entry : getCurrentTimeStr();
+      const entryTimeMs = slot.entryTimeMs || Date.now();
+
+      window.dbUpdate(`transactions/${ticketId}`, {
+        id: ticketId,
+        slotId: slot.id,
+        plate: cleanPlate,
+        vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+        timeIn,
+        timeOut: "--:--",
+        amount: currentFee,
+        status: "Unpaid",
+        timestamp: entryTimeMs
+      });
+
+      window.dbUpdate(`slots/${slot.id}`, {
+        plate: cleanPlate,
+        vehicleType,
+        ticketId,
+        entry: timeIn,
+        entryTimeMs
+      });
+    }
+
+    // 4. Put Bay Under Maintenance or Flag an Accident/Incident (No fee charged)
+    function setMaintenance() {
+      const slot = floorsData[currentFloor][selectedIndex];
+      const reason = prompt(`Enter maintenance or incident reason for Bay ${slot.id}:`, slot.note || "Scheduled Maintenance");
+      if (reason === null) return;
+
+      const cleanReason = reason.trim() || "Under Maintenance";
+
+      window.dbUpdate(`slots/${slot.id}`, {
+        status: "maintenance",
+        forced: true,
+        mode: "manual",
+        light: "red",
+        plate: "",
+        ticketId: "",
+        note: cleanReason,
+        entry: "--:--",
+        entryTimeMs: 0
+      });
+
+      if (window.pushNotification) {
+        window.pushNotification("Bay Under Maintenance", `Bay ${slot.id} marked unavailable: ${cleanReason}.`);
+      }
+    }
+
+    // 5. Settle accrued parking/reservation fee and release bay back to Available
+    function settleAndReleaseSlot() {
+      const slot = floorsData[currentFloor][selectedIndex];
+      const finalFee = calculateAccruedFee(slot).toFixed(2);
+      const timeOutStr = getCurrentTimeStr();
+
+      if (!confirm(`Settle Bay ${slot.id} (${slot.plate || 'Vehicle'}) for ₱${finalFee} and release the bay?`)) {
+        return;
+      }
+
+      if (slot.ticketId) {
+        window.dbUpdate(`transactions/${slot.ticketId}`, {
+          amount: finalFee,
+          timeOut: timeOutStr,
+          status: "Paid"
+        });
+      } else {
+        const autoTicketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
+        const is2W = (slot.vehicleType || "4w").toLowerCase().includes("2");
+        window.dbUpdate(`transactions/${autoTicketId}`, {
+          id: autoTicketId,
+          slotId: slot.id,
+          plate: slot.plate || `BAY-${slot.id}`,
+          vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+          timeIn: slot.entry !== "--:--" ? slot.entry : timeOutStr,
+          timeOut: timeOutStr,
+          amount: finalFee,
+          status: "Paid",
+          timestamp: slot.entryTimeMs || Date.now()
+        });
+      }
+
+      restoreAvailable(true);
+    }
+
+    // 6. Restore bay to Available & Auto sensor control
+    function restoreAvailable(skipConfirm = false) {
+      const slot = floorsData[currentFloor][selectedIndex];
+      window.dbUpdate(`slots/${slot.id}`, {
+        status: "available",
+        forced: false,
+        mode: "auto",
+        light: "green",
+        plate: "",
+        ticketId: "",
+        note: "",
+        entry: "--:--",
+        entryTimeMs: 0
+      });
+
+      if (!skipConfirm && window.pushNotification) {
+        window.pushNotification("Bay Restored", `Bay ${slot.id} is now Available.`);
+      }
+    }
+
+    // Sync standard pricing rates from /rates
+    window.dbListen("rates", (ratesObj) => {
+      if (!ratesObj) return;
+      ["2w", "4w"].forEach(key => {
+        if (ratesObj[key]) {
+          activeRates[key] = {
+            firstHour: parseFloat(ratesObj[key].firstHour) || (key === "2w" ? 20 : 40),
+            extraHour: parseFloat(ratesObj[key].extraHour) || (key === "2w" ? 10 : 20),
+            dailyMax: parseFloat(ratesObj[key].dailyMax) || (key === "2w" ? 100 : 200)
+          };
+        }
+      });
+      updateTelemetry();
+    });
+
+    // Listen to live /slots updates
     window.dbListen("slots", (slotsObj) => {
       if (!slotsObj) return;
       const orderedIds = ["1A-01", "1A-02", "1A-03", "1A-04"];
       floorsData[1] = orderedIds.map((id, idx) => {
         const s = slotsObj[id] || {};
         const status = (s.status || "available").toLowerCase();
+        const isBillable = status === "occupied" || status === "reserved";
         let entryTimeMs = s.entryTimeMs || 0;
         let entry = s.entry || "--:--";
 
-        // If ESP32 or Firebase flips status to occupied without a timestamp, stamp it automatically
-        if (status === "occupied" && !entryTimeMs) {
+        if (isBillable && !entryTimeMs) {
           entryTimeMs = Date.now();
           entry = getCurrentTimeStr();
           window.dbUpdate(`slots/${id}`, { entryTimeMs, entry });
@@ -282,25 +645,26 @@
           slotNum: s.slotNum || (idx + 1),
           status,
           forced: Boolean(s.forced),
-          entry: status === "occupied" ? entry : "--:--",
-          entryTimeMs: status === "occupied" ? entryTimeMs : 0,
-          duration: status === "occupied" ? formatElapsed(entryTimeMs) : "0m 0s"
+          plate: s.plate || "",
+          vehicleType: s.vehicleType || "4w",
+          ticketId: s.ticketId || "",
+          note: s.note || "",
+          entry: isBillable ? entry : "--:--",
+          entryTimeMs: isBillable ? entryTimeMs : 0,
+          duration: isBillable ? formatElapsed(entryTimeMs) : "0m 0s"
         };
       });
-
-      const syncEl = document.getElementById("liveSyncText");
-      if (syncEl) syncEl.innerHTML = "Live &bull; Synced with Firebase";
 
       renderDashboard();
     });
 
-    // Live 1-second timer to update duration for all occupied slots
+    // Live 1-second timer to update duration & accrued fee for Occupied and Reserved slots
     setInterval(() => {
       const slots = floorsData[currentFloor];
       let anyUpdated = false;
 
       slots.forEach(slot => {
-        if (slot.status === "occupied" && slot.entryTimeMs) {
+        if ((slot.status === "occupied" || slot.status === "reserved") && slot.entryTimeMs) {
           slot.duration = formatElapsed(slot.entryTimeMs);
           anyUpdated = true;
         }
@@ -309,6 +673,8 @@
       if (anyUpdated) {
         const currentSlot = slots[selectedIndex];
         document.getElementById("statDuration").textContent = currentSlot.duration;
+        const feeVal = calculateAccruedFee(currentSlot);
+        document.getElementById("statFee").innerHTML = `&#8369;${feeVal.toFixed(2)}`;
       }
     }, 1000);
 

@@ -295,24 +295,61 @@
     window.dbListen('slots', (slotsObj) => {
       if (!slotsObj) return;
       const orderedIds = ['1A-01', '1A-02', '1A-03', '1A-04'];
-      let occupied = 0;
+      let inUseCount = 0;
 
       const pillsHtml = orderedIds.map(id => {
         const s = slotsObj[id] || {};
-        const isOcc = (s.status || '').toLowerCase() === 'occupied';
-        if (isOcc) occupied++;
-        return `<span class="mini-bay ${isOcc ? 'occupied' : 'available'}">${id}</span>`;
+        const status = (s.status || 'available').toLowerCase();
+        const isUnavailable = status !== 'available';
+        if (isUnavailable) inUseCount++;
+
+        const validClass = ['occupied', 'reserved', 'maintenance'].includes(status)
+          ? status
+          : 'available';
+
+        const statusTitle = validClass.charAt(0).toUpperCase() + validClass.slice(1);
+        return `<span class="mini-bay ${validClass}" title="${id}: ${statusTitle}">${id}</span>`;
       }).join('');
 
       const total = orderedIds.length;
-      const available = Math.max(0, total - occupied);
-      const pct = Math.round((occupied / total) * 100);
+      const available = Math.max(0, total - inUseCount);
+      const occupancyRatio = total > 0 ? inUseCount / total : 0;
+      const pct = Math.round(occupancyRatio * 100);
 
-      document.getElementById('floorProgressBar').style.width = pct + '%';
-      document.getElementById('dashOccupied').textContent = occupied;
+      const barEl = document.getElementById('floorProgressBar');
+      const occEl = document.getElementById('dashOccupied');
+      const mainValEl = occEl ? occEl.parentElement : null;
+      const floorTagEl = mainValEl ? mainValEl.parentElement.querySelector('.kpi-tag') : null;
+
+      barEl.style.width = pct + '%';
+      occEl.textContent = inUseCount;
       document.getElementById('dashAvailable').textContent = available;
       document.getElementById('dashTotal').textContent = total;
       document.getElementById('miniBaysContainer').innerHTML = pillsHtml;
+
+      // Apply yellow (>= 75%) and red (100%) warnings like parkingMap.html
+      if (occupancyRatio >= 1) {
+        barEl.className = 'progress-bar bar-red';
+        if (mainValEl) mainValEl.className = 'kpi-main-val val-red';
+        if (floorTagEl) {
+          floorTagEl.className = 'kpi-tag tag-red';
+          floorTagEl.textContent = 'Floor 1 • Full';
+        }
+      } else if (occupancyRatio >= 0.75) {
+        barEl.className = 'progress-bar bar-amber';
+        if (mainValEl) mainValEl.className = 'kpi-main-val val-amber';
+        if (floorTagEl) {
+          floorTagEl.className = 'kpi-tag tag-amber';
+          floorTagEl.textContent = 'Floor 1 • Almost Full';
+        }
+      } else {
+        barEl.className = 'progress-bar';
+        if (mainValEl) mainValEl.className = 'kpi-main-val';
+        if (floorTagEl) {
+          floorTagEl.className = 'kpi-tag live';
+          floorTagEl.textContent = 'Floor 1';
+        }
+      }
     });
 
     // 2. Live Transactions & Revenue Analytics (/transactions)

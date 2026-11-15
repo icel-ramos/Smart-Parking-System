@@ -225,7 +225,7 @@
       const container = document.getElementById('slots-container');
       container.innerHTML = slots.map((slot, index) => {
         const isAuto = slot.mode === 'auto';
-        const dotColor = slot.status === 'Occupied' ? 'red' : 'green';
+        const dotColor = slot.status === 'Available' ? 'green' : 'red';
         const greenClass = !isAuto && slot.light === 'green' ? 'active-green' : '';
         const redClass = !isAuto && slot.light === 'red' ? 'active-red' : '';
 
@@ -283,12 +283,17 @@
       slots = orderedKeys.map((key, idx) => {
         const s = slotsData[key] || {};
         const rawStatus = (s.status || 'available').toLowerCase();
+        let displayStatus = 'Available';
+        if (rawStatus === 'occupied') displayStatus = 'Occupied';
+        else if (rawStatus === 'reserved') displayStatus = 'Reserved';
+        else if (rawStatus === 'maintenance') displayStatus = 'Maintenance';
+
         return {
           key,
           id: s.slotNum || (idx + 1),
-          status: rawStatus === 'occupied' ? 'Occupied' : 'Available',
+          status: displayStatus,
           mode: s.mode || 'auto',
-          light: s.light || (rawStatus === 'occupied' ? 'red' : 'green')
+          light: s.light || (rawStatus === 'available' ? 'green' : 'red')
         };
       });
       renderSlots();

@@ -145,6 +145,32 @@
   transition: width 0.3s ease;
 }
 
+.progress-bar.bar-amber {
+  background: #f59e0b;
+}
+
+.progress-bar.bar-red {
+  background: #ef4444;
+}
+
+.kpi-main-val.val-amber {
+  color: #d97706;
+}
+
+.kpi-main-val.val-red {
+  color: #dc2626;
+}
+
+.kpi-tag.tag-amber {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.kpi-tag.tag-red {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .mini-bays {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -171,6 +197,24 @@
   background: #fee2e2;
   color: #b91c1c;
   border-color: #fecaca;
+}
+
+.mini-bay.occupied {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.mini-bay.reserved {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.mini-bay.maintenance {
+  background: #e2e8f0;
+  color: #475569;
+  border-color: #cbd5e1;
 }
 
 /* Main 2-Column Workspace (Chart Left, Breakdown Right) */
