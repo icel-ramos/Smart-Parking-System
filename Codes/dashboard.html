@@ -254,8 +254,29 @@
         </div>
       </div>
 
-    </section>
+   
+<!-- ESP32 Connection Status -->
+<div class="esp32-status-card">
+  <div class="esp32-status-left">
+    <div class="esp32-device-icon">📡</div>
+    <div>
+      <h3>ESP32 Controller</h3>
+      <p id="esp32LastSeen">
+        Waiting for device...
+      </p>
+    </div>
+  </div>
 
+  <div class="esp32-status-right">
+    <span id="esp32Status" class="esp32-badge checking">
+      ● Checking...
+    </span>
+    <small id="esp32Connection">
+      Firebase Connection
+    </small>
+  </div>
+</div>
+       </section>
   </main>
 
   <footer class="site-footer">
