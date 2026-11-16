@@ -104,11 +104,14 @@ window.dbSet = function (path, data) {
     const db = getDatabase(app);
 
     _fbApi = {
-      listen: (path, cb) => onValue(ref(db, path), snap => cb(snap.val())),
-      update: (path, data) => update(ref(db, path), data),
-      set: (path, data) => set(ref(db, path), data),
-      signOutUser: () => signOut(auth)
-    };
+  listen: (path, cb) => onValue(ref(db, path), snap => {
+    document.body.classList.remove('syncing-data');
+    cb(snap.val());
+  }),
+  update: (path, data) => update(ref(db, path), data),
+  set: (path, data) => set(ref(db, path), data),
+  signOutUser: () => signOut(auth)
+};
 
     // Process any page listeners queued while the SDK was loading
     while (_fbQueue.length > 0) {
@@ -140,6 +143,14 @@ window.dbSet = function (path, data) {
 
 // 4. Initialize Icons, Header Bell, and Account Menu
 document.addEventListener('DOMContentLoaded', () => {
+
+  const isLoginPage = window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/');
+  if (!isLoginPage) {
+    document.body.classList.add('syncing-data');
+    // Safety fallback so the page never stays hidden if network is slow
+    setTimeout(() => document.body.classList.remove('syncing-data'), 2500);
+  }
+
   const menuBtn = document.querySelector('.menu-btn');
   if (menuBtn) menuBtn.innerHTML = SVG_ICONS.menu;
 

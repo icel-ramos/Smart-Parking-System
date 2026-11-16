@@ -776,3 +776,13 @@ header h1 {
 .nav-item a {
   gap: 12px;
 }
+
+/* Prevent flash of default zero-state data before Firebase syncs */
+body.syncing-data main {
+  opacity: 0;
+  pointer-events: none;
+}
+
+main {
+  transition: opacity 0.18s ease-in-out;
+}
