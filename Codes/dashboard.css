@@ -527,3 +527,85 @@
     font-size: 0.76rem;
   }
 }
+
+/* ESP32 Connection Status */
+.esp32-status-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  margin-bottom: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.esp32-status-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.esp32-device-icon {
+  font-size: 28px;
+}
+
+.esp32-status-left h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 5px;
+  color: #0f172a;
+}
+
+.esp32-status-left p {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.esp32-status-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.esp32-status-right small {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.esp32-badge {
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.esp32-badge.online {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.esp32-badge.offline {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.esp32-badge.checking {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+@media (max-width: 540px) {
+  .esp32-status-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .esp32-status-right {
+    align-items: flex-start;
+  }
+}
