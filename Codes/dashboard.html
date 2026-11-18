@@ -689,28 +689,37 @@
 
  
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const card = document.createElement("div");
-  card.style.cssText = `
-    position: fixed;
-    right: 20px;
-    bottom: 20px;
-    background: white;
-    padding: 12px 18px;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px #0002;
-    z-index: 1000;
-    font-family: Arial, sans-serif;
-  `;
 
-  card.textContent = "ESP32: Checking...";
-  document.body.appendChild(card);
+document.addEventListener("DOMContentLoaded", () => {
+  const title = [...document.querySelectorAll("*")].find(
+    el => el.children.length === 0 &&
+    el.textContent.trim() === "Smart Parking System"
+  );
+
+  if (!title) {
+    console.error("Smart Parking System card not found");
+    return;
+  }
+
+  const container = title.closest(".card") ||
+                    title.parentElement.parentElement;
+
+  const badge = [...container.querySelectorAll("*")].find(
+    el => el.children.length === 0 &&
+    el.textContent.includes("Checking")
+  );
+
+  const description = [...container.querySelectorAll("*")].find(
+    el => el.children.length === 0 &&
+    el.textContent.includes("Waiting for device")
+  );
 
   let device = null;
   let received = false;
 
   function updateStatus() {
     const timestamp = Number(device?.lastSeenMs);
+
     const online =
       received &&
       device?.status === "Online" &&
@@ -718,19 +727,25 @@ document.addEventListener("DOMContentLoaded", () => {
       timestamp > 0 &&
       Math.abs(Date.now() - timestamp) < 30000;
 
-    card.textContent = online
-      ? "🟢 ESP32-MAIN: ONLINE"
-      : received
-        ? "🔴 ESP32-MAIN: OFFLINE"
-        : "⚪ ESP32-MAIN: Checking...";
+    if (badge) {
+      badge.textContent = online ? "● Online" : "● Offline";
+      badge.style.color = online ? "#16a34a" : "#dc2626";
+      badge.style.background = online ? "#dcfce7" : "#fee2e2";
+    }
+
+    if (description) {
+      description.textContent = online
+        ? "ESP32-MAIN Connected"
+        : "ESP32-MAIN Disconnected";
+    }
   }
 
   if (typeof window.dbListen !== "function") {
-    card.textContent = "Firebase listener unavailable";
+    console.error("Firebase listener unavailable");
     return;
   }
 
-  window.dbListen("devices/ESP32-MAIN", (data) => {
+  window.dbListen("devices/ESP32-MAIN", data => {
     device = data;
     received = true;
     updateStatus();
@@ -738,6 +753,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setInterval(updateStatus, 3000);
 });
+
 </script>
 
 
