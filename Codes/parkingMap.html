@@ -330,10 +330,10 @@
 
       const beamEl = document.getElementById("statBeam");
       if (currentSlot.status === "occupied") {
-        beamEl.textContent = "Occupied (Sensor)";
+        beamEl.textContent = "Occupied";
         beamEl.className = "stat-value text-red";
       } else if (currentSlot.status === "reserved") {
-        beamEl.textContent = "Reserved (Billed)";
+        beamEl.textContent = "Reserved";
         beamEl.className = "stat-value text-amber";
       } else if (currentSlot.status === "maintenance") {
         beamEl.textContent = "Under Maintenance";
