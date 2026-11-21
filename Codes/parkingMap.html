@@ -92,6 +92,244 @@
 
     .text-amber { color: #d97706; }
     .text-slate { color: #64748b; }
+
+    /* Structured Bay Management Action List */
+    .control-group {
+      width: 100%;
+    }
+
+    .control-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .control-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .control-header-left .control-title {
+      margin: 0;
+    }
+
+    .bay-context-pill {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+
+    /* Manual Override Switch */
+    .override-toggle-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .override-toggle-wrap.active {
+      background: #fffbeb;
+      border-color: #f59e0b;
+    }
+
+    .override-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #334155;
+      user-select: none;
+    }
+
+    .override-toggle-wrap.active .override-label {
+      color: #b45309;
+    }
+
+    .override-switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 22px;
+      cursor: pointer;
+    }
+
+    .override-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .override-slider {
+      position: absolute;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 999px;
+      transition: background 0.18s ease;
+    }
+
+    .override-slider::before {
+      content: "";
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: #ffffff;
+      border-radius: 50%;
+      transition: transform 0.18s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .override-switch input:checked + .override-slider {
+      background: #d97706;
+    }
+
+    .override-switch input:checked + .override-slider::before {
+      transform: translateX(16px);
+    }
+
+    /* Action List Grid (2 columns on desktop, 1 on mobile) */
+    .action-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      width: 100%;
+    }
+
+    @media (max-width: 720px) {
+      .action-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .action-row-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .action-row-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .action-row-btn:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+
+    .action-row-main {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+
+    .action-row-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .action-row-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .action-row-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .action-row-sub {
+      font-size: 0.75rem;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .action-row-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* Active Color Variants */
+    .action-row-btn.tone-blue { border-color: #bfdbfe; background: #f8fbff; }
+    .action-row-btn.tone-blue:hover:not(:disabled) { background: #eff6ff; border-color: #93c5fd; }
+    .action-row-btn.tone-blue .action-row-icon { background: #dbeafe; color: #1d4ed8; }
+    .action-row-btn.tone-blue .action-row-tag { background: #dbeafe; color: #1d4ed8; }
+
+    .action-row-btn.tone-green { border-color: #bbf7d0; background: #f7fef9; }
+    .action-row-btn.tone-green:hover:not(:disabled) { background: #dcfce7; border-color: #86efac; }
+    .action-row-btn.tone-green .action-row-icon { background: #dcfce7; color: #15803d; }
+    .action-row-btn.tone-green .action-row-tag { background: #dcfce7; color: #15803d; }
+
+    .action-row-btn.tone-amber { border-color: #fde68a; background: #fffdf5; }
+    .action-row-btn.tone-amber:hover:not(:disabled) { background: #fef3c7; border-color: #fcd34d; }
+    .action-row-btn.tone-amber .action-row-icon { background: #fef3c7; color: #b45309; }
+    .action-row-btn.tone-amber .action-row-tag { background: #fef3c7; color: #b45309; }
+
+    /* Greyed-Out Unavailable / Locked State */
+    .action-row-btn:disabled {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+      color: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.62;
+    }
+
+    .action-row-btn:disabled .action-row-icon {
+      background: #e2e8f0;
+      color: #94a3b8;
+    }
+
+    .action-row-btn:disabled .action-row-title {
+      color: #64748b;
+    }
+
+    .action-row-btn:disabled .action-row-sub {
+      color: #94a3b8;
+    }
+
+    .action-row-btn:disabled .action-row-tag {
+      background: #e2e8f0;
+      color: #64748b;
+    }
   </style>
 </head>
 <body>
@@ -191,9 +429,23 @@
 
         <div class="controls-row">
           <div class="control-group">
-            <div class="control-title" id="controlGroupTitle">Bay Management Actions</div>
-            <div class="action-btn-group" id="slotActionButtons">
-              <!-- Populated dynamically based on selected slot state -->
+            <div class="control-header-bar">
+              <div class="control-header-left">
+                <div class="control-title" id="controlGroupTitle">Bay Management Actions</div>
+                <span class="bay-context-pill" id="actionBayBadge">1A-01 &middot; Available</span>
+              </div>
+
+              <div class="override-toggle-wrap" id="overrideWrap" title="Unlock sensor-controlled manual actions">
+                <span class="override-label" id="overrideStatusLabel">Manual Override: OFF</span>
+                <label class="override-switch">
+                  <input type="checkbox" id="manualOverrideToggle" onchange="toggleManualOverride(this.checked)">
+                  <span class="override-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="action-list" id="slotActionButtons">
+              <!-- Populated dynamically as a structured list with disabled states -->
             </div>
           </div>
         </div>
@@ -230,6 +482,16 @@
 
     let currentFloor = 1;
     let selectedIndex = 0; // Default to 1A-01
+    let manualOverrideMode = false;
+
+    function toggleManualOverride(isEnabled) {
+      manualOverrideMode = Boolean(isEnabled);
+      const wrap = document.getElementById("overrideWrap");
+      const label = document.getElementById("overrideStatusLabel");
+      if (wrap) wrap.classList.toggle("active", manualOverrideMode);
+      if (label) label.textContent = manualOverrideMode ? "Manual Override: ON" : "Manual Override: OFF";
+      updateTelemetry();
+    }
 
     function formatElapsed(startMs) {
       if (!startMs) return "0m 0s";
@@ -431,65 +693,175 @@
     }
 
     // 1. Reserve a Bay (Single custom form replaces 2 native prompts)
-    async function reserveSlot() {
+    function renderActionButtons(slot) {
+      const btnContainer = document.getElementById("slotActionButtons");
+      const bayBadge = document.getElementById("actionBayBadge");
+
+      const statusText = slot.status.charAt(0).toUpperCase() + slot.status.slice(1);
+      if (bayBadge) {
+        bayBadge.textContent = `${slot.id} · ${statusText}`;
+      }
+
+      const isAvail = slot.status === "available";
+      const isRes = slot.status === "reserved";
+      const isOcc = slot.status === "occupied";
+      const isMaint = slot.status === "maintenance";
+
+      const canReserve = isAvail;
+      const canMarkArrived = manualOverrideMode && (isRes || isAvail);
+      const canAssignPlate = isOcc;
+      const canSettle = isOcc || isRes;
+      const canFlagMaint = isAvail || isRes || isOcc;
+      const canRestore = isMaint;
+
+      // Dynamic helper text for Vehicle Arrived / Force Occupy
+      let arriveTitle = isRes ? "Vehicle Arrived (Mark Occupied)" : "Manual Check-In (Force Occupy)";
+      let arriveSub = "";
+      let arriveTag = "Override";
+
+      if (isOcc) {
+        arriveSub = "Bay is already occupied";
+        arriveTag = "Active";
+      } else if (isMaint) {
+        arriveSub = "Restore bay from maintenance first";
+        arriveTag = "Locked";
+      } else if (!manualOverrideMode) {
+        arriveSub = "Auto-detected by ESP32 (Enable Override to force)";
+        arriveTag = "Sensor Auto";
+      } else {
+        arriveSub = isRes
+          ? "Transition reserved bay to occupied and keep timer"
+          : "Manually lock bay as occupied without sensor trigger";
+        arriveTag = "Override";
+      }
+
+      const actions = [
+        {
+          title: "Reserve Bay (Standard Rate)",
+          sub: canReserve ? "Lock bay and start reservation billing" : `Unavailable while bay is ${statusText.toLowerCase()}`,
+          icon: "lock",
+          tone: "tone-blue",
+          tag: canReserve ? "Ready" : "Unavailable",
+          enabled: canReserve,
+          onClick: "reserveSlot()"
+        },
+        {
+          title: arriveTitle,
+          sub: arriveSub,
+          icon: "car",
+          tone: "tone-amber",
+          tag: arriveTag,
+          enabled: canMarkArrived,
+          onClick: "markArrived()"
+        },
+        {
+          title: slot.plate ? "Update Plate & Ticket" : "Assign Plate & Ticket",
+          sub: canAssignPlate ? "Link plate number and vehicle class to active bay" : "Available only for occupied bays",
+          icon: "billing",
+          tone: "tone-blue",
+          tag: canAssignPlate ? "Ready" : "Unavailable",
+          enabled: canAssignPlate,
+          onClick: "assignPlateToOccupied()"
+        },
+        {
+          title: isRes ? "Settle Fee & Release Bay" : "Settle Fee & Check Out",
+          sub: canSettle ? "Collect accrued fee and return bay to auto mode" : "No active billable session on this bay",
+          icon: "dashboard",
+          tone: "tone-green",
+          tag: canSettle ? "Ready" : "Unavailable",
+          enabled: canSettle,
+          onClick: "settleAndReleaseSlot()"
+        },
+        {
+          title: isOcc ? "Flag Incident / Maintenance" : "Put Under Maintenance",
+          sub: canFlagMaint
+            ? (isOcc ? "Requires settling active fee before locking bay" : isRes ? "Transfer, void, or settle reservation before locking" : "Take bay offline and set LED to red")
+            : "Bay is already under maintenance",
+          icon: "settings",
+          tone: "tone-amber",
+          tag: canFlagMaint ? "Ready" : "Active",
+          enabled: canFlagMaint,
+          onClick: "setMaintenance()"
+        },
+        {
+          title: "Complete Maintenance",
+          sub: canRestore ? "Clear incident flag and restore auto sensor control" : "Only available for bays under maintenance",
+          icon: "hardware",
+          tone: "tone-green",
+          tag: canRestore ? "Restore" : "Unavailable",
+          enabled: canRestore,
+          onClick: "restoreAvailable()"
+        }
+      ];
+
+      btnContainer.innerHTML = actions.map(a => `
+        <button
+          type="button"
+          class="action-row-btn ${a.tone}"
+          ${a.enabled ? `onclick="${a.onClick}"` : "disabled"}
+        >
+          <div class="action-row-main">
+            <span class="action-row-icon" data-icon="${a.icon}"></span>
+            <div class="action-row-text">
+              <span class="action-row-title">${a.title}</span>
+              <span class="action-row-sub">${a.sub}</span>
+            </div>
+          </div>
+          <span class="action-row-tag">${a.tag}</span>
+        </button>
+      `).join("");
+
+      if (window.renderIcons) window.renderIcons();
+    }
+
+    // 2. Manual Override: Mark Reserved Vehicle Arrived OR Force Occupy an Available Bay
+    async function markArrived() {
+      if (!manualOverrideMode) return;
       const slot = floorsData[currentFloor][selectedIndex];
-      const result = await window.peForm({
-        title: `Reserve Bay ${slot.id}`,
-        subtitle: 'Assign a vehicle plate and type to lock this bay at the standard rate.',
-        confirmText: 'Reserve Bay',
-        fields: [
-          { name: 'plate', label: 'Vehicle Plate Number', placeholder: 'e.g., ABC 1234', uppercase: true },
-          {
-            name: 'vehicleType',
-            label: 'Vehicle Type',
-            type: 'select',
-            value: '4w',
-            options: [
-              { value: '4w', label: `4 Wheelers (₱${activeRates['4w'].firstHour.toFixed(2)} first hr)` },
-              { value: '2w', label: `2 Wheelers (₱${activeRates['2w'].firstHour.toFixed(2)} first hr)` }
-            ]
-          }
-        ]
-      });
-      if (!result) return;
 
-      const cleanPlate = result.plate || "RESERVED";
-      const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
-      const is2W = vehicleType === "2w";
-      const rateAmount = activeRates[vehicleType].firstHour.toFixed(2);
+      if (slot.status === "reserved") {
+        const confirmed = await window.peConfirm(
+          `Manual Override: Bay ${slot.id}`,
+          `Confirm ${slot.plate || 'reserved vehicle'} has arrived and mark Bay ${slot.id} as Occupied?`,
+          { confirmText: 'Mark Occupied' }
+        );
+        if (!confirmed) return;
 
-      const nowMs = Date.now();
-      const timeStr = getCurrentTimeStr();
-      const ticketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
+        window.dbUpdate(`slots/${slot.id}`, {
+          status: "occupied",
+          forced: true,
+          mode: "manual",
+          light: "red",
+          note: "Parked (Override)"
+        });
 
-      window.dbUpdate(`transactions/${ticketId}`, {
-        id: ticketId,
-        slotId: slot.id,
-        plate: cleanPlate,
-        vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
-        timeIn: timeStr,
-        timeOut: "--:--",
-        amount: rateAmount,
-        status: "Unpaid",
-        type: "Reservation",
-        timestamp: nowMs
-      });
+        if (window.pushNotification) {
+          window.pushNotification("Reserved Vehicle Arrived", `${slot.plate || 'Vehicle'} marked occupied in Bay ${slot.id} via Manual Override.`);
+        }
+      } else if (slot.status === "available") {
+        const confirmed = await window.peConfirm(
+          `Manual Check-In: Bay ${slot.id}`,
+          `Force Bay ${slot.id} to Occupied and start the billing timer without waiting for the ESP32 sensor?`,
+          { confirmText: 'Force Occupy' }
+        );
+        if (!confirmed) return;
 
-      window.dbUpdate(`slots/${slot.id}`, {
-        status: "reserved",
-        forced: true,
-        mode: "manual",
-        light: "red",
-        plate: cleanPlate,
-        vehicleType,
-        ticketId,
-        note: "Reserved",
-        entry: timeStr,
-        entryTimeMs: nowMs
-      });
+        const nowMs = Date.now();
+        const timeStr = getCurrentTimeStr();
 
-      if (window.pushNotification) {
-        window.pushNotification("Bay Reserved", `Bay ${slot.id} reserved for ${cleanPlate} (Ticket ${ticketId}).`);
+        window.dbUpdate(`slots/${slot.id}`, {
+          status: "occupied",
+          forced: true,
+          mode: "manual",
+          light: "red",
+          note: "Manual Override",
+          entry: timeStr,
+          entryTimeMs: nowMs
+        });
+
+        if (window.pushNotification) {
+          window.pushNotification("Manual Bay Check-In", `Bay ${slot.id} was manually marked Occupied via Override.`);
+        }
       }
     }
 
@@ -546,24 +918,33 @@
       });
     }
 
-    // 4. Put Bay Under Maintenance or Flag an Incident (Forces payment if bay is active)
+    // 4. Put Bay Under Maintenance or Flag an Incident (Safeguards for Occupied & Reserved bays)
     async function setMaintenance() {
-      const slot = floorsData[currentFloor][selectedIndex];
-      const isBillable = slot.status === "occupied" || slot.status === "reserved";
-      const accruedFee = isBillable ? calculateAccruedFee(slot).toFixed(2) : "0.00";
+      const slots = floorsData[currentFloor];
+      const slot = slots[selectedIndex];
+      const isOccupied = slot.status === "occupied";
+      const isReserved = slot.status === "reserved";
+      const accruedFee = (isOccupied || isReserved) ? calculateAccruedFee(slot).toFixed(2) : "0.00";
 
       const fields = [
         {
           name: 'reason',
           label: 'Maintenance / Incident Reason',
           value: slot.note || 'Scheduled Maintenance',
-          placeholder: 'e.g., Vehicle breakdown or sensor fault',
+          placeholder: 'e.g., Sensor fault or bay obstruction',
           required: true
         }
       ];
 
-      // For one-time walk-ins or active bays, capture/confirm plate & type so the Paid record is complete
-      if (isBillable) {
+      let modalTitle = `Maintenance: Bay ${slot.id}`;
+      let modalSubtitle = 'Mark this bay unavailable and lock its indicator LED to red.';
+      let confirmText = 'Set Maintenance';
+
+      if (isOccupied) {
+        modalTitle = `Settle & Lock Bay ${slot.id}`;
+        modalSubtitle = `Bay ${slot.id} is currently occupied. Payment of ₱${accruedFee} must be collected before locking this bay for maintenance.`;
+        confirmText = `Collect ₱${accruedFee} & Lock Bay`;
+
         fields.push(
           {
             name: 'plate',
@@ -583,22 +964,44 @@
             ]
           }
         );
+      } else if (isReserved) {
+        const availableBays = slots.filter(s => s.status === "available" && s.id !== slot.id);
+        const reservationOptions = availableBays.map(b => ({
+          value: `transfer:${b.id}`,
+          label: `Transfer reservation to Bay ${b.id} (Available)`
+        }));
+
+        reservationOptions.push(
+          { value: 'void', label: 'Cancel & Void Reservation (Remove Unpaid Ticket)' },
+          { value: 'settle', label: `Collect Reservation Fee (Mark ₱${accruedFee} as Paid)` }
+        );
+
+        modalTitle = `Reserved Bay Maintenance: ${slot.id}`;
+        modalSubtitle = `Bay ${slot.id} is reserved for ${slot.plate || 'a vehicle'}. Choose how to handle the active reservation before locking this bay.`;
+        confirmText = 'Apply & Lock Bay';
+
+        fields.push({
+          name: 'reservationAction',
+          label: 'Reservation Safeguard Action',
+          type: 'select',
+          value: reservationOptions[0].value,
+          options: reservationOptions
+        });
       }
 
       const result = await window.peForm({
-        title: isBillable ? `Settle & Lock Bay ${slot.id}` : `Maintenance: Bay ${slot.id}`,
-        subtitle: isBillable
-          ? `Bay ${slot.id} has an active session. Payment of ₱${accruedFee} must be settled before switching this bay to maintenance.`
-          : 'Mark this bay unavailable and lock its indicator LED to red.',
-        confirmText: isBillable ? `Collect ₱${accruedFee} & Lock Bay` : 'Set Maintenance',
-        danger: isBillable,
+        title: modalTitle,
+        subtitle: modalSubtitle,
+        confirmText,
+        danger: isOccupied || isReserved,
         fields
       });
       if (!result) return;
 
       const cleanReason = result.reason || "Under Maintenance";
+      let notifExtra = "";
 
-      if (isBillable) {
+      if (isOccupied) {
         const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
         const is2W = vehicleType === "2w";
         const finalFee = calculateAccruedFee({ ...slot, vehicleType }).toFixed(2);
@@ -607,7 +1010,6 @@
         const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
         const finalPlate = result.plate || slot.plate || `BAY-${slot.id}`;
 
-        // Force-settle transaction in Firebase so no ghost Unpaid tickets remain
         window.dbUpdate(`transactions/${ticketId}`, {
           id: ticketId,
           slotId: slot.id,
@@ -619,9 +1021,66 @@
           status: "Paid",
           timestamp: slot.entryTimeMs || Date.now()
         });
+        notifExtra = ` (₱${finalFee} settled)`;
       }
 
-      // Lock bay under maintenance
+      if (isReserved) {
+        const action = result.reservationAction;
+
+        if (action.startsWith('transfer:')) {
+          const targetBayId = action.split(':')[1];
+          window.dbUpdate(`slots/${targetBayId}`, {
+            status: "reserved",
+            forced: true,
+            mode: "manual",
+            light: "red",
+            plate: slot.plate || "RESERVED",
+            vehicleType: slot.vehicleType || "4w",
+            ticketId: slot.ticketId || "",
+            note: "Reserved (Transferred)",
+            entry: slot.entry || getCurrentTimeStr(),
+            entryTimeMs: slot.entryTimeMs || Date.now()
+          });
+
+          if (slot.ticketId) {
+            window.dbUpdate(`transactions/${slot.ticketId}`, {
+              slotId: targetBayId
+            });
+          }
+          notifExtra = ` (Reservation moved to ${targetBayId})`;
+        } else if (action === 'void') {
+          if (slot.ticketId) {
+            if (typeof window.dbSet === 'function') {
+              window.dbSet(`transactions/${slot.ticketId}`, null);
+            } else {
+              window.dbUpdate(`transactions/${slot.ticketId}`, {
+                amount: "0.00",
+                timeOut: getCurrentTimeStr(),
+                status: "Paid"
+              });
+            }
+          }
+          notifExtra = " (Reservation voided)";
+        } else if (action === 'settle') {
+          const timeOutStr = getCurrentTimeStr();
+          const is2W = (slot.vehicleType || "4w").toLowerCase().includes("2");
+          const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+
+          window.dbUpdate(`transactions/${ticketId}`, {
+            id: ticketId,
+            slotId: slot.id,
+            plate: slot.plate || `BAY-${slot.id}`,
+            vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+            timeIn: (slot.entry && slot.entry !== "--:--") ? slot.entry : timeOutStr,
+            timeOut: timeOutStr,
+            amount: accruedFee,
+            status: "Paid",
+            timestamp: slot.entryTimeMs || Date.now()
+          });
+          notifExtra = ` (₱${accruedFee} reservation fee settled)`;
+        }
+      }
+
       window.dbUpdate(`slots/${slot.id}`, {
         status: "maintenance",
         forced: true,
@@ -635,8 +1094,7 @@
       });
 
       if (window.pushNotification) {
-        const feeNote = isBillable ? ` (Session settled before locking)` : '';
-        window.pushNotification("Bay Under Maintenance", `Bay ${slot.id} marked unavailable: ${cleanReason}${feeNote}.`);
+        window.pushNotification("Bay Under Maintenance", `Bay ${slot.id} marked unavailable: ${cleanReason}${notifExtra}.`);
       }
     }
 
