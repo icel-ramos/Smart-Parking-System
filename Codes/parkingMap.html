@@ -546,21 +546,82 @@
       });
     }
 
-    // 4. Put Bay Under Maintenance or Flag an Accident/Incident
+    // 4. Put Bay Under Maintenance or Flag an Incident (Forces payment if bay is active)
     async function setMaintenance() {
       const slot = floorsData[currentFloor][selectedIndex];
+      const isBillable = slot.status === "occupied" || slot.status === "reserved";
+      const accruedFee = isBillable ? calculateAccruedFee(slot).toFixed(2) : "0.00";
+
+      const fields = [
+        {
+          name: 'reason',
+          label: 'Maintenance / Incident Reason',
+          value: slot.note || 'Scheduled Maintenance',
+          placeholder: 'e.g., Vehicle breakdown or sensor fault',
+          required: true
+        }
+      ];
+
+      // For one-time walk-ins or active bays, capture/confirm plate & type so the Paid record is complete
+      if (isBillable) {
+        fields.push(
+          {
+            name: 'plate',
+            label: 'Vehicle Plate Number (for receipt)',
+            value: slot.plate || '',
+            placeholder: 'e.g., ABC 1234 (optional)',
+            uppercase: true
+          },
+          {
+            name: 'vehicleType',
+            label: 'Vehicle Type',
+            type: 'select',
+            value: (slot.vehicleType || '4w').toLowerCase().includes('2') ? '2w' : '4w',
+            options: [
+              { value: '4w', label: '4 Wheelers' },
+              { value: '2w', label: '2 Wheelers' }
+            ]
+          }
+        );
+      }
+
       const result = await window.peForm({
-        title: `Maintenance — Bay ${slot.id}`,
-        subtitle: 'Mark this bay unavailable and lock its indicator LED to red.',
-        confirmText: 'Set Maintenance',
-        fields: [
-          { name: 'reason', label: 'Maintenance / Incident Reason', value: slot.note || 'Scheduled Maintenance', placeholder: 'e.g., Sensor calibration' }
-        ]
+        title: isBillable ? `Settle & Lock Bay ${slot.id}` : `Maintenance: Bay ${slot.id}`,
+        subtitle: isBillable
+          ? `Bay ${slot.id} has an active session. Payment of ₱${accruedFee} must be settled before switching this bay to maintenance.`
+          : 'Mark this bay unavailable and lock its indicator LED to red.',
+        confirmText: isBillable ? `Collect ₱${accruedFee} & Lock Bay` : 'Set Maintenance',
+        danger: isBillable,
+        fields
       });
       if (!result) return;
 
       const cleanReason = result.reason || "Under Maintenance";
 
+      if (isBillable) {
+        const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
+        const is2W = vehicleType === "2w";
+        const finalFee = calculateAccruedFee({ ...slot, vehicleType }).toFixed(2);
+        const timeOutStr = getCurrentTimeStr();
+        const timeInStr = (slot.entry && slot.entry !== "--:--") ? slot.entry : timeOutStr;
+        const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+        const finalPlate = result.plate || slot.plate || `BAY-${slot.id}`;
+
+        // Force-settle transaction in Firebase so no ghost Unpaid tickets remain
+        window.dbUpdate(`transactions/${ticketId}`, {
+          id: ticketId,
+          slotId: slot.id,
+          plate: finalPlate,
+          vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+          timeIn: timeInStr,
+          timeOut: timeOutStr,
+          amount: finalFee,
+          status: "Paid",
+          timestamp: slot.entryTimeMs || Date.now()
+        });
+      }
+
+      // Lock bay under maintenance
       window.dbUpdate(`slots/${slot.id}`, {
         status: "maintenance",
         forced: true,
@@ -574,7 +635,8 @@
       });
 
       if (window.pushNotification) {
-        window.pushNotification("Bay Under Maintenance", `Bay ${slot.id} marked unavailable: ${cleanReason}.`);
+        const feeNote = isBillable ? ` (Session settled before locking)` : '';
+        window.pushNotification("Bay Under Maintenance", `Bay ${slot.id} marked unavailable: ${cleanReason}${feeNote}.`);
       }
     }
 
