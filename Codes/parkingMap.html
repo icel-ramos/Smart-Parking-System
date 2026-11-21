@@ -51,54 +51,87 @@
       gap: 14px;
     }
 
-    .action-btn-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-top: 8px;
-    }
-
-    .action-btn.btn-reserve {
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-    }
-    .action-btn.btn-reserve:hover {
-      background: #dbeafe;
-    }
-
-    .action-btn.btn-maint {
-      background: #fffbeb;
-      color: #b45309;
-      border: 1px solid #fde68a;
-    }
-    .action-btn.btn-maint:hover {
-      background: #fef3c7;
-    }
-
-    .action-btn.btn-settle {
-      background: #dcfce7;
-      color: #15803d;
-      border: 1px solid #bbf7d0;
-    }
-    .action-btn.btn-settle:hover {
-      background: #bbf7d0;
-    }
-
-    .action-btn.btn-clear {
-      background: #f1f5f9;
-      color: #334155;
-      border: 1px solid #cbd5e1;
-    }
-    .action-btn.btn-clear:hover {
-      background: #e2e8f0;
-    }
-
     .text-amber { color: #d97706; }
     .text-slate { color: #64748b; }
 
+    /* Top-Right Bays In Use Counter beside Live Parking Overview */
+    .overview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .bays-in-use-card {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 16px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    }
+
+    .bays-in-use-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+    }
+
+    .bays-in-use-value {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+
+    /* Clickable Note Button in the Telemetry Bar */
+    .stat-note-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 2px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .stat-note-btn:hover {
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    .stat-note-btn:active {
+      transform: scale(0.96);
+    }
+
+    .stat-note-btn svg {
+      width: 15px;
+      height: 15px;
+    }
+
     /* Structured Bay Management Action List */
+    .dashboard-card,
+    .telemetry-panel,
+    .controls-row,
+    .control-group {
+      min-width: 0;
+      max-width: 100%;
+    }
+
     .control-group {
       width: 100%;
     }
@@ -213,12 +246,6 @@
       width: 100%;
     }
 
-    @media (max-width: 720px) {
-      .action-list {
-        grid-template-columns: 1fr;
-      }
-    }
-
     .action-row-btn {
       display: flex;
       align-items: center;
@@ -247,6 +274,7 @@
       display: flex;
       align-items: center;
       gap: 11px;
+      flex: 1;
       min-width: 0;
     }
 
@@ -336,21 +364,105 @@
       color: #64748b;
     }
 
-    /* Ensure flex/grid containers never overflow on narrow screens */
-    .dashboard-card,
-    .telemetry-panel,
-    .controls-row,
-    .control-group {
-      min-width: 0;
-      max-width: 100%;
+    /* Selected Bay Details Modal */
+    .pe-modal-card {
+      max-height: 88vh;
+      overflow-y: auto;
     }
 
-    .action-row-main {
-      flex: 1;
-      min-width: 0;
+    .pe-modal-card.bays-info-modal {
+      max-width: 520px;
     }
 
+    .bay-detail-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #f8fafc;
+    }
+
+    .bay-detail-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .bay-detail-id-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bay-detail-id {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .bay-status-chip {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .bay-status-chip.available { background: #dcfce7; color: #15803d; }
+    .bay-status-chip.occupied { background: #fee2e2; color: #b91c1c; }
+    .bay-status-chip.reserved { background: #fef3c7; color: #b45309; }
+    .bay-status-chip.maintenance { background: #e2e8f0; color: #475569; }
+
+    .bay-detail-fee {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #15803d;
+    }
+
+    .bay-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 12px;
+      font-size: 0.82rem;
+      color: #334155;
+    }
+
+    .bay-detail-grid strong {
+      color: #64748b;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    .bay-detail-note-row {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed #cbd5e1;
+      font-size: 0.82rem;
+      color: #1e293b;
+      word-break: break-word;
+    }
+
+    .bays-empty-state {
+      text-align: center;
+      padding: 22px 12px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      color: #64748b;
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+    }
+
+    /* Mobile Responsive Overrides */
     @media (max-width: 720px) {
+      .bays-in-use-card {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+
       .dashboard-card {
         padding: 14px;
       }
@@ -489,224 +601,10 @@
         font-size: 0.65rem;
         padding: 3px 7px;
         align-self: flex-start;
-
-        /* Top-Right Bays In Use Widget beside Live Parking Overview */
-      .overview-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 14px;
-      }
-
-      .bays-in-use-card {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 8px 10px 8px 14px;
-        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
-      }
-
-      .bays-in-use-meta {
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-      }
-
-      .bays-in-use-label {
-        font-size: 0.72rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #64748b;
-      }
-
-      .bays-in-use-value {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #0f172a;
-        line-height: 1.2;
-      }
-
-      .bays-note-btn {
-        width: 36px;
-        height: 36px;
-        border-radius: 9px;
-        border: 1px solid #cbd5e1;
-        background: #f8fafc;
-        color: #334155;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
-      }
-
-      .bays-note-btn:hover {
-        background: #eff6ff;
-        border-color: #93c5fd;
-        color: #1d4ed8;
-      }
-
-      .bays-note-btn:active {
-        transform: scale(0.95);
-      }
-
-      /* Make peForm / Info Modals Scroll Safely on Small Phone Screens */
-      .pe-modal-card {
-        max-height: 90vh;
-        overflow-y: auto;
-      }
-
-      /* Bays In Use Detail Modal */
-      .pe-modal-card.bays-info-modal {
-        max-width: 520px;
-      }
-
-      .bays-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 8px;
-        margin-bottom: 14px;
-      }
-
-      .bays-summary-pill {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 9px;
-        padding: 8px 6px;
-        text-align: center;
-      }
-
-      .bays-summary-pill span {
-        display: block;
-        font-size: 0.68rem;
-        color: #64748b;
-        font-weight: 600;
-      }
-
-      .bays-summary-pill strong {
-        font-size: 0.98rem;
-        color: #0f172a;
-      }
-
-      .bays-detail-list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-bottom: 16px;
-      }
-
-      .bay-detail-item {
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 12px 14px;
-        background: #f8fafc;
-      }
-
-      .bay-detail-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        margin-bottom: 8px;
-      }
-
-      .bay-detail-id-group {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .bay-detail-id {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: #0f172a;
-      }
-
-      .bay-status-chip {
-        font-size: 0.7rem;
-        font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 999px;
-        text-transform: uppercase;
-      }
-
-      .bay-status-chip.occupied { background: #fee2e2; color: #b91c1c; }
-      .bay-status-chip.reserved { background: #fef3c7; color: #b45309; }
-      .bay-status-chip.maintenance { background: #e2e8f0; color: #475569; }
-
-      .bay-detail-fee {
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: #15803d;
       }
 
       .bay-detail-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 6px 12px;
-        font-size: 0.8rem;
-        color: #334155;
-      }
-
-      .bay-detail-grid strong {
-        color: #64748b;
-        font-weight: 600;
-        margin-right: 4px;
-      }
-
-      .bay-detail-note-row {
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px dashed #cbd5e1;
-        font-size: 0.8rem;
-        color: #1e293b;
-        word-break: break-word;
-      }
-
-      .bay-detail-jump {
-        margin-top: 8px;
-        background: transparent;
-        border: none;
-        padding: 0;
-        color: #2563eb;
-        font-size: 0.78rem;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .bay-detail-jump:hover {
-        text-decoration: underline;
-      }
-
-      .bays-empty-state {
-        text-align: center;
-        padding: 22px 12px;
-        border: 1px dashed #cbd5e1;
-        border-radius: 10px;
-        color: #64748b;
-        font-size: 0.88rem;
-        margin-bottom: 16px;
-      }
-
-      @media (max-width: 720px) {
-        .bays-in-use-card {
-          width: 100%;
-          justify-content: space-between;
-        }
-
-        .bays-summary-strip {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .bay-detail-grid {
-          grid-template-columns: 1fr;
-        }
-      }
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -748,19 +646,8 @@
       </div>
 
       <div class="bays-in-use-card">
-        <div class="bays-in-use-meta">
-          <span class="bays-in-use-label">Bays In Use</span>
-          <span class="bays-in-use-value" id="statTotalFull">0 / 4</span>
-        </div>
-        <button
-          type="button"
-          class="bays-note-btn"
-          onclick="openBaysInUseModal()"
-          title="View detailed info for bays in use"
-          aria-label="View detailed info for bays in use"
-        >
-          <span data-icon="note"></span>
-        </button>
+        <span class="bays-in-use-label">Bays In Use</span>
+        <span class="bays-in-use-value" id="statTotalFull">0 / 4</span>
       </div>
     </div>
 
@@ -817,6 +704,19 @@
           <div class="stat-item">
             <div class="stat-label">Current Fee</div>
             <div class="stat-value" id="statFee">&#8369;0.00</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Bay Details</div>
+            <button
+              type="button"
+              class="stat-note-btn"
+              onclick="openSelectedBayModal()"
+              title="View details and notes for the selected bay"
+              aria-label="View details and notes for the selected bay"
+            >
+              <span data-icon="note"></span>
+              <span>View Notes</span>
+            </button>
           </div>
           
         </div>
@@ -1166,69 +1066,54 @@
         .replace(/"/g, "&quot;");
     }
 
-    function openBaysInUseModal() {
-      const slots = floorsData[currentFloor];
-      const inUse = slots.filter(s => s.status !== "available");
+    function openSelectedBayModal() {
+      const slot = floorsData[currentFloor][selectedIndex];
+      const isAvail = slot.status === "available";
+      const isMaint = slot.status === "maintenance";
+      const fee = calculateAccruedFee(slot);
+      const vLabel = (slot.vehicleType || "4w").toUpperCase();
+      const statusLabel = slot.status.charAt(0).toUpperCase() + slot.status.slice(1);
+      const noteText = slot.note ? escapeHtml(slot.note) : "No additional note recorded.";
 
-      const occCount = slots.filter(s => s.status === "occupied").length;
-      const resCount = slots.filter(s => s.status === "reserved").length;
-      const maintCount = slots.filter(s => s.status === "maintenance").length;
-      const availCount = slots.length - inUse.length;
-      const totalAccrued = inUse.reduce((sum, s) => sum + calculateAccruedFee(s), 0);
+      const bodyHtml = isAvail
+        ? `<div class="bays-empty-state">Bay ${escapeHtml(slot.id)} is currently available. There are no active tickets, vehicle records, or notes for this bay.</div>`
+        : `
+          <div class="bay-detail-item" style="margin-bottom: 16px;">
+            <div class="bay-detail-top">
+              <div class="bay-detail-id-group">
+                <span class="bay-detail-id">Bay ${escapeHtml(slot.id)}</span>
+                <span class="bay-status-chip ${slot.status}">${statusLabel}</span>
+              </div>
+              <span class="bay-detail-fee">${isMaint ? "No Charge" : `₱${fee.toFixed(2)}`}</span>
+            </div>
 
-      const listHtml = inUse.length === 0
-        ? `<div class="bays-empty-state">All ${slots.length} bays are currently available.</div>`
-        : `<div class="bays-detail-list">
-            ${inUse.map(s => {
-              const isMaint = s.status === "maintenance";
-              const fee = calculateAccruedFee(s);
-              const vLabel = (s.vehicleType || "4w").toUpperCase();
-              const statusLabel = s.status.charAt(0).toUpperCase() + s.status.slice(1);
-              const noteText = s.note ? escapeHtml(s.note) : "No additional note";
+            <div class="bay-detail-grid">
+              <div><strong>Plate:</strong> ${isMaint ? "N/A" : escapeHtml(slot.plate || "Unassigned")} ${!isMaint ? `(${vLabel})` : ""}</div>
+              <div><strong>Ticket ID:</strong> ${isMaint ? "N/A" : escapeHtml(slot.ticketId || "Not Assigned")}</div>
+              <div><strong>Start Time:</strong> ${isMaint ? "--:--" : escapeHtml(slot.entry || "--:--")}</div>
+              <div><strong>Duration:</strong> ${isMaint ? "N/A" : escapeHtml(formatElapsed(slot.entryTimeMs))}</div>
+            </div>
 
-              return `
-                <div class="bay-detail-item">
-                  <div class="bay-detail-top">
-                    <div class="bay-detail-id-group">
-                      <span class="bay-detail-id">Bay ${escapeHtml(s.id)}</span>
-                      <span class="bay-status-chip ${s.status}">${statusLabel}</span>
-                    </div>
-                    <span class="bay-detail-fee">${isMaint ? "No Charge" : `₱${fee.toFixed(2)}`}</span>
-                  </div>
-                  <div class="bay-detail-grid">
-                    <div><strong>Plate:</strong> ${isMaint ? "N/A" : escapeHtml(s.plate || "Unassigned")} ${!isMaint ? `(${vLabel})` : ""}</div>
-                    <div><strong>Ticket:</strong> ${isMaint ? "N/A" : escapeHtml(s.ticketId || "Not Assigned")}</div>
-                    <div><strong>Start:</strong> ${isMaint ? "--:--" : escapeHtml(s.entry || "--:--")}</div>
-                    <div><strong>Duration:</strong> ${isMaint ? "N/A" : escapeHtml(formatElapsed(s.entryTimeMs))}</div>
-                  </div>
-                  <div class="bay-detail-note-row">
-                    <strong>Note / Details:</strong> ${noteText}
-                  </div>
-                  <button type="button" class="bay-detail-jump" data-jump-bay="${escapeHtml(s.id)}">
-                    Select Bay ${escapeHtml(s.id)} on Map &rarr;
-                  </button>
-                </div>
-              `;
-            }).join("")}
-          </div>`;
+            <div class="bay-detail-note-row">
+              <strong>Note / Details:</strong> ${noteText}
+            </div>
+          </div>
+        `;
 
       const backdrop = document.createElement("div");
       backdrop.className = "pe-modal-backdrop";
       backdrop.innerHTML = `
         <div class="pe-modal-card bays-info-modal" role="dialog" aria-modal="true">
-          <h3 class="pe-modal-title">Bays In Use Details (${inUse.length} / ${slots.length})</h3>
-          <p class="pe-modal-subtitle">Live breakdown of active sessions, reservations, maintenance notes, and accrued fees (Total active fees: ₱${totalAccrued.toFixed(2)}).</p>
-
-          <div class="bays-summary-strip">
-            <div class="bays-summary-pill"><span>Occupied</span><strong class="text-red">${occCount}</strong></div>
-            <div class="bays-summary-pill"><span>Reserved</span><strong class="text-amber">${resCount}</strong></div>
-            <div class="bays-summary-pill"><span>Maintenance</span><strong class="text-slate">${maintCount}</strong></div>
-            <div class="bays-summary-pill"><span>Available</span><strong class="text-green">${availCount}</strong></div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px;">
+            <h3 class="pe-modal-title" style="margin: 0;">Bay ${escapeHtml(slot.id)} Details</h3>
+            ${isAvail ? `<span class="bay-status-chip available">Available</span>` : ""}
           </div>
+          <p class="pe-modal-subtitle">Full session telemetry and notes for the currently selected bay.</p>
 
-          ${listHtml}
+          ${bodyHtml}
 
           <div class="pe-modal-actions">
+            ${!isAvail ? `<button type="button" class="pe-modal-btn cancel" id="editBayFromModalBtn">Edit Details</button>` : ""}
             <button type="button" class="pe-modal-btn confirm" id="closeBaysInfoBtn">Close</button>
           </div>
         </div>
@@ -1253,14 +1138,13 @@
         if (e.target === backdrop) closeModal();
       });
 
-      backdrop.querySelectorAll("[data-jump-bay]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const targetId = btn.getAttribute("data-jump-bay");
-          const idx = slots.findIndex(s => s.id === targetId);
-          if (idx !== -1) selectSlot(idx);
+      const editBtn = backdrop.querySelector("#editBayFromModalBtn");
+      if (editBtn) {
+        editBtn.addEventListener("click", () => {
           closeModal();
+          setTimeout(() => assignPlateToOccupied(), 170);
         });
-      });
+      }
     }
 
     // 1. Reserve a Bay (Single custom form replaces 2 native prompts)
