@@ -271,3 +271,177 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderNotifications();
 });
+
+// Unified Modal Engine (Replaces native prompt, confirm, and alert)
+window.peForm = function ({
+  title = 'Park Easy',
+  subtitle = '',
+  fields = [],
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  showCancel = true,
+  danger = false,
+  onChange = null
+}) {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'pe-modal-backdrop';
+
+    const form = document.createElement('form');
+    form.className = 'pe-modal-card';
+    form.noValidate = true;
+
+    const titleEl = document.createElement('h3');
+    titleEl.className = 'pe-modal-title';
+    titleEl.textContent = title;
+    form.appendChild(titleEl);
+
+    if (subtitle) {
+      const subEl = document.createElement('p');
+      subEl.className = 'pe-modal-subtitle';
+      subEl.textContent = subtitle;
+      form.appendChild(subEl);
+    }
+
+    const inputsMap = {};
+
+    if (fields.length > 0) {
+      const fieldsWrap = document.createElement('div');
+      fieldsWrap.className = 'pe-modal-fields';
+
+      fields.forEach((f) => {
+        const group = document.createElement('div');
+        group.className = 'pe-modal-field';
+
+        const label = document.createElement('label');
+        label.textContent = f.label;
+        group.appendChild(label);
+
+        let control;
+        if (f.type === 'select') {
+          control = document.createElement('select');
+          control.className = 'pe-modal-select';
+          (f.options || []).forEach((opt) => {
+            const optionEl = document.createElement('option');
+            optionEl.value = typeof opt === 'string' ? opt : opt.value;
+            optionEl.textContent = typeof opt === 'string' ? opt : opt.label;
+            if (optionEl.value === String(f.value ?? '')) optionEl.selected = true;
+            control.appendChild(optionEl);
+          });
+        } else {
+          control = document.createElement('input');
+          control.className = 'pe-modal-input';
+          control.type = f.type || 'text';
+          control.placeholder = f.placeholder || '';
+          control.value = f.value ?? '';
+          if (f.type === 'number') control.step = f.step || '0.01';
+          if (f.uppercase) control.style.textTransform = 'uppercase';
+        }
+
+        control.name = f.name;
+        inputsMap[f.name] = { el: control, cfg: f };
+        group.appendChild(control);
+        fieldsWrap.appendChild(group);
+      });
+
+      form.appendChild(fieldsWrap);
+    }
+
+    const errEl = document.createElement('div');
+    errEl.className = 'pe-modal-error';
+    form.appendChild(errEl);
+
+    const actions = document.createElement('div');
+    actions.className = 'pe-modal-actions';
+
+    let cancelBtn = null;
+    if (showCancel) {
+      cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'pe-modal-btn cancel';
+      cancelBtn.textContent = cancelText;
+      actions.appendChild(cancelBtn);
+    }
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'submit';
+    confirmBtn.className = `pe-modal-btn confirm${danger ? ' danger' : ''}`;
+    confirmBtn.textContent = confirmText;
+    actions.appendChild(confirmBtn);
+
+    form.appendChild(actions);
+    backdrop.appendChild(form);
+    document.body.appendChild(backdrop);
+
+    requestAnimationFrame(() => backdrop.classList.add('open'));
+
+    const firstField = fields.length > 0 ? inputsMap[fields[0].name].el : confirmBtn;
+    firstField.focus();
+    if (firstField.select) firstField.select();
+
+    const getValues = () => {
+      const out = {};
+      Object.entries(inputsMap).forEach(([k, { el, cfg }]) => {
+        const raw = el.value.trim();
+        out[k] = cfg.uppercase ? raw.toUpperCase() : raw;
+      });
+      return out;
+    };
+
+    if (typeof onChange === 'function') {
+      Object.entries(inputsMap).forEach(([k, { el }]) => {
+        el.addEventListener('change', () => onChange(k, getValues(), inputsMap));
+      });
+    }
+
+    const cleanup = (result) => {
+      document.removeEventListener('keydown', onKeyDown);
+      backdrop.classList.remove('open');
+      setTimeout(() => backdrop.remove(), 160);
+      resolve(result);
+    };
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cleanup(null);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => cleanup(null));
+    }
+
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) cleanup(null);
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      errEl.style.display = 'none';
+
+      for (const f of fields) {
+        const val = inputsMap[f.name].el.value.trim();
+        if (f.required && !val) {
+          errEl.textContent = `Please fill out "${f.label}".`;
+          errEl.style.display = 'block';
+          inputsMap[f.name].el.focus();
+          return;
+        }
+      }
+
+      cleanup(fields.length > 0 ? getValues() : true);
+    });
+  });
+};
+
+window.peConfirm = function (title, subtitle, options = {}) {
+  return window.peForm({
+    title,
+    subtitle,
+    fields: [],
+    confirmText: 'Confirm',
+    ...options
+  }).then((res) => Boolean(res));
+};

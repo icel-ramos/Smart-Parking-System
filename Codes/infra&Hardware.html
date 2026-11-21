@@ -356,19 +356,24 @@
       }).join('');
     }
 
-    function configureDevice(deviceId) {
+    async function configureDevice(deviceId) {
       const dev = devices.find(d => d.id === deviceId);
       if (!dev) return;
 
       const nextStatus = dev.status === 'Online' ? 'Offline' : 'Online';
       const nextHealth = nextStatus === 'Online' ? 100 : 0;
 
-      if (confirm(`Toggle ${dev.name} (${dev.id}) status to ${nextStatus}?`)) {
-        window.dbUpdate(`devices/${deviceId}`, {
-          status: nextStatus,
-          health: nextHealth
-        });
-      }
+      const ok = await window.peConfirm(
+        `Toggle Device Status`,
+        `Switch ${dev.name} (${dev.id}) to ${nextStatus}?`,
+        { confirmText: `Set ${nextStatus}`, danger: nextStatus === 'Offline' }
+      );
+      if (!ok) return;
+
+      window.dbUpdate(`devices/${deviceId}`, {
+        status: nextStatus,
+        health: nextHealth
+      });
     }
 
     window.dbListen('devices', (devicesObj) => {

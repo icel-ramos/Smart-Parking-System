@@ -430,23 +430,38 @@
       renderDashboard();
     }
 
-    // 1. Reserve a Bay (Charges standard rate immediately & creates active transaction)
-    function reserveSlot() {
+    // 1. Reserve a Bay (Single custom form replaces 2 native prompts)
+    async function reserveSlot() {
       const slot = floorsData[currentFloor][selectedIndex];
-      const plateInput = prompt(`Reserve Bay ${slot.id} - Enter Vehicle Plate Number:`, "");
-      if (plateInput === null) return;
+      const result = await window.peForm({
+        title: `Reserve Bay ${slot.id}`,
+        subtitle: 'Assign a vehicle plate and type to lock this bay at the standard rate.',
+        confirmText: 'Reserve Bay',
+        fields: [
+          { name: 'plate', label: 'Vehicle Plate Number', placeholder: 'e.g., ABC 1234', uppercase: true },
+          {
+            name: 'vehicleType',
+            label: 'Vehicle Type',
+            type: 'select',
+            value: '4w',
+            options: [
+              { value: '4w', label: `4 Wheelers (₱${activeRates['4w'].firstHour.toFixed(2)} first hr)` },
+              { value: '2w', label: `2 Wheelers (₱${activeRates['2w'].firstHour.toFixed(2)} first hr)` }
+            ]
+          }
+        ]
+      });
+      if (!result) return;
 
-      const cleanPlate = plateInput.trim().toUpperCase() || "RESERVED";
-      const vehInput = prompt("Enter Vehicle Type (4W for 4 Wheelers, 2W for 2 Wheelers):", "4W") || "4W";
-      const is2W = vehInput.toLowerCase().includes("2");
-      const vehicleType = is2W ? "2w" : "4w";
+      const cleanPlate = result.plate || "RESERVED";
+      const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
+      const is2W = vehicleType === "2w";
       const rateAmount = activeRates[vehicleType].firstHour.toFixed(2);
 
       const nowMs = Date.now();
       const timeStr = getCurrentTimeStr();
       const ticketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
 
-      // Create an active Unpaid transaction so reservation is charged the standard rate
       window.dbUpdate(`transactions/${ticketId}`, {
         id: ticketId,
         slotId: slot.id,
@@ -460,7 +475,6 @@
         timestamp: nowMs
       });
 
-      // Lock bay in manual mode with red LED so walk-in vehicles know it is taken
       window.dbUpdate(`slots/${slot.id}`, {
         status: "reserved",
         forced: true,
@@ -479,28 +493,32 @@
       }
     }
 
-    // 2. Transition Reserved Bay to Occupied when vehicle physically parks (keeps original billing timer)
-    function markArrived() {
+    // 3. Assign or update a Plate Number + Billing Ticket
+    async function assignPlateToOccupied() {
       const slot = floorsData[currentFloor][selectedIndex];
-      window.dbUpdate(`slots/${slot.id}`, {
-        status: "occupied",
-        note: "Parked"
+      const result = await window.peForm({
+        title: `${slot.plate ? 'Update' : 'Assign'} Plate — Bay ${slot.id}`,
+        subtitle: 'Link a plate number and vehicle class to track billing for this bay.',
+        confirmText: 'Save Ticket',
+        fields: [
+          { name: 'plate', label: 'Plate Number', value: slot.plate || '', placeholder: 'e.g., ABC 1234', required: true, uppercase: true },
+          {
+            name: 'vehicleType',
+            label: 'Vehicle Type',
+            type: 'select',
+            value: (slot.vehicleType || '4w').toLowerCase().includes('2') ? '2w' : '4w',
+            options: [
+              { value: '4w', label: '4 Wheelers' },
+              { value: '2w', label: '2 Wheelers' }
+            ]
+          }
+        ]
       });
-      if (window.pushNotification) {
-        window.pushNotification("Reserved Vehicle Arrived", `${slot.plate || 'Vehicle'} parked in Bay ${slot.id}.`);
-      }
-    }
+      if (!result) return;
 
-    // 3. Assign or update a Plate Number + Billing Ticket for a walk-in Occupied bay
-    function assignPlateToOccupied() {
-      const slot = floorsData[currentFloor][selectedIndex];
-      const plateInput = prompt(`Enter Plate Number for Bay ${slot.id}:`, slot.plate || "");
-      if (!plateInput || !plateInput.trim()) return;
-
-      const cleanPlate = plateInput.trim().toUpperCase();
-      const vehInput = prompt("Enter Vehicle Type (4W or 2W):", (slot.vehicleType || "4W").toUpperCase()) || "4W";
-      const is2W = vehInput.toLowerCase().includes("2");
-      const vehicleType = is2W ? "2w" : "4w";
+      const cleanPlate = result.plate;
+      const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
+      const is2W = vehicleType === "2w";
       const currentFee = calculateAccruedFee({ ...slot, vehicleType }).toFixed(2);
 
       const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
@@ -528,13 +546,20 @@
       });
     }
 
-    // 4. Put Bay Under Maintenance or Flag an Accident/Incident (No fee charged)
-    function setMaintenance() {
+    // 4. Put Bay Under Maintenance or Flag an Accident/Incident
+    async function setMaintenance() {
       const slot = floorsData[currentFloor][selectedIndex];
-      const reason = prompt(`Enter maintenance or incident reason for Bay ${slot.id}:`, slot.note || "Scheduled Maintenance");
-      if (reason === null) return;
+      const result = await window.peForm({
+        title: `Maintenance — Bay ${slot.id}`,
+        subtitle: 'Mark this bay unavailable and lock its indicator LED to red.',
+        confirmText: 'Set Maintenance',
+        fields: [
+          { name: 'reason', label: 'Maintenance / Incident Reason', value: slot.note || 'Scheduled Maintenance', placeholder: 'e.g., Sensor calibration' }
+        ]
+      });
+      if (!result) return;
 
-      const cleanReason = reason.trim() || "Under Maintenance";
+      const cleanReason = result.reason || "Under Maintenance";
 
       window.dbUpdate(`slots/${slot.id}`, {
         status: "maintenance",
@@ -553,15 +578,18 @@
       }
     }
 
-    // 5. Settle accrued parking/reservation fee and release bay back to Available
-    function settleAndReleaseSlot() {
+    // 5. Settle accrued parking/reservation fee and release bay
+    async function settleAndReleaseSlot() {
       const slot = floorsData[currentFloor][selectedIndex];
       const finalFee = calculateAccruedFee(slot).toFixed(2);
       const timeOutStr = getCurrentTimeStr();
 
-      if (!confirm(`Settle Bay ${slot.id} (${slot.plate || 'Vehicle'}) for ₱${finalFee} and release the bay?`)) {
-        return;
-      }
+      const confirmed = await window.peConfirm(
+        `Settle & Release Bay ${slot.id}`,
+        `Confirm payment of ₱${finalFee} for ${slot.plate || 'this vehicle'} and restore Bay ${slot.id} to Available?`,
+        { confirmText: `Settle ₱${finalFee}` }
+      );
+      if (!confirmed) return;
 
       if (slot.ticketId) {
         window.dbUpdate(`transactions/${slot.ticketId}`, {

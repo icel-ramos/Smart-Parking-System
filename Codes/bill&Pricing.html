@@ -285,29 +285,51 @@
       updateKPIs();
     });
 
-    function addTransactionPrompt() {
-      const plate = prompt("Enter vehicle plate number (e.g., ABC 1234):");
-      if (!plate || !plate.trim()) return;
+    async function addTransactionPrompt() {
+      const result = await window.peForm({
+        title: 'New Parking Ticket',
+        subtitle: 'Record a manual vehicle entry or completed payment.',
+        confirmText: 'Create Ticket',
+        fields: [
+          { name: 'plate', label: 'Vehicle Plate Number', placeholder: 'e.g., ABC 1234', required: true, uppercase: true },
+          {
+            name: 'vehicle',
+            label: 'Vehicle Type',
+            type: 'select',
+            value: '4 Wheelers',
+            options: ['4 Wheelers', '2 Wheelers']
+          },
+          { name: 'amount', label: 'Parking Fee (PHP)', type: 'number', value: ratesData[1].firstHour, required: true },
+          {
+            name: 'status',
+            label: 'Payment Status',
+            type: 'select',
+            value: 'Paid',
+            options: ['Paid', 'Unpaid']
+          }
+        ],
+        onChange: (changedField, values, inputsMap) => {
+          if (changedField === 'vehicle') {
+            const is2W = values.vehicle.toLowerCase().includes('2');
+            inputsMap.amount.el.value = is2W ? ratesData[0].firstHour : ratesData[1].firstHour;
+          }
+        }
+      });
+      if (!result) return;
 
-      const vehicleChoice = prompt("Enter vehicle type (4 Wheelers or 2 Wheelers):", "4 Wheelers") || "4 Wheelers";
-      const is2W = vehicleChoice.toLowerCase().includes("2");
-      const defaultRate = is2W ? ratesData[0].firstHour : ratesData[1].firstHour;
-
-      const amountInput = prompt("Enter parking fee amount (PHP):", defaultRate) || defaultRate;
-      const statusInput = prompt("Payment status (Paid or Unpaid):", "Paid") || "Paid";
-
+      const is2W = result.vehicle.toLowerCase().includes("2");
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const ticketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
 
       const newTx = {
         id: ticketId,
-        plate: plate.trim().toUpperCase(),
+        plate: result.plate,
         vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
         timeIn: timeStr,
-        timeOut: statusInput.toLowerCase() === "paid" ? timeStr : "--:--",
-        amount: (parseFloat(amountInput) || 0).toFixed(2),
-        status: statusInput.toLowerCase() === "unpaid" ? "Unpaid" : "Paid",
+        timeOut: result.status === "Paid" ? timeStr : "--:--",
+        amount: (parseFloat(result.amount) || 0).toFixed(2),
+        status: result.status === "Unpaid" ? "Unpaid" : "Paid",
         timestamp: Date.now()
       };
 

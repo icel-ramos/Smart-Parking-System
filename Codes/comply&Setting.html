@@ -347,21 +347,35 @@
       fileInput.click();
     }
 
-    fileInput.addEventListener('change', function () {
+    fileInput.addEventListener('change', async function () {
       if (this.files && this.files[0] && activeDocRow) {
         const fileName = this.files[0].name;
         const currentExpiry = activeDocRow.querySelector('.expiry-date').textContent;
-        const newExpiry = prompt('Enter document expiry date:', currentExpiry !== '-' ? currentExpiry : 'December 31, 2026');
+        const docTitle = activeDocRow.querySelector('.doc-title').textContent;
+
+        const result = await window.peForm({
+          title: `Upload ${docTitle}`,
+          subtitle: `Selected file: ${fileName}`,
+          confirmText: 'Stage Upload',
+          fields: [
+            {
+              name: 'expiry',
+              label: 'Document Expiry Date',
+              value: currentExpiry !== '-' ? currentExpiry : 'December 31, 2026',
+              placeholder: 'e.g., December 31, 2026'
+            }
+          ]
+        });
+        if (!result) return;
 
         activeDocRow.querySelector('.doc-file').textContent = fileName;
-        activeDocRow.querySelector('.expiry-date').textContent = (newExpiry && newExpiry.trim()) ? newExpiry.trim() : 'Uploaded';
+        activeDocRow.querySelector('.expiry-date').textContent = result.expiry || 'Uploaded';
         activeDocRow.dataset.status = 'valid';
 
         const pill = activeDocRow.querySelector('.status-pill');
         pill.className = 'status-pill valid';
         pill.innerHTML = '<span class="dot"></span> Valid';
 
-        const docTitle = activeDocRow.querySelector('.doc-title').textContent;
         showStatusMessage('Document "' + fileName + '" staged. Click Save Changes to sync to Firebase.');
         if (window.pushNotification) {
           window.pushNotification('Document Uploaded', fileName + ' uploaded for ' + docTitle + '.');
@@ -369,21 +383,26 @@
       }
     });
 
-    function addComplianceDoc() {
-      const docName = prompt('Enter compliance document or permit name:');
-      if (!docName || !docName.trim()) return;
-
-      const expiryInput = prompt('Enter expiry date (optional, e.g., December 31, 2026):', '-');
-      const expiryText = expiryInput && expiryInput.trim() ? expiryInput.trim() : '-';
+    async function addComplianceDoc() {
+      const result = await window.peForm({
+        title: 'Add Compliance Document',
+        subtitle: 'Create a new permit or certificate requirement to track.',
+        confirmText: 'Add Document',
+        fields: [
+          { name: 'docName', label: 'Document / Permit Name', placeholder: 'e.g., Sanitary Permit', required: true },
+          { name: 'expiry', label: 'Expiry Date (Optional)', value: '-', placeholder: 'e.g., December 31, 2026' }
+        ]
+      });
+      if (!result) return;
 
       appendDocRow({
-        title: docName.trim(),
+        title: result.docName,
         file: 'No document uploaded',
-        expiry: expiryText,
+        expiry: result.expiry || '-',
         status: 'none'
       });
 
-      showStatusMessage('Added "' + docName.trim() + '". Click Save Changes to sync to Firebase.');
+      showStatusMessage('Added "' + result.docName + '". Click Save Changes to sync to Firebase.');
     }
 
     function appendDocRow(doc) {
@@ -451,23 +470,34 @@
       }).join('');
     }
 
-    function addNewUser() {
-      const name = prompt('Enter new user full name:');
-      if (!name || !name.trim()) return;
+    async function addNewUser() {
+      const result = await window.peForm({
+        title: 'Add Dashboard User',
+        subtitle: 'Register a staff member and assign their operational role.',
+        confirmText: 'Add User',
+        fields: [
+          { name: 'name', label: 'Full Name', placeholder: 'e.g., Juan Dela Cruz', required: true },
+          { name: 'email', label: 'Email Address', type: 'email', placeholder: 'e.g., operator@parkeasy.ph', required: true },
+          {
+            name: 'role',
+            label: 'Role',
+            type: 'select',
+            value: 'Operator',
+            options: ['Operator', 'Admin', 'Cashier']
+          }
+        ]
+      });
+      if (!result) return;
 
-      const email = prompt('Enter user email address:');
-      if (!email || !email.trim()) return;
-
-      const role = prompt('Enter role (Admin, Operator, or Cashier):', 'Operator') || 'Operator';
       usersList.push({
-        name: name.trim(),
-        email: email.trim(),
-        role: role.trim(),
+        name: result.name,
+        email: result.email,
+        role: result.role,
         lastActive: 'Just now'
       });
 
       renderUsersTable();
-      showStatusMessage('User "' + name.trim() + '" staged. Click Save Changes to sync to Firebase.');
+      showStatusMessage('User "' + result.name + '" staged. Click Save Changes to sync to Firebase.');
     }
 
     function saveChanges() {
