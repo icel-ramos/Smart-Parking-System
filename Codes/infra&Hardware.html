@@ -263,20 +263,18 @@
       window.dbUpdate(`slots/${slot.key}`, updates);
     }
 
-    function setSlotLight(index, color) {
-      const slot = slots[index];
-      const isOccupied = color === 'red';
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      window.dbUpdate(`slots/${slot.key}`, {
-        light: color,
-        status: isOccupied ? 'occupied' : 'available',
-        forced: isOccupied,
-        entry: isOccupied ? timeStr : '--:--',
-        entryTimeMs: isOccupied ? Date.now() : 0
-      });
-    }
+function setSlotLight(index, color) {
+  const slot = slots[index];
+
+  if (!slot || slot.mode !== 'manual') return;
+  if (color !== 'red' && color !== 'green') return;
+
+  window.dbUpdate(`slots/${slot.key}`, {
+    light: color
+  });
+}
+
 
     window.dbListen('slots', (slotsData) => {
       if (!slotsData) return;
