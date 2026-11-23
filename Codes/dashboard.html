@@ -6,6 +6,30 @@
   <title>Smart Parking System - Dashboard</title>
   <link rel="stylesheet" href="global.css">
   <link rel="stylesheet" href="dashboard.css">
+  <style>
+    .chart-wrapper {
+      position: relative;
+      cursor: crosshair;
+      touch-action: pan-y;
+    }
+
+    .axis-label-x-sub {
+      font-size: 9.5px;
+      fill: #94a3b8;
+      text-anchor: middle;
+      font-weight: 500;
+    }
+
+    .chart-dot {
+      transition: r 0.12s ease, stroke-width 0.12s ease;
+    }
+
+    .chart-tooltip {
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 5;
+    }
+  </style>
 </head>
 <body>
 
@@ -47,7 +71,7 @@
         <span>Reporting Period:</span>
         <select class="dropdown-inline" id="globalPeriodSelect" onchange="refreshDashboard()">
           <option value="today">Today (Hourly)</option>
-          <option value="week">This Week (Daily)</option>
+          <option value="week" selected>Last 7 Days (Daily)</option>
           <option value="all">All Time</option>
         </select>
       </div>
@@ -75,18 +99,18 @@
         </div>
       </div>
 
-      <!-- Card 2: Currently Parked Vehicles (Active Unpaid Tickets) -->
+      <!-- Card 2: Currently Parked Vehicles (Synced to Live Occupied Bays) -->
       <div class="kpi-box">
         <div>
           <div class="kpi-top">
             <span class="kpi-label">Currently Parked</span>
-            <span class="kpi-tag">Active Tickets</span>
+            <span class="kpi-tag" id="kpiParkedBadge">Live Bays</span>
           </div>
           <div class="kpi-main-val" id="kpiActiveTotal">0 Vehicles</div>
         </div>
         <div class="kpi-sub-row">
-          <span>2W: <strong id="kpiActive2W">0</strong> &bull; 4W: <strong id="kpiActive4W">0</strong></span>
-          <span>Available: <strong id="dashAvailable">4</strong></span>
+          <span>2W: <strong id="kpiActive2W">0</strong> &bull; 4W+: <strong id="kpiActive4W">0</strong></span>
+          <span id="dashAvailWrap">Available: <strong id="dashAvailable">4</strong></span>
         </div>
       </div>
 
@@ -95,27 +119,27 @@
         <div>
           <div class="kpi-top">
             <span class="kpi-label">Total Logged Visits</span>
-            <span class="kpi-tag" id="kpiPeriodBadge">Today</span>
+            <span class="kpi-tag" id="kpiPeriodBadge">Last 7 Days</span>
           </div>
           <div class="kpi-main-val" id="kpiLoggedTotal">0 Visits</div>
         </div>
         <div class="kpi-sub-row">
           <span>Completed: <strong id="kpiCompletedCount">0</strong></span>
-          <span>2W: <strong id="kpiLogged2W">0</strong> | 4W: <strong id="kpiLogged4W">0</strong></span>
+          <span>2W: <strong id="kpiLogged2W">0</strong> | 4W+: <strong id="kpiLogged4W">0</strong></span>
         </div>
       </div>
 
-      <!-- Card 4: Collected Revenue vs Pending Fees -->
+      <!-- Card 4: Collected Revenue vs Live Pending Fees -->
       <div class="kpi-box">
         <div>
           <div class="kpi-top">
             <span class="kpi-label">Collected Revenue</span>
-            <span class="kpi-tag" id="kpiRevBadge">Today</span>
+            <span class="kpi-tag" id="kpiRevBadge">Last 7 Days</span>
           </div>
           <div class="kpi-main-val" id="kpiCollectedRev">&#8369;0</div>
         </div>
         <div class="kpi-sub-row">
-          <span>Pending (Unpaid):</span>
+          <span>Pending (Live + Unpaid):</span>
           <strong id="kpiPendingRev" style="color: #d97706;">&#8369;0</strong>
         </div>
       </div>
@@ -124,13 +148,13 @@
     <!-- Main 2-Column Workspace -->
     <section class="workspace-grid">
 
-      <!-- Left Column: Graphical Summary with Proper X & Y Axes -->
+      <!-- Left Column: Smooth Linear Graphical Summary -->
       <div class="panel-card">
         <div>
           <div class="panel-header">
             <div>
               <h3 class="panel-title">Graphical Summary</h3>
-              <p class="panel-subtitle" id="chartSubtitle">Hourly vehicle arrivals (Today)</p>
+              <p class="panel-subtitle" id="chartSubtitle">Collected revenue (&#8369;) over the last 7 days</p>
             </div>
             <div class="chart-controls">
               <select class="dropdown-inline" id="chartMetricSelect" onchange="updateChart()">
@@ -141,7 +165,7 @@
           </div>
 
           <div class="chart-wrapper" id="interactiveChart">
-            <svg class="chart-svg" viewBox="0 0 620 230">
+            <svg class="chart-svg" id="summaryChartSvg" viewBox="0 0 620 242">
               <defs>
                 <linearGradient id="grad4W" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.22"/>
@@ -153,39 +177,40 @@
                 </linearGradient>
               </defs>
 
-              <!-- Y-Axis Gridlines & Labels (Rendered by JS) -->
+              <!-- Y-Axis Gridlines & Labels -->
               <g id="chartGridGroup"></g>
 
-              <!-- Shaded Area Fills -->
+              <!-- Smooth Shaded Area Fills -->
               <path id="area4W" d="" fill="url(#grad4W)"/>
               <path id="area2W" d="" fill="url(#grad2W)"/>
 
-              <!-- Data Lines -->
+              <!-- Smooth Data Curves -->
               <path id="path2W" d="" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
               <path id="path4W" d="" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
 
-              <!-- Data Dots & X-Axis Labels (Rendered by JS) -->
+              <!-- Hover Vertical Indicator Line -->
+              <line id="chartHoverLine" class="chart-hover-line" x1="0" y1="18" x2="0" y2="192" style="display: none;"/>
+
+              <!-- Data Dots & X-Axis Labels -->
               <g id="chartDotsGroup"></g>
               <g id="chartXAxisGroup"></g>
-
-              <!-- Hover Vertical Indicator Line -->
-              <line id="chartHoverLine" class="chart-hover-line" x1="0" y1="15" x2="0" y2="195" style="display: none;"/>
             </svg>
 
             <div class="chart-tooltip" id="chartTooltip" style="display: none;">
-              <strong id="tooltipLabel">--:--</strong><br>
-              <span style="color:#60a5fa;" id="tooltip4W">4W: 0</span> &bull;
-              <span style="color:#fbbf24;" id="tooltip2W">2W: 0</span>
+              <strong id="tooltipLabel">--</strong><br>
+              <span style="color:#60a5fa;" id="tooltip4W">4W+: &#8369;0</span> &bull;
+              <span style="color:#fbbf24;" id="tooltip2W">2W: &#8369;0</span>
+              <div style="color:#cbd5e1; font-size:0.72rem; margin-top:2px;" id="tooltipTotal">Total: &#8369;0</div>
             </div>
           </div>
         </div>
 
         <div class="chart-footer">
           <div class="chart-legend">
-            <span class="legend-item"><span class="legend-dot" style="background:#3b82f6;"></span> 4 Wheelers</span>
-            <span class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> 2 Wheelers</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#3b82f6;"></span> 4-Wheelers+</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> 2-Wheeler</span>
           </div>
-          <span id="chartPeakNote">Hover or tap points to inspect exact time and value</span>
+          <span id="chartPeakNote">Hover or tap points to inspect exact date and value</span>
         </div>
       </div>
 
@@ -195,7 +220,7 @@
           <div class="panel-header">
             <div>
               <h3 class="panel-title">Vehicle &amp; Revenue Breakdown</h3>
-              <p class="panel-subtitle">Separates currently parked vehicles from period totals</p>
+              <p class="panel-subtitle">Synced with live occupied bays and period transactions</p>
             </div>
           </div>
 
@@ -204,7 +229,7 @@
               <thead>
                 <tr>
                   <th>Category</th>
-                  <th class="num" title="Vehicles currently inside (Unpaid)">Active Now</th>
+                  <th class="num" title="Vehicles currently parked in Floor 1 bays">Active Now</th>
                   <th class="num" title="Total sessions logged during selected period">Logged Visits</th>
                   <th class="num">Paid Rev</th>
                   <th class="num">Pending</th>
@@ -213,7 +238,7 @@
               <tbody>
                 <tr>
                   <td>
-                    <span class="veh-badge"><span class="veh-dot" style="background:#f59e0b;"></span> 2 Wheelers</span>
+                    <span class="veh-badge"><span class="veh-dot" style="background:#f59e0b;"></span> 2-Wheeler</span>
                   </td>
                   <td class="num" id="tbl2WActive">0</td>
                   <td class="num" id="tbl2WLogged">0</td>
@@ -222,7 +247,7 @@
                 </tr>
                 <tr>
                   <td>
-                    <span class="veh-badge"><span class="veh-dot" style="background:#3b82f6;"></span> 4 Wheelers</span>
+                    <span class="veh-badge"><span class="veh-dot" style="background:#3b82f6;"></span> 4-Wheelers+</span>
                   </td>
                   <td class="num" id="tbl4WActive">0</td>
                   <td class="num" id="tbl4WLogged">0</td>
@@ -256,22 +281,6 @@
       </div>
     </section>
 
-    <!-- Full-Width ESP32 Connection Status -->
-    <div class="esp32-status-card" style="margin-top: 16px;">
-      <div class="esp32-status-left">
-        <div class="esp32-device-icon" data-icon="hardware" style="display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; background:#eff6ff; color:#2563eb;"></div>
-        <div>
-          <h3>Smart Parking System</h3>
-          <p id="esp32LastSeen">Waiting for device...</p>
-        </div>
-      </div>
-
-      <div class="esp32-status-right">
-        <span id="esp32Status" class="esp32-badge checking">● Checking...</span>
-        <small id="esp32Connection">Firebase Connection</small>
-      </div>
-    </div>
-
   </main>
 
   <footer class="site-footer">
@@ -284,27 +293,43 @@
 
   <script src="global.js"></script>
   <script>
-    let allTransactions = [];
+    const ORDERED_SLOT_IDS = ['1A-01', '1A-02', '1A-03', '1A-04'];
+    const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-    // Chart SVG Coordinate Constants (Leaves room for Y-axis on left and X-axis on bottom)
-    const CHART_LEFT = 52;
-    const CHART_RIGHT = 602;
+    let allTransactions = [];
+    let liveSlots = ORDERED_SLOT_IDS.map(id => ({
+      id,
+      status: 'available',
+      vehicleType: '4w',
+      ticketId: '',
+      entryTimeMs: 0
+    }));
+
+    const activeRates = {
+      '2w': { firstHour: 20, extraHour: 10, dailyMax: 100 },
+      '4w': { firstHour: 40, extraHour: 20, dailyMax: 200 }
+    };
+
+    // Chart SVG Coordinate Constants
+    const CHART_LEFT = 56;
+    const CHART_RIGHT = 598;
     const CHART_TOP = 18;
-    const CHART_BOTTOM = 195;
+    const CHART_BOTTOM = 192;
     const CHART_W = CHART_RIGHT - CHART_LEFT;
     const CHART_H = CHART_BOTTOM - CHART_TOP;
 
-    window.chartData = {
-      today: {
-        labels: ['6AM', '9AM', '12PM', '3PM', '6PM', '9PM', '12AM'],
-        parking: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] },
-        revenue: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] }
-      },
-      week: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        parking: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] },
-        revenue: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] }
-      }
+    // Active rendered chart series state for accurate hover lookup
+    let activeChartState = {
+      labels: [],
+      subLabels: [],
+      tooltipLabels: [],
+      twoW: [],
+      fourW: [],
+      pts2W: [],
+      pts4W: [],
+      metric: 'revenue',
+      hoveredIndex: -1
     };
 
     function escapeHtml(str) {
@@ -320,28 +345,121 @@
       });
     }
 
+    function formatPeso(amount) {
+      const val = Math.round(Number(amount) || 0);
+      return '₱' + val.toLocaleString('en-PH');
+    }
+
+    function toLocalDateKey(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function startOfLocalDay(dateObj) {
+      return new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    }
+
+    function formatShortMonthDay(dateObj) {
+      return `${MONTH_SHORT[dateObj.getMonth()]} ${dateObj.getDate()}`;
+    }
+
+    function formatFullDateLabel(dateObj) {
+      return `${DAY_SHORT[dateObj.getDay()]}, ${MONTH_SHORT[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
+    }
+
+    function parseTxDate(tx, fallbackNow) {
+      const ts = Number(tx?.timestamp);
+      if (Number.isFinite(ts) && ts > 0) {
+        return new Date(ts);
+      }
+      return fallbackNow;
+    }
+
+    function parseTxHour(tx, txDate) {
+      if (tx?.timeIn && String(tx.timeIn).includes(':')) {
+        const h = parseInt(String(tx.timeIn).split(':')[0], 10);
+        if (!isNaN(h) && h >= 0 && h <= 23) return h;
+      }
+      return txDate.getHours();
+    }
+
+    function isTwoWheeler(val) {
+      return String(val || '').toLowerCase().includes('2');
+    }
+
+    function calculateSlotAccruedFee(slot) {
+      if (!slot || (slot.status !== 'occupied' && slot.status !== 'reserved')) return 0;
+      const rateKey = isTwoWheeler(slot.vehicleType) ? '2w' : '4w';
+      const rate = activeRates[rateKey] || activeRates['4w'];
+      if (!slot.entryTimeMs) return rate.firstHour;
+
+      const elapsedHours = Math.max(0, (Date.now() - slot.entryTimeMs) / (1000 * 60 * 60));
+      const billableHours = Math.max(1, Math.ceil(elapsedHours));
+      let total = rate.firstHour + Math.max(0, billableHours - 1) * rate.extraHour;
+      if (rate.dailyMax > 0 && total > rate.dailyMax) {
+        total = rate.dailyMax;
+      }
+      return total;
+    }
+
     // 1. Live Ground Floor Occupancy & Mini Bay Pills (/slots)
     window.dbListen('slots', (slotsObj) => {
-      if (!slotsObj) return;
-      const orderedIds = ['1A-01', '1A-02', '1A-03', '1A-04'];
+      const safeObj = slotsObj || {};
+      liveSlots = ORDERED_SLOT_IDS.map(id => {
+        const s = safeObj[id] || {};
+        return {
+          id,
+          status: (s.status || 'available').toLowerCase(),
+          vehicleType: s.vehicleType || '4w',
+          ticketId: s.ticketId || '',
+          entryTimeMs: Number(s.entryTimeMs) || 0,
+          plate: s.plate || ''
+        };
+      });
+
+      renderOccupancyCard();
+      refreshDashboard();
+    });
+
+    // 2. Live Pricing Rates (/rates) for accurate live Pending fees
+    window.dbListen('rates', (ratesObj) => {
+      if (!ratesObj) return;
+      ['2w', '4w'].forEach(key => {
+        if (ratesObj[key]) {
+          activeRates[key] = {
+            firstHour: parseFloat(ratesObj[key].firstHour) || (key === '2w' ? 20 : 40),
+            extraHour: parseFloat(ratesObj[key].extraHour) || (key === '2w' ? 10 : 20),
+            dailyMax: parseFloat(ratesObj[key].dailyMax) || (key === '2w' ? 100 : 200)
+          };
+        }
+      });
+      refreshDashboard();
+    });
+
+    // 3. Live Transactions & Revenue Analytics (/transactions)
+    window.dbListen('transactions', (txObj) => {
+      allTransactions = txObj
+        ? Object.values(txObj).sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0))
+        : [];
+      refreshDashboard();
+    });
+
+    function renderOccupancyCard() {
       let inUseCount = 0;
 
-      const pillsHtml = orderedIds.map(id => {
-        const s = slotsObj[id] || {};
-        const status = (s.status || 'available').toLowerCase();
-        const isUnavailable = status !== 'available';
-        if (isUnavailable) inUseCount++;
-
-        const validClass = ['occupied', 'reserved', 'maintenance'].includes(status)
-          ? status
+      const pillsHtml = liveSlots.map(slot => {
+        const validClass = ['occupied', 'reserved', 'maintenance'].includes(slot.status)
+          ? slot.status
           : 'available';
+        if (validClass !== 'available') inUseCount++;
 
         const statusTitle = validClass.charAt(0).toUpperCase() + validClass.slice(1);
-        return `<span class="mini-bay ${validClass}" title="${id}: ${statusTitle}">${id}</span>`;
+        return `<span class="mini-bay ${validClass}" title="${slot.id}: ${statusTitle}">${slot.id}</span>`;
       }).join('');
 
-      const total = orderedIds.length;
-      const available = Math.max(0, total - inUseCount);
+      const total = liveSlots.length;
       const occupancyRatio = total > 0 ? inUseCount / total : 0;
       const pct = Math.round(occupancyRatio * 100);
 
@@ -352,11 +470,9 @@
 
       barEl.style.width = pct + '%';
       occEl.textContent = inUseCount;
-      document.getElementById('dashAvailable').textContent = available;
       document.getElementById('dashTotal').textContent = total;
       document.getElementById('miniBaysContainer').innerHTML = pillsHtml;
 
-      // Apply yellow (>= 75%) and red (100%) warnings like parkingMap.html
       if (occupancyRatio >= 1) {
         barEl.className = 'progress-bar bar-red';
         if (mainValEl) mainValEl.className = 'kpi-main-val val-red';
@@ -379,131 +495,119 @@
           floorTagEl.textContent = 'Floor 1';
         }
       }
-    });
-
-    // 2. Live Transactions & Revenue Analytics (/transactions)
-    window.dbListen('transactions', (txObj) => {
-      allTransactions = txObj
-        ? Object.values(txObj).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-        : [];
-      refreshDashboard();
-    });
-
-    function parseTxHour(tx) {
-      if (tx.timeIn && tx.timeIn.includes(':')) {
-        const h = parseInt(tx.timeIn.split(':')[0], 10);
-        if (!isNaN(h)) return h;
-      }
-      if (tx.timestamp) {
-        return new Date(tx.timestamp).getHours();
-      }
-      return new Date().getHours();
     }
 
-    function isSameDay(ts, now) {
-      if (!ts) return true;
-      const d = new Date(ts);
-      return d.getFullYear() === now.getFullYear() &&
-             d.getMonth() === now.getMonth() &&
-             d.getDate() === now.getDate();
-    }
-
-    function isWithinThisWeek(ts, now) {
-      if (!ts) return true;
-      const diffMs = now.getTime() - ts;
-      return diffMs >= 0 && diffMs <= 7 * 24 * 60 * 60 * 1000;
+    function buildLast7DaysMeta(now) {
+      const todayStart = startOfLocalDay(now);
+      const days = [];
+      for (let offset = 6; offset >= 0; offset--) {
+        const d = new Date(todayStart.getTime() - offset * 86400000);
+        days.push({
+          key: toLocalDateKey(d),
+          date: d,
+          label: offset === 0 ? 'Today' : DAY_SHORT[d.getDay()],
+          subLabel: formatShortMonthDay(d),
+          tooltipLabel: formatFullDateLabel(d)
+        });
+      }
+      return days;
     }
 
     function refreshDashboard() {
       const period = document.getElementById('globalPeriodSelect').value;
-      const periodLabel = period === 'today' ? 'Today' : (period === 'week' ? 'This Week' : 'All Time');
+      const periodLabel = period === 'today' ? 'Today' : (period === 'week' ? 'Last 7 Days' : 'All Time');
       document.getElementById('kpiPeriodBadge').textContent = periodLabel;
       document.getElementById('kpiRevBadge').textContent = periodLabel;
 
       const now = new Date();
+      const todayKey = toLocalDateKey(now);
+      const last7Days = buildLast7DaysMeta(now);
+      const last7KeySet = new Set(last7Days.map(d => d.key));
 
-      // Reset chart arrays
-      const tP2 = [0, 0, 0, 0, 0, 0, 0], tP4 = [0, 0, 0, 0, 0, 0, 0];
-      const tR2 = [0, 0, 0, 0, 0, 0, 0], tR4 = [0, 0, 0, 0, 0, 0, 0];
-      const wP2 = [0, 0, 0, 0, 0, 0, 0], wP4 = [0, 0, 0, 0, 0, 0, 0];
-      const wR2 = [0, 0, 0, 0, 0, 0, 0], wR4 = [0, 0, 0, 0, 0, 0, 0];
-
-      // Counters for breakdown table & KPIs
-      let active2W = 0, active4W = 0;
-      let logged2W = 0, logged4W = 0;
-      let completedCount = 0;
-      let rev2W = 0, rev4W = 0;
-      let pend2W = 0, pend4W = 0;
-
+      // Map transactions by ID for linking live bays
+      const txById = {};
       allTransactions.forEach(tx => {
-        const is2W = (tx.vehicle || '').toLowerCase().includes('2');
-        const isPaid = tx.status === 'Paid';
-        const amt = parseFloat(tx.amount) || 0;
-        const ts = tx.timestamp || now.getTime();
+        if (tx && tx.id) txById[tx.id] = tx;
+      });
 
-        // Active (Currently Parked = Unpaid ticket)
-        if (!isPaid) {
+      // 1. Live Currently Parked & Live Accrued Pending Fees from /slots
+      let active2W = 0;
+      let active4W = 0;
+      let reservedCount = 0;
+      let availableCount = 0;
+      let pend2W = 0;
+      let pend4W = 0;
+
+      const accountedTicketIds = new Set();
+      const activeBillableSlotIds = new Set();
+
+      liveSlots.forEach(slot => {
+        if (slot.status === 'available') {
+          availableCount++;
+          return;
+        }
+        if (slot.status === 'maintenance') return;
+
+        const linkedTx = slot.ticketId ? txById[slot.ticketId] : null;
+        const vehSource = slot.vehicleType || (linkedTx ? linkedTx.vehicle : '4w');
+        const is2W = isTwoWheeler(vehSource);
+
+        if (slot.status === 'occupied') {
           if (is2W) active2W++;
           else active4W++;
+        } else if (slot.status === 'reserved') {
+          reservedCount++;
         }
 
-        // Populate Today Hourly Chart (Buckets: 6AM, 9AM, 12PM, 3PM, 6PM, 9PM, 12AM)
-        if (isSameDay(ts, now)) {
-          const hour = parseTxHour(tx);
-          const hourBucket = Math.min(6, Math.max(0, Math.floor((hour - 4) / 3)));
-          if (is2W) {
-            tP2[hourBucket] += 1;
-            if (isPaid) tR2[hourBucket] += amt;
-          } else {
-            tP4[hourBucket] += 1;
-            if (isPaid) tR4[hourBucket] += amt;
-          }
-        }
-
-        // Populate Weekly Chart (Mon=0 .. Sun=6)
-        if (isWithinThisWeek(ts, now)) {
-          const d = new Date(ts);
-          const dayIdx = (d.getDay() + 6) % 7;
-          if (is2W) {
-            wP2[dayIdx] += 1;
-            if (isPaid) wR2[dayIdx] += amt;
-          } else {
-            wP4[dayIdx] += 1;
-            if (isPaid) wR4[dayIdx] += amt;
-          }
-        }
-
-        // Filter for Selected Reporting Period
-        const inPeriod =
-          period === 'all' ||
-          (period === 'today' && isSameDay(ts, now)) ||
-          (period === 'week' && isWithinThisWeek(ts, now));
-
-        if (inPeriod) {
-          if (is2W) {
-            logged2W++;
-            if (isPaid) {
-              rev2W += amt;
-              completedCount++;
-            } else {
-              pend2W += amt;
-            }
-          } else {
-            logged4W++;
-            if (isPaid) {
-              rev4W += amt;
-              completedCount++;
-            } else {
-              pend4W += amt;
-            }
-          }
+        // Live accrued fee for Occupied and Reserved bays
+        if (slot.status === 'occupied' || slot.status === 'reserved') {
+          activeBillableSlotIds.add(slot.id);
+          if (slot.ticketId) accountedTicketIds.add(slot.ticketId);
+          const liveFee = calculateSlotAccruedFee({ ...slot, vehicleType: is2W ? '2w' : '4w' });
+          if (is2W) pend2W += liveFee;
+          else pend4W += liveFee;
         }
       });
 
-      window.chartData.today.parking = { twoW: tP2, fourW: tP4 };
-      window.chartData.today.revenue = { twoW: tR2, fourW: tR4 };
-      window.chartData.week.parking = { twoW: wP2, fourW: wP4 };
-      window.chartData.week.revenue = { twoW: wR2, fourW: wR4 };
+      // 2. Period Logged Visits, Collected Revenue, and Standalone Unpaid Tickets
+      let logged2W = 0;
+      let logged4W = 0;
+      let completedCount = 0;
+      let rev2W = 0;
+      let rev4W = 0;
+
+      allTransactions.forEach(tx => {
+        const txDate = parseTxDate(tx, now);
+        const txKey = toLocalDateKey(txDate);
+        const is2W = isTwoWheeler(tx.vehicle);
+        const isPaid = tx.status === 'Paid';
+        const amt = parseFloat(tx.amount) || 0;
+
+        const inPeriod =
+          period === 'all' ||
+          (period === 'today' && txKey === todayKey) ||
+          (period === 'week' && last7KeySet.has(txKey));
+
+        if (!inPeriod) return;
+
+        if (is2W) {
+          logged2W++;
+          if (isPaid) {
+            rev2W += amt;
+            completedCount++;
+          } else if (!accountedTicketIds.has(tx.id) && !activeBillableSlotIds.has(tx.slotId)) {
+            pend2W += amt;
+          }
+        } else {
+          logged4W++;
+          if (isPaid) {
+            rev4W += amt;
+            completedCount++;
+          } else if (!accountedTicketIds.has(tx.id) && !activeBillableSlotIds.has(tx.slotId)) {
+            pend4W += amt;
+          }
+        }
+      });
 
       // Update Top KPI Strip
       const totalActive = active2W + active4W;
@@ -514,30 +618,32 @@
       document.getElementById('kpiActiveTotal').textContent = `${totalActive} Vehicle${totalActive === 1 ? '' : 's'}`;
       document.getElementById('kpiActive2W').textContent = active2W;
       document.getElementById('kpiActive4W').textContent = active4W;
+      document.getElementById('kpiParkedBadge').textContent = reservedCount > 0 ? `${reservedCount} Reserved` : 'Live Bays';
+      document.getElementById('dashAvailWrap').innerHTML = `Available: <strong id="dashAvailable">${availableCount}</strong>`;
 
       document.getElementById('kpiLoggedTotal').textContent = `${totalLogged} Visit${totalLogged === 1 ? '' : 's'}`;
       document.getElementById('kpiCompletedCount').textContent = completedCount;
       document.getElementById('kpiLogged2W').textContent = logged2W;
       document.getElementById('kpiLogged4W').textContent = logged4W;
 
-      document.getElementById('kpiCollectedRev').textContent = '₱' + totalRev.toFixed(0);
-      document.getElementById('kpiPendingRev').textContent = '₱' + totalPend.toFixed(0);
+      document.getElementById('kpiCollectedRev').textContent = formatPeso(totalRev);
+      document.getElementById('kpiPendingRev').textContent = formatPeso(totalPend);
 
       // Update Breakdown Matrix Table
       document.getElementById('tbl2WActive').textContent = active2W;
       document.getElementById('tbl2WLogged').textContent = logged2W;
-      document.getElementById('tbl2WRev').textContent = '₱' + rev2W.toFixed(0);
-      document.getElementById('tbl2WPending').textContent = '₱' + pend2W.toFixed(0);
+      document.getElementById('tbl2WRev').textContent = formatPeso(rev2W);
+      document.getElementById('tbl2WPending').textContent = formatPeso(pend2W);
 
       document.getElementById('tbl4WActive').textContent = active4W;
       document.getElementById('tbl4WLogged').textContent = logged4W;
-      document.getElementById('tbl4WRev').textContent = '₱' + rev4W.toFixed(0);
-      document.getElementById('tbl4WPending').textContent = '₱' + pend4W.toFixed(0);
+      document.getElementById('tbl4WRev').textContent = formatPeso(rev4W);
+      document.getElementById('tbl4WPending').textContent = formatPeso(pend4W);
 
       document.getElementById('tblTotalActive').textContent = totalActive;
       document.getElementById('tblTotalLogged').textContent = totalLogged;
-      document.getElementById('tblTotalRev').textContent = '₱' + totalRev.toFixed(0);
-      document.getElementById('tblTotalPending').textContent = '₱' + totalPend.toFixed(0);
+      document.getElementById('tblTotalRev').textContent = formatPeso(totalRev);
+      document.getElementById('tblTotalPending').textContent = formatPeso(totalPend);
 
       renderRecentFeed();
       updateChart();
@@ -553,14 +659,15 @@
 
       container.innerHTML = recent.map(tx => {
         const isPaid = tx.status === 'Paid';
+        const vehText = isTwoWheeler(tx.vehicle) ? '2-Wheeler' : '4-Wheelers+';
         return `
           <div class="feed-item">
             <div class="feed-left">
               <span class="feed-plate">${escapeHtml(tx.plate || 'UNASSIGNED')}</span>
-              <span class="feed-meta">${escapeHtml(tx.vehicle || 'Vehicle')} &bull; In: ${escapeHtml(tx.timeIn || '--:--')}</span>
+              <span class="feed-meta">${escapeHtml(vehText)} &bull; In: ${escapeHtml(tx.timeIn || '--:--')}</span>
             </div>
             <div class="feed-right">
-              &#8369;${parseFloat(tx.amount || 0).toFixed(0)}
+              ${formatPeso(tx.amount || 0)}
               <span class="feed-status ${isPaid ? 'paid' : 'unpaid'}">${escapeHtml(tx.status || 'Unpaid')}</span>
             </div>
           </div>
@@ -568,27 +675,273 @@
       }).join('');
     }
 
-    function getChartPeriodKey() {
-      const globalPeriod = document.getElementById('globalPeriodSelect').value;
-      return globalPeriod === 'today' ? 'today' : 'week';
+    function buildChartSeries(period, metric) {
+      const now = new Date();
+      const todayStart = startOfLocalDay(now);
+      const todayKey = toLocalDateKey(now);
+      const isRev = metric === 'revenue';
+
+      // Mode A: Today (8 chronological 3-hour windows covering 00:00-23:59)
+      if (period === 'today') {
+        const labels = ['12AM', '3AM', '6AM', '9AM', '12PM', '3PM', '6PM', '9PM'];
+        const ranges = [
+          '12:00 AM - 2:59 AM', '3:00 AM - 5:59 AM', '6:00 AM - 8:59 AM', '9:00 AM - 11:59 AM',
+          '12:00 PM - 2:59 PM', '3:00 PM - 5:59 PM', '6:00 PM - 8:59 PM', '9:00 PM - 11:59 PM'
+        ];
+        const twoW = new Array(8).fill(0);
+        const fourW = new Array(8).fill(0);
+
+        allTransactions.forEach(tx => {
+          const d = parseTxDate(tx, now);
+          if (toLocalDateKey(d) !== todayKey) return;
+          const is2W = isTwoWheeler(tx.vehicle);
+          const isPaid = tx.status === 'Paid';
+          const amt = parseFloat(tx.amount) || 0;
+          const bucket = Math.min(7, Math.max(0, Math.floor(parseTxHour(tx, d) / 3)));
+
+          if (isRev) {
+            if (!isPaid) return;
+            if (is2W) twoW[bucket] += amt;
+            else fourW[bucket] += amt;
+          } else {
+            if (is2W) twoW[bucket] += 1;
+            else fourW[bucket] += 1;
+          }
+        });
+
+        return {
+          subtitle: `${isRev ? 'Collected revenue (₱)' : 'Vehicles logged'} by 3-hour window (${formatShortMonthDay(now)})`,
+          labels,
+          subLabels: new Array(8).fill(''),
+          tooltipLabels: ranges.map(r => `${formatShortMonthDay(now)} · ${r}`),
+          twoW,
+          fourW
+        };
+      }
+
+      // Mode B: Last 7 Days (Strict chronological calendar dates ending Today)
+      if (period === 'week') {
+        const days = buildLast7DaysMeta(now);
+        const indexByKey = {};
+        days.forEach((d, idx) => { indexByKey[d.key] = idx; });
+
+        const twoW = new Array(7).fill(0);
+        const fourW = new Array(7).fill(0);
+
+        allTransactions.forEach(tx => {
+          const d = parseTxDate(tx, now);
+          const idx = indexByKey[toLocalDateKey(d)];
+          if (idx === undefined) return;
+          const is2W = isTwoWheeler(tx.vehicle);
+          const isPaid = tx.status === 'Paid';
+          const amt = parseFloat(tx.amount) || 0;
+
+          if (isRev) {
+            if (!isPaid) return;
+            if (is2W) twoW[idx] += amt;
+            else fourW[idx] += amt;
+          } else {
+            if (is2W) twoW[idx] += 1;
+            else fourW[idx] += 1;
+          }
+        });
+
+        return {
+          subtitle: `${isRev ? 'Collected revenue (₱)' : 'Vehicles logged'} from ${days[0].subLabel} to ${days[6].subLabel}`,
+          labels: days.map(d => d.label),
+          subLabels: days.map(d => d.subLabel),
+          tooltipLabels: days.map(d => d.tooltipLabel),
+          twoW,
+          fourW
+        };
+      }
+
+      // Mode C: All Time (Chronological daily or multi-day buckets from earliest record to Today)
+      let earliestDay = new Date(todayStart.getTime() - 6 * 86400000);
+      allTransactions.forEach(tx => {
+        const d = startOfLocalDay(parseTxDate(tx, now));
+        if (d.getTime() < earliestDay.getTime()) {
+          earliestDay = d;
+        }
+      });
+
+      const spanDays = Math.max(6, Math.round((todayStart.getTime() - earliestDay.getTime()) / 86400000));
+
+      if (spanDays <= 11) {
+        const count = spanDays + 1;
+        const days = [];
+        const indexByKey = {};
+        for (let i = 0; i < count; i++) {
+          const d = new Date(earliestDay.getTime() + i * 86400000);
+          const key = toLocalDateKey(d);
+          indexByKey[key] = i;
+          days.push({
+            key,
+            label: i === count - 1 ? 'Today' : DAY_SHORT[d.getDay()],
+            subLabel: formatShortMonthDay(d),
+            tooltipLabel: formatFullDateLabel(d)
+          });
+        }
+
+        const twoW = new Array(count).fill(0);
+        const fourW = new Array(count).fill(0);
+
+        allTransactions.forEach(tx => {
+          const d = parseTxDate(tx, now);
+          const idx = indexByKey[toLocalDateKey(d)];
+          if (idx === undefined) return;
+          const is2W = isTwoWheeler(tx.vehicle);
+          const isPaid = tx.status === 'Paid';
+          const amt = parseFloat(tx.amount) || 0;
+
+          if (isRev) {
+            if (!isPaid) return;
+            if (is2W) twoW[idx] += amt;
+            else fourW[idx] += amt;
+          } else {
+            if (is2W) twoW[idx] += 1;
+            else fourW[idx] += 1;
+          }
+        });
+
+        return {
+          subtitle: `${isRev ? 'Collected revenue (₱)' : 'Vehicles logged'} (${days[0].subLabel} - ${days[count - 1].subLabel})`,
+          labels: days.map(d => d.label),
+          subLabels: days.map(d => d.subLabel),
+          tooltipLabels: days.map(d => d.tooltipLabel),
+          twoW,
+          fourW
+        };
+      }
+
+      // Longer history (> 12 days): 8 chronological date-range buckets
+      const bucketCount = 8;
+      const startMs = earliestDay.getTime();
+      const endMs = todayStart.getTime() + 86400000 - 1;
+      const bucketSpanMs = (endMs - startMs + 1) / bucketCount;
+
+      const labels = [];
+      const subLabels = [];
+      const tooltipLabels = [];
+      const twoW = new Array(bucketCount).fill(0);
+      const fourW = new Array(bucketCount).fill(0);
+
+      for (let i = 0; i < bucketCount; i++) {
+        const bStart = new Date(startMs + i * bucketSpanMs);
+        const bEnd = new Date(Math.min(endMs, startMs + (i + 1) * bucketSpanMs - 1));
+        labels.push(formatShortMonthDay(bStart));
+        subLabels.push(i === bucketCount - 1 ? 'Today' : '');
+        tooltipLabels.push(`${formatShortMonthDay(bStart)} - ${formatShortMonthDay(bEnd)}, ${bEnd.getFullYear()}`);
+      }
+
+      allTransactions.forEach(tx => {
+        const d = parseTxDate(tx, now);
+        const idx = Math.min(bucketCount - 1, Math.max(0, Math.floor((d.getTime() - startMs) / bucketSpanMs)));
+        const is2W = isTwoWheeler(tx.vehicle);
+        const isPaid = tx.status === 'Paid';
+        const amt = parseFloat(tx.amount) || 0;
+
+        if (isRev) {
+          if (!isPaid) return;
+          if (is2W) twoW[idx] += amt;
+          else fourW[idx] += amt;
+        } else {
+          if (is2W) twoW[idx] += 1;
+          else fourW[idx] += 1;
+        }
+      });
+
+      return {
+        subtitle: `${isRev ? 'Collected revenue (₱)' : 'Vehicles logged'} (All Time: ${formatShortMonthDay(earliestDay)} - ${formatShortMonthDay(now)})`,
+        labels,
+        subLabels,
+        tooltipLabels,
+        twoW,
+        fourW
+      };
+    }
+
+    function computeNiceMax(rawMax, isRev) {
+      const steps = 4;
+      const minFloor = isRev ? 100 : 4;
+      const target = Math.max(rawMax, minFloor);
+      const roughStep = target / steps;
+      const niceSteps = isRev
+        ? [25, 50, 100, 150, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 25000]
+        : [1, 2, 5, 10, 20, 25, 50, 100, 250, 500];
+
+      const chosen = niceSteps.find(s => s >= roughStep) || Math.ceil(roughStep / 100) * 100;
+      return chosen * steps;
+    }
+
+    // Monotone cubic Hermite spline (smooth curves that never overshoot below 0)
+    function buildSmoothLinePath(pts) {
+      if (!pts || pts.length === 0) return '';
+      if (pts.length === 1) return `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+
+      const n = pts.length;
+      const dx = [];
+      const dy = [];
+      const slopes = [];
+
+      for (let i = 0; i < n - 1; i++) {
+        dx[i] = pts[i + 1].x - pts[i].x;
+        dy[i] = pts[i + 1].y - pts[i].y;
+        slopes[i] = dx[i] !== 0 ? dy[i] / dx[i] : 0;
+      }
+
+      const m = new Array(n).fill(0);
+      m[0] = slopes[0] || 0;
+      m[n - 1] = slopes[n - 2] || 0;
+
+      for (let i = 1; i < n - 1; i++) {
+        if (slopes[i - 1] * slopes[i] <= 0) {
+          m[i] = 0;
+        } else {
+          m[i] = (slopes[i - 1] + slopes[i]) / 2;
+        }
+      }
+
+      for (let i = 0; i < n - 1; i++) {
+        if (slopes[i] === 0) {
+          m[i] = 0;
+          m[i + 1] = 0;
+        } else {
+          const a = m[i] / slopes[i];
+          const b = m[i + 1] / slopes[i];
+          const h = Math.hypot(a, b);
+          if (h > 3) {
+            const t = 3 / h;
+            m[i] = t * a * slopes[i];
+            m[i + 1] = t * b * slopes[i];
+          }
+        }
+      }
+
+      let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+      for (let i = 0; i < n - 1; i++) {
+        const segDx = dx[i] / 3;
+        const cp1x = pts[i].x + segDx;
+        const cp1y = Math.min(CHART_BOTTOM, Math.max(CHART_TOP, pts[i].y + m[i] * segDx));
+        const cp2x = pts[i + 1].x - segDx;
+        const cp2y = Math.min(CHART_BOTTOM, Math.max(CHART_TOP, pts[i + 1].y - m[i + 1] * segDx));
+        d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${pts[i + 1].x.toFixed(1)},${pts[i + 1].y.toFixed(1)}`;
+      }
+      return d;
     }
 
     function updateChart() {
+      const period = document.getElementById('globalPeriodSelect').value;
       const metric = document.getElementById('chartMetricSelect').value;
-      const periodKey = getChartPeriodKey();
-      const current = window.chartData[periodKey];
-      const series = current[metric];
       const isRev = metric === 'revenue';
+      const series = buildChartSeries(period, metric);
 
-      document.getElementById('chartSubtitle').textContent =
-        `${isRev ? 'Collected revenue (₱)' : 'Vehicles logged'} by ${periodKey === 'today' ? 'time of day (Today)' : 'day of week (This Week)'}`;
+      document.getElementById('chartSubtitle').textContent = series.subtitle;
 
-      const rawMax = Math.max(...series.twoW, ...series.fourW);
-      const maxVal = isRev
-        ? Math.max(Math.ceil(rawMax / 50) * 50, 100)
-        : Math.max(Math.ceil(rawMax / 2) * 2, 4);
+      const rawMax = Math.max(0, ...series.twoW, ...series.fourW);
+      const maxVal = computeNiceMax(rawMax, isRev);
 
-      // 1. Render 5 Horizontal Gridlines + Y-Axis Value Labels
+      // 1. Render 5 Clean Horizontal Gridlines + Y-Axis Value Labels
       const gridGroup = document.getElementById('chartGridGroup');
       let gridHtml = '';
       const steps = 4;
@@ -596,19 +949,19 @@
         const ratio = i / steps;
         const y = (CHART_BOTTOM - ratio * CHART_H).toFixed(1);
         const val = Math.round(ratio * maxVal);
-        const label = isRev ? `₱${val}` : `${val}`;
+        const label = isRev ? formatPeso(val) : String(val);
         const lineClass = i === 0 ? 'axis-baseline' : 'grid-line';
 
         gridHtml += `
           <line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" class="${lineClass}"/>
-          <text x="${CHART_LEFT - 8}" y="${Number(y) + 3.5}" class="axis-label-y">${label}</text>
+          <text x="${CHART_LEFT - 10}" y="${Number(y) + 3.5}" class="axis-label-y">${label}</text>
         `;
       }
       gridGroup.innerHTML = gridHtml;
 
-      // 2. Compute Coordinates for 2W and 4W
-      const count = current.labels.length;
-      const stepX = CHART_W / (count - 1);
+      // 2. Compute Coordinates for 2W and 4W+
+      const count = series.labels.length;
+      const stepX = count > 1 ? CHART_W / (count - 1) : 0;
 
       const pts2W = series.twoW.map((v, i) => ({
         x: +(CHART_LEFT + i * stepX).toFixed(1),
@@ -622,133 +975,176 @@
         v
       }));
 
-      const toLine = pts => pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
-      const toArea = pts => `${toLine(pts)} L${pts[pts.length - 1].x},${CHART_BOTTOM} L${pts[0].x},${CHART_BOTTOM} Z`;
+      const line2W = buildSmoothLinePath(pts2W);
+      const line4W = buildSmoothLinePath(pts4W);
+      const area2W = pts2W.length > 1
+        ? `${line2W} L${pts2W[pts2W.length - 1].x},${CHART_BOTTOM} L${pts2W[0].x},${CHART_BOTTOM} Z`
+        : '';
+      const area4W = pts4W.length > 1
+        ? `${line4W} L${pts4W[pts4W.length - 1].x},${CHART_BOTTOM} L${pts4W[0].x},${CHART_BOTTOM} Z`
+        : '';
 
-      document.getElementById('path2W').setAttribute('d', toLine(pts2W));
-      document.getElementById('path4W').setAttribute('d', toLine(pts4W));
-      document.getElementById('area2W').setAttribute('d', toArea(pts2W));
-      document.getElementById('area4W').setAttribute('d', toArea(pts4W));
+      document.getElementById('path2W').setAttribute('d', line2W);
+      document.getElementById('path4W').setAttribute('d', line4W);
+      document.getElementById('area2W').setAttribute('d', area2W);
+      document.getElementById('area4W').setAttribute('d', area4W);
 
-      // 3. Render X-Axis Time/Day Labels & Data Point Dots
+      // 3. Render X-Axis Labels (Day + Date) & Data Point Dots
       const xAxisGroup = document.getElementById('chartXAxisGroup');
       const dotsGroup = document.getElementById('chartDotsGroup');
 
       let xHtml = '';
       let dotsHtml = '';
 
-      current.labels.forEach((lbl, i) => {
+      series.labels.forEach((lbl, i) => {
         const x = (CHART_LEFT + i * stepX).toFixed(1);
-        xHtml += `<text x="${x}" y="${CHART_BOTTOM + 18}" class="axis-label-x">${lbl}</text>`;
+        const sub = series.subLabels[i] || '';
+        xHtml += `<text x="${x}" y="${CHART_BOTTOM + 18}" class="axis-label-x">${escapeHtml(lbl)}</text>`;
+        if (sub) {
+          xHtml += `<text x="${x}" y="${CHART_BOTTOM + 31}" class="axis-label-x-sub">${escapeHtml(sub)}</text>`;
+        }
         dotsHtml += `
-          <circle cx="${pts2W[i].x}" cy="${pts2W[i].y}" r="3.5" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
-          <circle cx="${pts4W[i].x}" cy="${pts4W[i].y}" r="3.5" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+          <circle class="chart-dot dot-2w" data-idx="${i}" cx="${pts2W[i].x}" cy="${pts2W[i].y}" r="3.5" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+          <circle class="chart-dot dot-4w" data-idx="${i}" cx="${pts4W[i].x}" cy="${pts4W[i].y}" r="3.5" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
         `;
       });
 
       xAxisGroup.innerHTML = xHtml;
       dotsGroup.innerHTML = dotsHtml;
+
+      activeChartState = {
+        labels: series.labels,
+        subLabels: series.subLabels,
+        tooltipLabels: series.tooltipLabels,
+        twoW: series.twoW,
+        fourW: series.fourW,
+        pts2W,
+        pts4W,
+        metric,
+        hoveredIndex: -1
+      };
+
+      clearChartHover();
     }
 
-    // Interactive Hover & Touch Inspection on Chart
+    // Pixel-Accurate SVG Coordinate Conversion
     const chartBox = document.getElementById('interactiveChart');
+    const chartSvg = document.getElementById('summaryChartSvg');
     const tooltip = document.getElementById('chartTooltip');
     const hoverLine = document.getElementById('chartHoverLine');
 
-    function handleChartPointer(clientX) {
-      const rect = chartBox.getBoundingClientRect();
-      const scaleX = 620 / rect.width;
-      const svgX = (clientX - rect.left) * scaleX;
+    function clientToSvgX(clientX, clientY) {
+      const ctm = chartSvg.getScreenCTM();
+      if (!ctm) {
+        const rect = chartSvg.getBoundingClientRect();
+        return ((clientX - rect.left) / Math.max(1, rect.width)) * 620;
+      }
+      const pt = chartSvg.createSVGPoint();
+      pt.x = clientX;
+      pt.y = clientY;
+      return pt.matrixTransform(ctm.inverse()).x;
+    }
 
+    function svgToWrapperCoords(svgX, svgY) {
+      const ctm = chartSvg.getScreenCTM();
+      const wrapRect = chartBox.getBoundingClientRect();
+      if (!ctm) {
+        return { x: (svgX / 620) * wrapRect.width, y: 10 };
+      }
+      const pt = chartSvg.createSVGPoint();
+      pt.x = svgX;
+      pt.y = svgY;
+      const screenPt = pt.matrixTransform(ctm);
+      return {
+        x: screenPt.x - wrapRect.left,
+        y: screenPt.y - wrapRect.top
+      };
+    }
+
+    function highlightChartDot(idx) {
+      document.querySelectorAll('#chartDotsGroup .chart-dot').forEach(dot => {
+        const isActive = Number(dot.dataset.idx) === idx;
+        dot.setAttribute('r', isActive ? '5.5' : '3.5');
+        dot.setAttribute('stroke-width', isActive ? '2.8' : '2');
+      });
+    }
+
+    function clearChartHover() {
+      hoverLine.style.display = 'none';
+      tooltip.style.display = 'none';
+      if (activeChartState.hoveredIndex !== -1) {
+        activeChartState.hoveredIndex = -1;
+        highlightChartDot(-1);
+      }
+    }
+
+    function handleChartPointer(clientX, clientY) {
+      const count = activeChartState.labels.length;
+      if (count === 0) return;
+
+      const svgX = clientToSvgX(clientX, clientY);
       const clampedSvgX = Math.max(CHART_LEFT, Math.min(svgX, CHART_RIGHT));
-      const periodKey = getChartPeriodKey();
-      const metric = document.getElementById('chartMetricSelect').value;
-      const current = window.chartData[periodKey];
-      const series = current[metric];
+      const idx = count > 1
+        ? Math.round(((clampedSvgX - CHART_LEFT) / CHART_W) * (count - 1))
+        : 0;
 
-      const idx = Math.round(((clampedSvgX - CHART_LEFT) / CHART_W) * (current.labels.length - 1));
-      const snapSvgX = CHART_LEFT + idx * (CHART_W / (current.labels.length - 1));
-      const pctLeft = (snapSvgX / 620) * 100;
-      const prefix = metric === 'revenue' ? '₱' : '';
-      const suffix = metric === 'revenue' ? '' : ' vehicles';
+      const pt4 = activeChartState.pts4W[idx];
+      const pt2 = activeChartState.pts2W[idx];
+      if (!pt4 || !pt2) return;
 
+      const snapSvgX = pt4.x;
       hoverLine.setAttribute('x1', snapSvgX);
       hoverLine.setAttribute('x2', snapSvgX);
       hoverLine.style.display = 'block';
 
-      tooltip.style.display = 'block';
-      tooltip.style.left = Math.min(Math.max(pctLeft, 14), 86) + '%';
+      if (activeChartState.hoveredIndex !== idx) {
+        activeChartState.hoveredIndex = idx;
+        highlightChartDot(idx);
+      }
 
-      document.getElementById('tooltipLabel').textContent = current.labels[idx];
-      document.getElementById('tooltip4W').textContent = `4W: ${prefix}${series.fourW[idx]}${suffix}`;
-      document.getElementById('tooltip2W').textContent = `2W: ${prefix}${series.twoW[idx]}${suffix}`;
+      const isRev = activeChartState.metric === 'revenue';
+      const v4 = activeChartState.fourW[idx] || 0;
+      const v2 = activeChartState.twoW[idx] || 0;
+      const totalVal = v4 + v2;
+
+      document.getElementById('tooltipLabel').textContent = activeChartState.tooltipLabels[idx];
+      document.getElementById('tooltip4W').textContent = isRev
+        ? `4W+: ${formatPeso(v4)}`
+        : `4W+: ${v4} vehicle${v4 === 1 ? '' : 's'}`;
+      document.getElementById('tooltip2W').textContent = isRev
+        ? `2W: ${formatPeso(v2)}`
+        : `2W: ${v2} vehicle${v2 === 1 ? '' : 's'}`;
+      document.getElementById('tooltipTotal').textContent = isRev
+        ? `Total: ${formatPeso(totalVal)}`
+        : `Total: ${totalVal} logged`;
+
+      tooltip.style.display = 'block';
+
+      const anchorSvgY = Math.min(pt4.y, pt2.y);
+      const pos = svgToWrapperCoords(snapSvgX, anchorSvgY);
+      const halfW = (tooltip.offsetWidth || 130) / 2;
+      const safeLeft = Math.min(Math.max(pos.x, halfW + 8), Math.max(halfW + 8, chartBox.clientWidth - halfW - 8));
+      const safeTop = Math.max(6, Math.min(pos.y - (tooltip.offsetHeight || 56) - 12, chartBox.clientHeight - (tooltip.offsetHeight || 56) - 8));
+
+      tooltip.style.left = `${safeLeft}px`;
+      tooltip.style.top = `${safeTop}px`;
     }
 
-    chartBox.addEventListener('mousemove', (e) => handleChartPointer(e.clientX));
+    chartBox.addEventListener('mousemove', (e) => handleChartPointer(e.clientX, e.clientY));
     chartBox.addEventListener('touchstart', (e) => {
-      if (e.touches[0]) handleChartPointer(e.touches[0].clientX);
+      if (e.touches[0]) handleChartPointer(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
+    chartBox.addEventListener('touchmove', (e) => {
+      if (e.touches[0]) handleChartPointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    chartBox.addEventListener('mouseleave', clearChartHover);
 
-    chartBox.addEventListener('mouseleave', () => {
-      hoverLine.style.display = 'none';
-      tooltip.style.display = 'none';
-    });
-  </script>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const badge = document.getElementById("esp32Status");
-      const lastSeen = document.getElementById("esp32LastSeen");
-      const connection = document.getElementById("esp32Connection");
-
-      if (!badge || !lastSeen || !connection) return;
-
-      let device = null;
-      let received = false;
-
-      function updateStatus() {
-        if (!received) {
-          badge.textContent = "● Checking...";
-          lastSeen.textContent = "Checking Firebase...";
-          return;
-        }
-
-        const timestamp = Number(device?.lastSeenMs);
-
-        const online =
-          device?.status === "Online" &&
-          Number.isFinite(timestamp) &&
-          timestamp > 0 &&
-          Math.abs(Date.now() - timestamp) < 30000;
-
-        badge.textContent = online ? "● Online" : "● Offline";
-        badge.className = "esp32-badge " + (online ? "online" : "offline");
-
-        badge.style.color = online ? "#16a34a" : "#dc2626";
-        badge.style.backgroundColor = online ? "#dcfce7" : "#fee2e2";
-
-        lastSeen.textContent = online
-          ? "ESP32-MAIN Connected"
-          : "ESP32-MAIN Disconnected";
-
-        connection.textContent = "Firebase Connection";
+    // Refresh live accrued pending fees every 15 seconds while dashboard is open
+    setInterval(() => {
+      if (liveSlots.some(s => s.status === 'occupied' || s.status === 'reserved')) {
+        refreshDashboard();
       }
-
-      if (typeof window.dbListen !== "function") {
-        badge.textContent = "● Error";
-        lastSeen.textContent = "Firebase listener unavailable";
-        return;
-      }
-
-      window.dbListen("devices/ESP32-MAIN", (data) => {
-        device = data;
-        received = true;
-        updateStatus();
-      });
-
-      updateStatus();
-      setInterval(updateStatus, 3000);
-    });
+    }, 15000);
   </script>
 
 </body>
