@@ -131,15 +131,15 @@
   </main>
 
   <!-- Modal 1: Register / Edit RFID Card -->
-  <div class="modal-backdrop" id="driverModal">
-    <div class="modal-box">
-      <div class="modal-header">
+  <div class="pe-modal-backdrop" id="driverModal">
+    <div class="pe-modal-card pe-modal-wide pe-modal-structured" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="pe-modal-header">
         <h3 id="modalTitle">Register Driver RFID Card</h3>
-        <button type="button" class="modal-close" onclick="closeDriverModal()">&times;</button>
+        <button type="button" class="pe-modal-close" onclick="closeDriverModal()" aria-label="Close">&times;</button>
       </div>
 
       <form id="driverForm" onsubmit="saveDriverRecord(event)">
-        <div class="modal-body">
+        <div class="pe-modal-body">
           <div id="driverFormError" class="form-error-banner"></div>
 
           <div class="form-grid-2">
@@ -247,24 +247,24 @@
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn-cancel" onclick="closeDriverModal()">Cancel</button>
-          <button type="submit" class="btn-save">Save Registration</button>
+        <div class="pe-modal-footer">
+          <button type="button" class="pe-modal-btn cancel" onclick="closeDriverModal()">Cancel</button>
+          <button type="submit" class="pe-modal-btn confirm">Save Registration</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- Modal 2: Top-Up / Load RFID Balance -->
-  <div class="modal-backdrop" id="loadModal">
-    <div class="modal-box modal-sm">
-      <div class="modal-header">
-        <h3>Top Up RFID Card Balance</h3>
-        <button type="button" class="modal-close" onclick="closeLoadModal()">&times;</button>
+  <div class="pe-modal-backdrop" id="loadModal">
+    <div class="pe-modal-card pe-modal-wide pe-modal-structured" role="dialog" aria-modal="true" aria-labelledby="loadModalTitle">
+      <div class="pe-modal-header">
+        <h3 id="loadModalTitle">Top Up RFID Card Balance</h3>
+        <button type="button" class="pe-modal-close" onclick="closeLoadModal()" aria-label="Close">&times;</button>
       </div>
 
       <form id="loadForm" onsubmit="confirmTopUp(event)">
-        <div class="modal-body">
+        <div class="pe-modal-body">
           <div id="loadFormError" class="form-error-banner"></div>
 
           <div class="topup-driver-banner">
@@ -320,9 +320,9 @@
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn-cancel" onclick="closeLoadModal()">Cancel</button>
-          <button type="submit" class="btn-save">Confirm Top-Up</button>
+        <div class="pe-modal-footer">
+          <button type="button" class="pe-modal-btn cancel" onclick="closeLoadModal()">Cancel</button>
+          <button type="submit" class="pe-modal-btn confirm">Confirm Top-Up</button>
         </div>
       </form>
     </div>
@@ -737,6 +737,21 @@
         return map[m];
       });
     }
+
+    // Close modals when clicking the dark backdrop or pressing Escape
+    document.getElementById('driverModal').addEventListener('click', (e) => {
+      if (e.target.id === 'driverModal') closeDriverModal();
+    });
+
+    document.getElementById('loadModal').addEventListener('click', (e) => {
+      if (e.target.id === 'loadModal') closeLoadModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (document.getElementById('driverModal').classList.contains('open')) closeDriverModal();
+      if (document.getElementById('loadModal').classList.contains('open')) closeLoadModal();
+    });
   </script>
 
 </body>

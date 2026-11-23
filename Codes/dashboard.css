@@ -5,6 +5,16 @@
   margin: 0 auto;
 }
 
+.dash-toolbar,
+.kpi-strip,
+.kpi-box,
+.workspace-grid,
+.panel-card,
+.esp32-status-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* Top Toolbar: Title + Global Period Filter */
 .dash-toolbar {
   display: flex;
@@ -16,14 +26,14 @@
 }
 
 .dash-toolbar-left h2 {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
 }
 
 .dash-toolbar-left p {
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   color: #64748b;
   margin: 2px 0 0 0;
 }
@@ -35,7 +45,7 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.82rem;
   color: #475569;
   font-weight: 600;
@@ -45,7 +55,7 @@
   background: #2563eb;
   color: #ffffff;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   padding: 5px 10px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -57,10 +67,81 @@
   background: #1d4ed8;
 }
 
+/* ESP32 Connection Status */
+.esp32-status-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.esp32-status-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.esp32-device-icon {
+  font-size: 28px;
+}
+
+.esp32-status-left h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #0f172a;
+}
+
+.esp32-status-left p {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.esp32-status-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.esp32-status-right small {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.esp32-badge {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.esp32-badge.online {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.esp32-badge.offline {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.esp32-badge.checking {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
 /* 4-Column Compact KPI Strip */
 .kpi-strip {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 16px;
 }
@@ -68,9 +149,9 @@
 .kpi-box {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -80,24 +161,26 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
   margin-bottom: 6px;
 }
 
 .kpi-label {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #64748b;
 }
 
 .kpi-tag {
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   padding: 2px 7px;
   border-radius: 999px;
   background: #f1f5f9;
   color: #475569;
+  white-space: nowrap;
 }
 
 .kpi-tag.live {
@@ -105,18 +188,37 @@
   color: #15803d;
 }
 
+.kpi-tag.tag-amber {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.kpi-tag.tag-red {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .kpi-main-val {
   font-size: 1.5rem;
   font-weight: 700;
   color: #0f172a;
   line-height: 1.2;
+  word-break: break-word;
+}
+
+.kpi-main-val.val-amber {
+  color: #d97706;
+}
+
+.kpi-main-val.val-red {
+  color: #dc2626;
 }
 
 .kpi-sub-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: #64748b;
   margin-top: 8px;
   padding-top: 8px;
@@ -153,27 +255,9 @@
   background: #ef4444;
 }
 
-.kpi-main-val.val-amber {
-  color: #d97706;
-}
-
-.kpi-main-val.val-red {
-  color: #dc2626;
-}
-
-.kpi-tag.tag-amber {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.kpi-tag.tag-red {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
 .mini-bays {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
   margin-top: 6px;
 }
@@ -191,12 +275,6 @@
   background: #dcfce7;
   color: #15803d;
   border-color: #bbf7d0;
-}
-
-.mini-bay.occupied {
-  background: #fee2e2;
-  color: #b91c1c;
-  border-color: #fecaca;
 }
 
 .mini-bay.occupied {
@@ -228,9 +306,9 @@
 .panel-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 16px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -264,7 +342,7 @@
   gap: 8px;
 }
 
-/* Intuitive SVG Chart with Y-Axis & X-Axis */
+/* SVG Chart */
 .chart-wrapper {
   position: relative;
   width: 100%;
@@ -358,7 +436,7 @@
   border-radius: 3px;
 }
 
-/* Right Column: Packed Vehicle & Revenue Matrix Table */
+/* Right Column: Vehicle & Revenue Matrix Table */
 .breakdown-table-wrap {
   overflow-x: auto;
 }
@@ -412,7 +490,7 @@
   border-radius: 50%;
 }
 
-/* Recent Activity Mini List inside Right Panel */
+/* Recent Activity Mini List */
 .mini-feed {
   margin-top: 14px;
   padding-top: 12px;
@@ -447,10 +525,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   font-size: 0.78rem;
   background: #f8fafc;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 7px 10px;
+  border-radius: 7px;
   border: 1px solid #f1f5f9;
 }
 
@@ -458,6 +537,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .feed-plate {
@@ -473,14 +553,15 @@
 .feed-right {
   font-weight: 700;
   color: #0f172a;
+  flex-shrink: 0;
 }
 
 .feed-status {
   font-size: 0.68rem;
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  border-radius: 999px;
   margin-left: 4px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .feed-status.paid {
@@ -496,113 +577,52 @@
 /* Tablet & Mobile Responsive Breakpoints */
 @media (max-width: 1080px) {
   .kpi-strip {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
   .workspace-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 720px) {
   .main-content {
-    padding: 12px;
+    padding: 14px 12px;
   }
+
   .kpi-strip {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
+
   .kpi-box {
-    padding: 10px 12px;
+    padding: 12px 14px;
   }
+
   .kpi-main-val {
     font-size: 1.2rem;
   }
+
   .kpi-sub-row {
     font-size: 0.7rem;
   }
+
+  .panel-card {
+    padding: 14px;
+  }
+
   .chart-wrapper {
     height: 200px;
   }
+
   .breakdown-table {
     font-size: 0.76rem;
   }
-}
 
-/* ESP32 Connection Status */
-.esp32-status-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 22px;
-  margin-bottom: 20px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-}
-
-.esp32-status-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.esp32-device-icon {
-  font-size: 28px;
-}
-
-.esp32-status-left h3 {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 0 0 5px;
-  color: #0f172a;
-}
-
-.esp32-status-left p {
-  font-size: 12px;
-  color: #64748b;
-  margin: 0;
-}
-
-.esp32-status-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 7px;
-}
-
-.esp32-status-right small {
-  font-size: 11px;
-  color: #64748b;
-}
-
-.esp32-badge {
-  padding: 7px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.esp32-badge.online {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.esp32-badge.offline {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.esp32-badge.checking {
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-@media (max-width: 540px) {
   .esp32-status-card {
     flex-direction: column;
     align-items: flex-start;
+    padding: 14px;
   }
 
   .esp32-status-right {

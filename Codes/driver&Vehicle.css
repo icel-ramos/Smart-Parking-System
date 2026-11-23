@@ -9,7 +9,7 @@
   max-width: 100%;
 }
 
-/* Page Header (Matches parkingMap.html overview-header) */
+/* Page Header */
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -57,7 +57,7 @@
   transform: scale(0.98);
 }
 
-/* 4-Column KPI Grid (Matches Dashboard & Parking Map Stat Cards) */
+/* 4-Column KPI Grid */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -275,7 +275,7 @@ tbody tr:last-child td {
   letter-spacing: 0.03em;
 }
 
-/* Pills & Badges (Aligned with parkingMap.html status chips) */
+/* Pills & Badges */
 .pass-tag {
   display: inline-block;
   margin-left: 6px;
@@ -325,7 +325,7 @@ tbody tr:last-child td {
   border: 1px solid #cbd5e1;
 }
 
-/* Balance & Tinted Action Buttons (Matches parkingMap.html tone buttons) */
+/* Balance & Tinted Action Buttons */
 .balance-cell {
   display: inline-flex;
   align-items: center;
@@ -442,6 +442,7 @@ tbody tr:last-child td {
   font-size: 0.86rem;
 }
 
+/* Page-Specific Inner Modal Components (Shell handled by global.css) */
 .form-error-banner {
   display: none;
   padding: 8px 10px;
@@ -451,95 +452,6 @@ tbody tr:last-child td {
   color: #b91c1c;
   font-size: 0.78rem;
   font-weight: 600;
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(2px);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 1100;
-  overflow-y: auto;
-}
-
-.modal-backdrop.open {
-  display: flex;
-}
-
-.modal-box {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 520px;
-  max-height: 88vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
-  overflow: hidden;
-  margin: auto;
-}
-
-.modal-box.modal-sm {
-  max-width: 520px;
-}
-
-.modal-box form {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.modal-header {
-  padding: 18px 24px;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.modal-header h3 {
-  font-size: 1.08rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.modal-close {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  color: #64748b;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.modal-close:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.modal-body {
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .form-grid-2 {
@@ -561,37 +473,12 @@ tbody tr:last-child td {
   color: #475569;
 }
 
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-family: inherit;
-  color: #0f172a;
-  background: #ffffff;
-  outline: none;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  border-color: var(--primary-blue, #2563eb);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-}
-
-.form-group input:disabled {
-  background: #f1f5f9;
-  color: #64748b;
-}
-
 .field-hint {
   font-size: 0.72rem;
   color: #64748b;
   line-height: 1.3;
 }
 
-/* Top-Up Modal Specifics */
 .topup-driver-banner {
   display: flex;
   justify-content: space-between;
@@ -666,13 +553,15 @@ tbody tr:last-child td {
   align-items: center;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 0 10px;
-  background: #ffffff;
+  padding: 0 12px;
+  background: #f8fafc;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .peso-input-wrap:focus-within {
+  background: #ffffff;
   border-color: var(--primary-blue, #2563eb);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .peso-input-wrap span {
@@ -681,9 +570,11 @@ tbody tr:last-child td {
   margin-right: 6px;
 }
 
+.pe-modal-body .peso-input-wrap input,
 .peso-input-wrap input {
   border: none;
-  padding: 8px 0;
+  background: transparent;
+  padding: 9px 0;
   font-weight: 700;
   font-size: 0.92rem;
   box-shadow: none !important;
@@ -707,7 +598,7 @@ tbody tr:last-child td {
   font-weight: 700;
 }
 
-/* Toggle Switch (Matches parkingMap.html override-switch proportions) */
+/* Toggle Switch */
 .toggle-row {
   display: flex;
   justify-content: space-between;
@@ -775,48 +666,6 @@ tbody tr:last-child td {
   transform: translateX(18px);
 }
 
-.modal-footer {
-  padding: 14px 24px;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.btn-cancel {
-  padding: 9px 16px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #334155;
-  font-size: 0.84rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.btn-cancel:hover {
-  background: #f1f5f9;
-}
-
-.btn-save {
-  padding: 9px 18px;
-  border-radius: 8px;
-  border: none;
-  background: var(--primary-blue, #2563eb);
-  color: #ffffff;
-  font-size: 0.84rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.btn-save:hover {
-  background: var(--primary-blue-hover, #1d4ed8);
-}
-
 /* Tablet Breakpoint */
 @media (max-width: 960px) {
   .kpi-grid {
@@ -824,7 +673,7 @@ tbody tr:last-child td {
   }
 }
 
-/* Mobile Responsive Overrides (Matches parkingMap.html 720px breakpoint) */
+/* Mobile Responsive Overrides */
 @media (max-width: 720px) {
   .section-header {
     align-items: stretch;
@@ -835,7 +684,6 @@ tbody tr:last-child td {
     padding: 11px 16px;
   }
 
-  /* Compact 2x2 KPI Grid for Phones */
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
@@ -991,35 +839,6 @@ tbody tr:last-child td {
 
   .form-grid-2 {
     grid-template-columns: 1fr;
-  }
-
-  .modal-box,
-  .modal-box.modal-sm {
-    max-width: 100%;
-    max-height: calc(100dvh - 16px);
-  }
-
-  .modal-header {
-    padding: 14px 16px;
-  }
-
-  .modal-body {
-    padding: 16px;
-  }
-
-  .modal-footer {
-    padding: 12px 16px;
-    justify-content: stretch;
-  }
-
-  .modal-footer {
-    justify-content: stretch;
-  }
-
-  .modal-footer .btn-cancel,
-  .modal-footer .btn-save {
-    flex: 1;
-    padding: 10px 12px;
   }
 }
 
