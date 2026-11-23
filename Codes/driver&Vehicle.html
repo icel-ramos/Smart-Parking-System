@@ -65,7 +65,7 @@
       <div class="kpi-card">
         <div class="kpi-label">Low Balance Cards</div>
         <div class="kpi-value text-orange" id="kpiLowBalance">0</div>
-        <div class="kpi-sub text-muted">Member cards below ₱50.00 threshold</div>
+        <div class="kpi-sub text-muted">Member cards below ₱100.00 threshold</div>
       </div>
     </div>
 
@@ -86,17 +86,17 @@
             type="text"
             id="driverSearchInput"
             placeholder="Search RFID UID, driver name, or plate..."
-            oninput="renderDriversTable()"
+            oninput="handleDriversFilterChange()"
           />
         </div>
         <div class="toolbar-actions">
-          <select id="vehicleFilter" class="filter-select" onchange="renderDriversTable()">
+          <select id="vehicleFilter" class="filter-select" onchange="handleDriversFilterChange()">
             <option value="ALL">All Vehicle Types</option>
             <option value="4W">4 Wheelers (Car/SUV)</option>
             <option value="2W">2 Wheelers (Motorcycle)</option>
             <option value="ANY">Any / Walk-In</option>
           </select>
-          <select id="statusFilter" class="filter-select" onchange="renderDriversTable()">
+          <select id="statusFilter" class="filter-select" onchange="handleDriversFilterChange()">
             <option value="ALL">All Statuses</option>
             <option value="Member">Members Only</option>
             <option value="Visitor">Visitor Passes Only</option>
@@ -126,6 +126,20 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="table-footer" id="driversTableFooter">
+        <div class="table-footer-left">
+          <span id="driversPageInfo">Showing 0 of 0 cards</span>
+          <label class="per-page-wrap">
+            <span>Show:</span>
+            <select id="driversPerPage" class="filter-select per-page-select" onchange="changeDriversPageSize()">
+              <option value="5" selected>5 per page</option>
+              <option value="10">10 per page</option>
+            </select>
+          </label>
+        </div>
+        <div class="pagination" id="driversPagination"></div>
       </div>
     </div>
   </main>
@@ -346,7 +360,9 @@
     let loadingUid = null;
     let isSavingDriver = false;
     let isConfirmingTopUp = false;
-    const LOW_BALANCE_THRESHOLD = 50;
+    const LOW_BALANCE_THRESHOLD = 100;
+    let currentPage = 1;
+    let pageSize = 5;
 
     if (typeof window.dbListen === 'function') {
       window.dbListen('driverInfo', (snapshotVal) => {
@@ -387,6 +403,53 @@
       document.getElementById('kpiLowBalance').textContent = lowBalCount;
     }
 
+    function handleDriversFilterChange() {
+      currentPage = 1;
+      renderDriversTable();
+    }
+
+    function changeDriversPageSize() {
+      const sel = document.getElementById('driversPerPage');
+      const val = parseInt(sel ? sel.value : '5', 10);
+      pageSize = (val === 10) ? 10 : 5;
+      currentPage = 1;
+      renderDriversTable();
+    }
+
+    function goToDriversPage(page) {
+      currentPage = page;
+      renderDriversTable();
+    }
+
+    function renderDriversPagination(totalItems, startIdx, endIdx, totalPages) {
+      const infoEl = document.getElementById('driversPageInfo');
+      const controlsEl = document.getElementById('driversPagination');
+      if (!infoEl || !controlsEl) return;
+
+      if (totalItems === 0) {
+        infoEl.textContent = 'Showing 0 of 0 cards';
+        controlsEl.innerHTML = '';
+        return;
+      }
+
+      infoEl.textContent = `Showing ${startIdx + 1}-${endIdx} of ${totalItems} card${totalItems === 1 ? '' : 's'}`;
+
+      if (totalPages <= 1) {
+        controlsEl.innerHTML = '';
+        return;
+      }
+
+      let html = `<button type="button" class="page-btn" ${currentPage <= 1 ? 'disabled' : `onclick="goToDriversPage(${currentPage - 1})"`}>Prev</button>`;
+
+      for (let p = 1; p <= totalPages; p++) {
+        html += `<button type="button" class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToDriversPage(${p})">${p}</button>`;
+      }
+
+      html += `<button type="button" class="page-btn" ${currentPage >= totalPages ? 'disabled' : `onclick="goToDriversPage(${currentPage + 1})"`}>Next</button>`;
+
+      controlsEl.innerHTML = html;
+    }
+
     function renderDriversTable() {
       const tbody = document.getElementById('driversTableBody');
       const query = document.getElementById('driverSearchInput').value.trim().toLowerCase();
@@ -415,18 +478,29 @@
             (statusFilter === 'LowBal' && !isVisitor && bal < LOW_BALANCE_THRESHOLD);
 
           return matchesQuery && matchesVeh && matchesStatus;
-        });
+        })
+        .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0) || a.uid.localeCompare(b.uid));
 
-      if (list.length === 0) {
+      const totalItems = list.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      if (totalItems === 0) {
         tbody.innerHTML = `
           <tr class="empty-row">
             <td colspan="7" class="empty-state">No registered RFID cards found. Click "+ Register RFID Card" to add one.</td>
           </tr>
         `;
+        renderDriversPagination(0, 0, 0, 1);
         return;
       }
 
-      tbody.innerHTML = list.map(driver => {
+      const startIdx = (currentPage - 1) * pageSize;
+      const endIdx = Math.min(startIdx + pageSize, totalItems);
+      const pageItems = list.slice(startIdx, endIdx);
+
+      tbody.innerHTML = pageItems.map(driver => {
         const isVisitor = (driver.passType || 'Member') === 'Visitor';
         const is2W = driver.vehicleType === '2W';
         const isAny = driver.vehicleType === 'ANY';
@@ -479,6 +553,8 @@
           </tr>
         `;
       }).join('');
+
+      renderDriversPagination(totalItems, startIdx, endIdx, totalPages);
     }
 
     function handlePassTypeChange() {
@@ -589,7 +665,6 @@
         return;
       }
 
-      // Prevent accidental overwrite when registering a new card with an existing UID
       if (!editingUid && Object.prototype.hasOwnProperty.call(driversData, rawUid)) {
         const existingOwner = driversData[rawUid]?.name || 'another driver';
         setFormError(

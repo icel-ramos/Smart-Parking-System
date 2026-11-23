@@ -254,30 +254,24 @@
           </div>
         </div>
       </div>
+    </section>
 
-   
-<!-- ESP32 Connection Status -->
-<div class="esp32-status-card">
-  <div class="esp32-status-left">
-    <div class="esp32-device-icon">📡</div>
-    <div>
-      <h3>Smart Parking System</h3>
-      <p id="esp32LastSeen">
-        Waiting for device...
-      </p>
+    <!-- Full-Width ESP32 Connection Status -->
+    <div class="esp32-status-card" style="margin-top: 16px;">
+      <div class="esp32-status-left">
+        <div class="esp32-device-icon" data-icon="hardware" style="display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; background:#eff6ff; color:#2563eb;"></div>
+        <div>
+          <h3>Smart Parking System</h3>
+          <p id="esp32LastSeen">Waiting for device...</p>
+        </div>
+      </div>
+
+      <div class="esp32-status-right">
+        <span id="esp32Status" class="esp32-badge checking">● Checking...</span>
+        <small id="esp32Connection">Firebase Connection</small>
+      </div>
     </div>
-  </div>
 
-  <div class="esp32-status-right">
-    <span id="esp32Status" class="esp32-badge checking">
-      ● Checking...
-    </span>
-    <small id="esp32Connection">
-      Firebase Connection
-    </small>
-  </div>
-</div>
-       </section>
   </main>
 
   <footer class="site-footer">
@@ -312,6 +306,19 @@
         revenue: { twoW: [0, 0, 0, 0, 0, 0, 0], fourW: [0, 0, 0, 0, 0, 0, 0] }
       }
     };
+
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/[&<>"']/g, function(m) {
+        var map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        };
+        return map[m];
+      });
+    }
 
     // 1. Live Ground Floor Occupancy & Mini Bay Pills (/slots)
     window.dbListen('slots', (slotsObj) => {
@@ -549,12 +556,12 @@
         return `
           <div class="feed-item">
             <div class="feed-left">
-              <span class="feed-plate">${tx.plate}</span>
-              <span class="feed-meta">${tx.vehicle} &bull; In: ${tx.timeIn || '--:--'}</span>
+              <span class="feed-plate">${escapeHtml(tx.plate || 'UNASSIGNED')}</span>
+              <span class="feed-meta">${escapeHtml(tx.vehicle || 'Vehicle')} &bull; In: ${escapeHtml(tx.timeIn || '--:--')}</span>
             </div>
             <div class="feed-right">
               &#8369;${parseFloat(tx.amount || 0).toFixed(0)}
-              <span class="feed-status ${isPaid ? 'paid' : 'unpaid'}">${tx.status}</span>
+              <span class="feed-status ${isPaid ? 'paid' : 'unpaid'}">${escapeHtml(tx.status || 'Unpaid')}</span>
             </div>
           </div>
         `;
@@ -688,65 +695,61 @@
     });
   </script>
 
- 
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const badge = document.getElementById("esp32Status");
+      const lastSeen = document.getElementById("esp32LastSeen");
+      const connection = document.getElementById("esp32Connection");
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const badge = document.getElementById("esp32Status");
-  const lastSeen = document.getElementById("esp32LastSeen");
-  const connection = document.getElementById("esp32Connection");
+      if (!badge || !lastSeen || !connection) return;
 
-  if (!badge || !lastSeen || !connection) return;
+      let device = null;
+      let received = false;
 
-  let device = null;
-  let received = false;
+      function updateStatus() {
+        if (!received) {
+          badge.textContent = "● Checking...";
+          lastSeen.textContent = "Checking Firebase...";
+          return;
+        }
 
-  function updateStatus() {
-    if (!received) {
-      badge.textContent = "● Checking...";
-      lastSeen.textContent = "Checking Firebase...";
-      return;
-    }
+        const timestamp = Number(device?.lastSeenMs);
 
-    const timestamp = Number(device?.lastSeenMs);
+        const online =
+          device?.status === "Online" &&
+          Number.isFinite(timestamp) &&
+          timestamp > 0 &&
+          Math.abs(Date.now() - timestamp) < 30000;
 
-    const online =
-      device?.status === "Online" &&
-      Number.isFinite(timestamp) &&
-      timestamp > 0 &&
-      Math.abs(Date.now() - timestamp) < 30000;
+        badge.textContent = online ? "● Online" : "● Offline";
+        badge.className = "esp32-badge " + (online ? "online" : "offline");
 
-    badge.textContent = online ? "● Online" : "● Offline";
-    badge.className = "esp32-badge " + (online ? "online" : "offline");
+        badge.style.color = online ? "#16a34a" : "#dc2626";
+        badge.style.backgroundColor = online ? "#dcfce7" : "#fee2e2";
 
-    badge.style.color = online ? "#16a34a" : "#dc2626";
-    badge.style.backgroundColor = online ? "#dcfce7" : "#fee2e2";
+        lastSeen.textContent = online
+          ? "ESP32-MAIN Connected"
+          : "ESP32-MAIN Disconnected";
 
-    lastSeen.textContent = online
-      ? "ESP32-MAIN Connected"
-      : "ESP32-MAIN Disconnected";
+        connection.textContent = "Firebase Connection";
+      }
 
-    connection.textContent = "Firebase Connection";
-  }
+      if (typeof window.dbListen !== "function") {
+        badge.textContent = "● Error";
+        lastSeen.textContent = "Firebase listener unavailable";
+        return;
+      }
 
-  if (typeof window.dbListen !== "function") {
-    badge.textContent = "● Error";
-    lastSeen.textContent = "Firebase listener unavailable";
-    return;
-  }
+      window.dbListen("devices/ESP32-MAIN", (data) => {
+        device = data;
+        received = true;
+        updateStatus();
+      });
 
-  window.dbListen("devices/ESP32-MAIN", (data) => {
-    device = data;
-    received = true;
-    updateStatus();
-  });
-
-  updateStatus();
-  setInterval(updateStatus, 3000);
-});
-</script>
-
-
+      updateStatus();
+      setInterval(updateStatus, 3000);
+    });
+  </script>
 
 </body>
 </html>
