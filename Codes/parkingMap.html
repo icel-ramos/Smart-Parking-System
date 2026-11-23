@@ -117,7 +117,7 @@
           </div>
         </div>
 
-        <div class="controls-row" style="padding-top:12px">
+        <div class="controls-row">
           <div class="control-group">
             <div class="control-header-bar">
               <div class="control-header-left">
@@ -180,6 +180,14 @@
 
     function normalizeUid(val) {
       return String(val || "").replace(/[^0-9A-F]/gi, "").toUpperCase();
+    }
+
+    function formatVehicleCode(vType) {
+      return (vType || "4w").toLowerCase().includes("2") ? "2W" : "4W+";
+    }
+
+    function formatVehicleLabel(vType) {
+      return (vType || "4w").toLowerCase().includes("2") ? "2-Wheeler" : "4-Wheelers+";
     }
 
     function findMemberByPlate(plate) {
@@ -414,8 +422,7 @@
       if (currentSlot.status === "maintenance") {
         noteEl.textContent = currentSlot.note || "Maintenance / Incident";
       } else if (currentSlot.plate) {
-        const vLabel = (currentSlot.vehicleType || "4w").toUpperCase();
-        noteEl.textContent = `${currentSlot.plate} (${vLabel})`;
+        noteEl.textContent = `${currentSlot.plate} (${formatVehicleCode(currentSlot.vehicleType)})`;
       } else {
         noteEl.textContent = "None";
       }
@@ -582,7 +589,7 @@
       const isAvail = slot.status === "available";
       const isMaint = slot.status === "maintenance";
       const fee = calculateAccruedFee(slot);
-      const vLabel = (slot.vehicleType || "4w").toUpperCase();
+      const vLabel = formatVehicleLabel(slot.vehicleType);
       const statusLabel = slot.status.charAt(0).toUpperCase() + slot.status.slice(1);
       const noteText = slot.note ? escapeHtml(slot.note) : "No additional note recorded.";
       const rfidLabel = slot.rfidUid
@@ -728,10 +735,10 @@
               </div>
 
               <div class="pe-modal-field">
-                <label for="resVehicleType">Vehicle Type</label>
+                <label for="resVehicleType">Vehicle Category</label>
                 <select id="resVehicleType" class="pe-modal-select">
-                  <option value="4w">4 Wheelers (₱${activeRates["4w"].firstHour.toFixed(2)} first hr)</option>
-                  <option value="2w">2 Wheelers (₱${activeRates["2w"].firstHour.toFixed(2)} first hr)</option>
+                  <option value="4w">4-Wheelers+ (₱${activeRates["4w"].firstHour.toFixed(2)} first hr)</option>
+                  <option value="2w">2-Wheeler (₱${activeRates["2w"].firstHour.toFixed(2)} first hr)</option>
                 </select>
               </div>
 
@@ -854,7 +861,7 @@
           noteInput.value = `${verifiedCard.name} (Walk-In)`;
           setStatus(
             "valid",
-            `Registered Visitor Pass: ${verifiedCard.name} (UID: ${verifiedCard.uid}) · Ready to assign`
+            `Registered Visitor Pass: ${verifiedCard.name} (UID: ${verifiedCard.uid}) · Select vehicle category & plate below`
           );
           walkInPlateInput.focus();
         }
@@ -915,7 +922,6 @@
         }
 
         const vehicleType = vehSelect.value === "2w" ? "2w" : "4w";
-        const is2W = vehicleType === "2w";
         const rateAmount = activeRates[vehicleType].firstHour.toFixed(2);
         const resolvedNote = noteInput.value.trim() || `${verifiedCard.name} (${isVisitor ? "Walk-In" : "Subscriber"})`;
 
@@ -929,7 +935,7 @@
           plate: cleanPlate,
           rfidUid: verifiedCard.uid,
           passType: activeMode,
-          vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+          vehicle: formatVehicleLabel(vehicleType),
           timeIn: timeStr,
           timeOut: "--:--",
           amount: rateAmount,
@@ -1059,12 +1065,12 @@
           { name: "plate", label: "Vehicle Plate Number", value: slot.plate || "", placeholder: "e.g., ABC 1234", required: true, uppercase: true },
           {
             name: "vehicleType",
-            label: "Vehicle Type",
+            label: "Vehicle Category",
             type: "select",
             value: (slot.vehicleType || "4w").toLowerCase().includes("2") ? "2w" : "4w",
             options: [
-              { value: "4w", label: `4 Wheelers (₱${activeRates["4w"].firstHour.toFixed(2)} first hr)` },
-              { value: "2w", label: `2 Wheelers (₱${activeRates["2w"].firstHour.toFixed(2)} first hr)` }
+              { value: "4w", label: `4-Wheelers+ (₱${activeRates["4w"].firstHour.toFixed(2)} first hr)` },
+              { value: "2w", label: `2-Wheeler (₱${activeRates["2w"].firstHour.toFixed(2)} first hr)` }
             ]
           },
           { name: "entry", label: "Start Time", type: "time", value: defaultTime, required: true },
@@ -1076,7 +1082,6 @@
 
       const cleanPlate = result.plate;
       const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
-      const is2W = vehicleType === "2w";
       const timeIn = result.entry || defaultTime;
       const entryTimeMs = (timeIn === slot.entry && slot.entryTimeMs)
         ? slot.entryTimeMs
@@ -1095,7 +1100,7 @@
         plate: cleanPlate,
         rfidUid: slot.rfidUid || "",
         passType: slot.passType || "",
-        vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+        vehicle: formatVehicleLabel(vehicleType),
         timeIn,
         timeOut: "--:--",
         amount: currentFee,
@@ -1156,12 +1161,12 @@
           },
           {
             name: 'vehicleType',
-            label: 'Vehicle Type',
+            label: 'Vehicle Category',
             type: 'select',
             value: (slot.vehicleType || '4w').toLowerCase().includes('2') ? '2w' : '4w',
             options: [
-              { value: '4w', label: '4 Wheelers' },
-              { value: '2w', label: '2 Wheelers' }
+              { value: '4w', label: '4-Wheelers+' },
+              { value: '2w', label: '2-Wheeler' }
             ]
           }
         );
@@ -1204,7 +1209,6 @@
 
       if (isOccupied) {
         const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
-        const is2W = vehicleType === "2w";
         const finalFee = calculateAccruedFee({ ...slot, vehicleType }).toFixed(2);
         const timeOutStr = getCurrentTimeStr();
         const timeInStr = (slot.entry && slot.entry !== "--:--") ? slot.entry : timeOutStr;
@@ -1217,7 +1221,7 @@
           plate: finalPlate,
           rfidUid: slot.rfidUid || "",
           passType: slot.passType || "",
-          vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+          vehicle: formatVehicleLabel(vehicleType),
           timeIn: timeInStr,
           timeOut: timeOutStr,
           amount: finalFee,
@@ -1268,7 +1272,6 @@
           notifExtra = " (Reservation voided)";
         } else if (action === 'settle') {
           const timeOutStr = getCurrentTimeStr();
-          const is2W = (slot.vehicleType || "4w").toLowerCase().includes("2");
           const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
 
           window.dbUpdate(`transactions/${ticketId}`, {
@@ -1277,7 +1280,7 @@
             plate: slot.plate || `BAY-${slot.id}`,
             rfidUid: slot.rfidUid || "",
             passType: slot.passType || "",
-            vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+            vehicle: formatVehicleLabel(slot.vehicleType),
             timeIn: (slot.entry && slot.entry !== "--:--") ? slot.entry : timeOutStr,
             timeOut: timeOutStr,
             amount: accruedFee,
@@ -1352,7 +1355,6 @@
       }
 
       const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
-      const is2W = (slot.vehicleType || "4w").toLowerCase().includes("2");
 
       window.dbUpdate(`transactions/${ticketId}`, {
         id: ticketId,
@@ -1360,7 +1362,7 @@
         plate: slot.plate || `BAY-${slot.id}`,
         rfidUid: slot.rfidUid || (matchedMember ? matchedMember.uid : ""),
         passType: slot.passType || (matchedMember ? "Member" : ""),
-        vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+        vehicle: formatVehicleLabel(slot.vehicleType),
         timeIn: slot.entry !== "--:--" ? slot.entry : timeOutStr,
         timeOut: timeOutStr,
         amount: finalFee,

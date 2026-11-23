@@ -40,7 +40,7 @@
     <div class="section-header">
       <div>
         <h2>RFID Access &amp; Driver Registry</h2>
-        <p>Register member and reusable visitor RFID cards, manage prepaid balances, and control gate access</p>
+        <p>Register subscriber and reusable visitor RFID cards, manage prepaid balances, and control gate access</p>
       </div>
       <button type="button" class="btn-primary-action" onclick="openDriverModal()">+ Register RFID Card</button>
     </div>
@@ -60,12 +60,12 @@
       <div class="kpi-card">
         <div class="kpi-label">Total Prepaid Load</div>
         <div class="kpi-value text-blue" id="kpiTotalBalance">₱0.00</div>
-        <div class="kpi-sub text-muted">Combined member wallet credits</div>
+        <div class="kpi-sub text-muted">Combined subscriber wallet credits</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Low Balance Cards</div>
         <div class="kpi-value text-orange" id="kpiLowBalance">0</div>
-        <div class="kpi-sub text-muted">Member cards below ₱100.00 threshold</div>
+        <div class="kpi-sub text-muted">Subscriber cards below ₱100.00 threshold</div>
       </div>
     </div>
 
@@ -74,7 +74,7 @@
       <div class="card-header">
         <div>
           <h3>Authorized Drivers &amp; RFID Cards</h3>
-          <span class="sub-note">Click "+ Load" to top up a member card or click a status badge to toggle gate access</span>
+          <span class="sub-note">Click "+ Load" to top up a subscriber card or click a status badge to toggle gate access</span>
         </div>
       </div>
 
@@ -92,17 +92,17 @@
         <div class="toolbar-actions">
           <select id="vehicleFilter" class="filter-select" onchange="handleDriversFilterChange()">
             <option value="ALL">All Vehicle Types</option>
-            <option value="4W">4 Wheelers (Car/SUV)</option>
-            <option value="2W">2 Wheelers (Motorcycle)</option>
-            <option value="ANY">Any / Walk-In</option>
+            <option value="4W">4-Wheelers+ (Car / SUV / Van)</option>
+            <option value="2W">2-Wheeler (Motorcycle)</option>
+            <option value="ANY">Visitor (Assigned at Bay)</option>
           </select>
           <select id="statusFilter" class="filter-select" onchange="handleDriversFilterChange()">
             <option value="ALL">All Statuses</option>
-            <option value="Member">Members Only</option>
+            <option value="Member">Subscribers Only</option>
             <option value="Visitor">Visitor Passes Only</option>
             <option value="Active">Active Only</option>
             <option value="Suspended">Suspended Only</option>
-            <option value="LowBal">Low Balance (&lt; ₱50)</option>
+            <option value="LowBal">Low Balance (&lt; ₱100)</option>
           </select>
         </div>
       </div>
@@ -156,6 +156,32 @@
         <div class="pe-modal-body">
           <div id="driverFormError" class="form-error-banner"></div>
 
+          <!-- Pass Type Segmented Switcher (Matches Parking Map Modal) -->
+          <input type="hidden" id="passTypeInput" value="Member" />
+          <div class="pe-mode-switch" role="tablist" aria-label="RFID card type">
+            <button
+              type="button"
+              class="pe-mode-btn active"
+              id="regModeMemberBtn"
+              role="tab"
+              aria-selected="true"
+              onclick="setDriverModalMode('Member')"
+            >
+              Subscriber (Member)
+            </button>
+            <button
+              type="button"
+              class="pe-mode-btn"
+              id="regModeVisitorBtn"
+              role="tab"
+              aria-selected="false"
+              onclick="setDriverModalMode('Visitor')"
+            >
+              Walk-In (Visitor Pass)
+            </button>
+          </div>
+
+          <!-- Shared Fields: UID & Name / Label -->
           <div class="form-grid-2">
             <div class="form-group">
               <label for="rfidUidInput">RFID Card UID (Hex) *</label>
@@ -163,23 +189,18 @@
                 type="text"
                 id="rfidUidInput"
                 placeholder="e.g., A1B2C3D4"
-                maxlength="14"
+                minlength="8"
+                maxlength="8"
+                pattern="[0-9A-Fa-f]{8}"
+                title="Enter an exact 8-character hexadecimal UID (0-9, A-F)"
+                autocomplete="off"
+                oninput="this.value = this.value.toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 8)"
                 required
                 style="text-transform: uppercase; font-family: monospace;"
               />
+              <small class="field-hint">Exact 8-character hex UID (0-9, A-F).</small>
             </div>
 
-            <div class="form-group">
-              <label for="passTypeInput">Card Type *</label>
-              <select id="passTypeInput" onchange="handlePassTypeChange()">
-                <option value="Member">Member Pass (Prepaid)</option>
-                <option value="Visitor">Visitor Pass (Reusable Walk-In)</option>
-              </select>
-            </div>
-          </div>
-          <small class="field-hint" style="margin-top: -6px;">8-character hex UID from the MIFARE card or ESP32 Serial Monitor.</small>
-
-          <div class="form-grid-2">
             <div class="form-group">
               <label for="driverNameInput" id="driverNameLabel">Driver Full Name *</label>
               <input
@@ -192,61 +213,68 @@
                 style="text-transform: uppercase;"
               />
             </div>
-
-            <div class="form-group" id="contactGroup">
-              <label for="driverContactInput">Contact Number</label>
-              <input
-                type="text"
-                id="driverContactInput"
-                inputmode="numeric"
-                maxlength="11"
-                minlength="11"
-                pattern="[0-9]{11}"
-                placeholder="09171234567"
-                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-              />
-            </div>
           </div>
 
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label for="plateNumberInput" id="plateNumberLabel">Plate Number *</label>
-              <input
-                type="text"
-                id="plateNumberInput"
-                minlength="6"
-                maxlength="12"
-                placeholder="e.g., ABC 1234"
-                required
-                style="text-transform: uppercase;"
-              />
+          <!-- Subscriber-Only Fields -->
+          <div id="memberFieldsSection" class="member-fields-section">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="plateNumberInput">Plate Number *</label>
+                <input
+                  type="text"
+                  id="plateNumberInput"
+                  minlength="6"
+                  maxlength="12"
+                  placeholder="e.g., ABC 1234"
+                  required
+                  style="text-transform: uppercase;"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="vehicleTypeInput">Vehicle Category *</label>
+                <select id="vehicleTypeInput" required>
+                  <option value="4W">4-Wheelers+ (Car / SUV / Van)</option>
+                  <option value="2W">2-Wheeler (Motorcycle / Scooter)</option>
+                </select>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label for="vehicleTypeInput">Vehicle Category *</label>
-              <select id="vehicleTypeInput" required>
-                <option value="4W">4 Wheeler (Car / SUV / Van)</option>
-                <option value="2W">2 Wheeler (Motorcycle / Scooter)</option>
-                <option value="ANY">Any Vehicle (Assigned at Bay)</option>
-              </select>
-            </div>
-          </div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="driverContactInput">Contact Number</label>
+                <input
+                  type="text"
+                  id="driverContactInput"
+                  inputmode="numeric"
+                  maxlength="11"
+                  minlength="11"
+                  pattern="[0-9]{11}"
+                  placeholder="09171234567"
+                  oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                />
+              </div>
 
-          <div class="form-grid-2">
-            <div class="form-group" id="vehicleModelGroup">
-              <label for="vehicleModelInput">Vehicle Make / Color</label>
-              <input
-                type="text"
-                id="vehicleModelInput"
-                placeholder="e.g., White Toyota Vios"
-                style="text-transform: uppercase;"
-              />
+              <div class="form-group">
+                <label for="vehicleModelInput">Vehicle Make / Color</label>
+                <input
+                  type="text"
+                  id="vehicleModelInput"
+                  placeholder="e.g., White Toyota Vios"
+                  style="text-transform: uppercase;"
+                />
+              </div>
             </div>
 
             <div class="form-group" id="initialBalanceGroup">
               <label for="initialBalanceInput">Initial Load Balance (₱)</label>
               <input type="number" id="initialBalanceInput" min="0" step="10" value="100" />
             </div>
+          </div>
+
+          <!-- Visitor-Only Info Note (Option A: Vehicle Class & Plate Assigned at Bay) -->
+          <div id="visitorInfoBox" class="visitor-mode-hint" style="display: none;">
+            <strong>Reusable Walk-In Pass:</strong> Plate number and vehicle category (2-Wheeler or 4-Wheelers+) are assigned per session on the Parking Map. Fees are settled at checkout.
           </div>
 
           <div class="toggle-row">
@@ -462,13 +490,14 @@
           const passType = item.passType || 'Member';
           const isVisitor = passType === 'Visitor';
           const bal = Number(item.balance) || 0;
+          const normalizedVeh = isVisitor ? 'ANY' : (item.vehicleType === '2W' ? '2W' : '4W');
 
           const matchesQuery =
             item.uid.toLowerCase().includes(query) ||
             (item.name || '').toLowerCase().includes(query) ||
             (item.plate || '').toLowerCase().includes(query);
 
-          const matchesVeh = vehFilter === 'ALL' || item.vehicleType === vehFilter;
+          const matchesVeh = vehFilter === 'ALL' || normalizedVeh === vehFilter;
           const matchesStatus =
             statusFilter === 'ALL' ||
             (statusFilter === 'Member' && !isVisitor) ||
@@ -502,21 +531,20 @@
 
       tbody.innerHTML = pageItems.map(driver => {
         const isVisitor = (driver.passType || 'Member') === 'Visitor';
-        const is2W = driver.vehicleType === '2W';
-        const isAny = driver.vehicleType === 'ANY';
+        const is2W = !isVisitor && driver.vehicleType === '2W';
 
-        const vehBadgeClass = isAny ? 'veh-pill-any' : (is2W ? 'veh-pill-2w' : 'veh-pill-4w');
-        const vehLabel = isAny ? 'Any / Walk-In' : (is2W ? '2 Wheeler' : '4 Wheeler');
+        const vehBadgeClass = isVisitor ? 'veh-pill-any' : (is2W ? 'veh-pill-2w' : 'veh-pill-4w');
+        const vehLabel = isVisitor ? 'Assigned at Bay' : (is2W ? '2-Wheeler' : '4-Wheelers+');
         const bal = Number(driver.balance) || 0;
         const isLow = !isVisitor && bal < LOW_BALANCE_THRESHOLD;
 
         const passBadge = isVisitor
           ? '<span class="pass-tag pass-tag-visitor">Visitor</span>'
-          : '<span class="pass-tag pass-tag-member">Member</span>';
+          : '<span class="pass-tag pass-tag-member">Subscriber</span>';
 
-        const plateDisplay = driver.plate
-          ? escapeHtml(driver.plate)
-          : (isVisitor ? 'WALK-IN' : 'UNASSIGNED');
+        const plateDisplay = isVisitor
+          ? 'WALK-IN'
+          : (driver.plate ? escapeHtml(driver.plate) : 'UNASSIGNED');
 
         const balanceMarkup = isVisitor
           ? '<span class="pay-per-use-label">Pay-per-use (Map)</span>'
@@ -537,7 +565,7 @@
             <td data-label="Driver">
               <div>
                 <div class="driver-name">${escapeHtml(driver.name)}${passBadge}</div>
-                <div class="driver-sub">${escapeHtml(driver.contact || driver.vehicleModel || (isVisitor ? 'Reusable Guest Entry Card' : 'Registered Driver'))}</div>
+                <div class="driver-sub">${escapeHtml(driver.contact || driver.vehicleModel || (isVisitor ? 'Reusable Guest Entry Card' : 'Registered Subscriber'))}</div>
               </div>
             </td>
             <td data-label="Plate No."><span class="plate-tag">${plateDisplay}</span></td>
@@ -557,48 +585,64 @@
       renderDriversPagination(totalItems, startIdx, endIdx, totalPages);
     }
 
-    function handlePassTypeChange() {
-      const isVisitor = document.getElementById('passTypeInput').value === 'Visitor';
+    function setDriverModalMode(mode) {
+      const normalized = mode === 'Visitor' ? 'Visitor' : 'Member';
+      const isVisitor = normalized === 'Visitor';
+
+      document.getElementById('passTypeInput').value = normalized;
+
+      const memberBtn = document.getElementById('regModeMemberBtn');
+      const visitorBtn = document.getElementById('regModeVisitorBtn');
+      if (memberBtn) {
+        memberBtn.classList.toggle('active', !isVisitor);
+        memberBtn.setAttribute('aria-selected', String(!isVisitor));
+      }
+      if (visitorBtn) {
+        visitorBtn.classList.toggle('active', isVisitor);
+        visitorBtn.setAttribute('aria-selected', String(isVisitor));
+      }
+
       const nameLabel = document.getElementById('driverNameLabel');
       const nameInput = document.getElementById('driverNameInput');
-      const plateLabel = document.getElementById('plateNumberLabel');
+      const memberSection = document.getElementById('memberFieldsSection');
+      const visitorInfoBox = document.getElementById('visitorInfoBox');
       const plateInput = document.getElementById('plateNumberInput');
       const vehSelect = document.getElementById('vehicleTypeInput');
       const contactInput = document.getElementById('driverContactInput');
       const modelInput = document.getElementById('vehicleModelInput');
-      const initBalInput = document.getElementById('initialBalanceInput');
       const initBalGroup = document.getElementById('initialBalanceGroup');
-      const contactGroup = document.getElementById('contactGroup');
-      const modelGroup = document.getElementById('vehicleModelGroup');
+      const initBalInput = document.getElementById('initialBalanceInput');
 
       if (isVisitor) {
         nameLabel.textContent = 'Pass Label / Name *';
         nameInput.placeholder = 'e.g., Visitor Pass 01';
-        plateLabel.textContent = 'Plate Number (Optional)';
+        memberSection.style.display = 'none';
+        visitorInfoBox.style.display = 'block';
+
         plateInput.required = false;
-        plateInput.removeAttribute('minlength');
-        plateInput.placeholder = 'Assigned on Parking Map';
-        contactGroup.style.display = 'none';
-        modelGroup.style.display = 'none';
-        initBalGroup.style.display = 'none';
+        plateInput.disabled = true;
+        vehSelect.required = false;
+        vehSelect.disabled = true;
         contactInput.disabled = true;
         modelInput.disabled = true;
         initBalInput.disabled = true;
-        if (!editingUid) vehSelect.value = 'ANY';
       } else {
         nameLabel.textContent = 'Driver Full Name *';
         nameInput.placeholder = 'Juan Dela Cruz';
-        plateLabel.textContent = 'Plate Number *';
+        memberSection.style.display = 'flex';
+        visitorInfoBox.style.display = 'none';
+
+        plateInput.disabled = false;
         plateInput.required = true;
-        plateInput.setAttribute('minlength', '6');
-        plateInput.placeholder = 'e.g., ABC 1234';
-        contactGroup.style.display = 'flex';
-        modelGroup.style.display = 'flex';
-        initBalGroup.style.display = editingUid ? 'none' : 'flex';
+        vehSelect.disabled = false;
+        vehSelect.required = true;
+        if (vehSelect.value !== '2W' && vehSelect.value !== '4W') {
+          vehSelect.value = '4W';
+        }
         contactInput.disabled = false;
         modelInput.disabled = false;
+        initBalGroup.style.display = editingUid ? 'none' : 'flex';
         initBalInput.disabled = Boolean(editingUid);
-        if (vehSelect.value === 'ANY') vehSelect.value = '4W';
       }
     }
 
@@ -619,26 +663,26 @@
 
       if (uid && driversData[uid]) {
         const d = driversData[uid];
-        const passType = d.passType || 'Member';
+        const passType = d.passType === 'Visitor' ? 'Visitor' : 'Member';
         document.getElementById('modalTitle').textContent = 'Edit Driver & RFID Card';
         uidInput.value = uid;
         uidInput.disabled = true;
-        document.getElementById('passTypeInput').value = passType;
         document.getElementById('driverNameInput').value = d.name || '';
         document.getElementById('driverContactInput').value = d.contact || '';
         document.getElementById('plateNumberInput').value = d.plate || '';
-        document.getElementById('vehicleTypeInput').value = d.vehicleType || (passType === 'Visitor' ? 'ANY' : '4W');
+        document.getElementById('vehicleTypeInput').value = d.vehicleType === '2W' ? '2W' : '4W';
         document.getElementById('vehicleModelInput').value = d.vehicleModel || '';
         document.getElementById('accessActiveToggle').checked = d.active !== false;
+        setDriverModalMode(passType);
       } else {
         document.getElementById('modalTitle').textContent = 'Register Driver RFID Card';
         uidInput.disabled = false;
-        document.getElementById('passTypeInput').value = 'Member';
+        document.getElementById('vehicleTypeInput').value = '4W';
         document.getElementById('initialBalanceInput').value = 100;
         document.getElementById('accessActiveToggle').checked = true;
+        setDriverModalMode('Member');
       }
 
-      handlePassTypeChange();
       modal.classList.add('open');
     }
 
@@ -660,8 +704,8 @@
       setFormError('driverFormError', '');
 
       const rawUid = document.getElementById('rfidUidInput').value.trim().toUpperCase().replace(/[^0-9A-F]/g, '');
-      if (rawUid.length < 4) {
-        setFormError('driverFormError', 'Please enter a valid hexadecimal RFID UID (at least 4 hex characters).');
+      if (!editingUid && rawUid.length !== 8) {
+        setFormError('driverFormError', 'RFID UID must be exactly 8 hexadecimal characters (0-9, A-F).');
         return;
       }
 
@@ -682,7 +726,7 @@
       }
 
       try {
-        const passType = document.getElementById('passTypeInput').value;
+        const passType = document.getElementById('passTypeInput').value === 'Visitor' ? 'Visitor' : 'Member';
         const isVisitor = passType === 'Visitor';
         const isActive = document.getElementById('accessActiveToggle').checked;
         const existingBalance = isVisitor
@@ -691,12 +735,14 @@
               ? (Number(driversData[editingUid].balance) || 0)
               : (Number(document.getElementById('initialBalanceInput').value) || 0));
 
+        const selectedVeh = document.getElementById('vehicleTypeInput').value === '2W' ? '2W' : '4W';
+
         const record = {
           passType: passType,
           name: document.getElementById('driverNameInput').value.trim().toUpperCase(),
           contact: isVisitor ? '' : document.getElementById('driverContactInput').value.trim(),
-          plate: document.getElementById('plateNumberInput').value.trim().toUpperCase(),
-          vehicleType: document.getElementById('vehicleTypeInput').value,
+          plate: isVisitor ? '' : document.getElementById('plateNumberInput').value.trim().toUpperCase(),
+          vehicleType: isVisitor ? 'ANY' : selectedVeh,
           vehicleModel: isVisitor ? '' : document.getElementById('vehicleModelInput').value.trim().toUpperCase(),
           balance: existingBalance,
           active: isActive,

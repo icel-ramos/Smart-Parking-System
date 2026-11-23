@@ -442,6 +442,77 @@ tbody tr:last-child td {
   font-size: 0.86rem;
 }
 
+/* Table Pagination Footer */
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.table-footer-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.per-page-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.per-page-select {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  border-radius: 7px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.page-btn {
+  padding: 5px 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.page-btn:hover:not(:disabled):not(.active) {
+  background: #f1f5f9;
+}
+
+.page-btn.active {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Page-Specific Inner Modal Components (Shell handled by global.css) */
 .form-error-banner {
   display: none;
@@ -452,6 +523,62 @@ tbody tr:last-child td {
   color: #b91c1c;
   font-size: 0.78rem;
   font-weight: 600;
+}
+
+/* Segmented Pass Type Switcher (Shared Pattern with Parking Map) */
+.pe-mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 4px;
+}
+
+.pe-mode-btn {
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pe-mode-btn:hover {
+  color: #0f172a;
+}
+
+.pe-mode-btn.active {
+  background: #ffffff;
+  color: #1d4ed8;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.member-fields-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.visitor-mode-hint {
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #475569;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.visitor-mode-hint strong {
+  color: #0f172a;
 }
 
 .form-grid-2 {
@@ -666,77 +793,6 @@ tbody tr:last-child td {
   transform: translateX(18px);
 }
 
-/* Table Pagination Footer (Matches bill&Pricing.css) */
-.table-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
-  font-size: 0.82rem;
-  color: #64748b;
-}
-
-.table-footer-left {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.per-page-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.per-page-select {
-  padding: 4px 8px;
-  font-size: 0.8rem;
-  border-radius: 7px;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.page-btn {
-  padding: 5px 10px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #334155;
-  font-size: 0.8rem;
-  font-weight: 600;
-  font-family: inherit;
-  border-radius: 7px;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.page-btn:hover:not(:disabled):not(.active) {
-  background: #f1f5f9;
-}
-
-.page-btn.active {
-  background: #eff6ff;
-  border-color: #93c5fd;
-  color: #1d4ed8;
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* Tablet Breakpoint */
 @media (max-width: 960px) {
   .kpi-grid {
@@ -908,10 +964,6 @@ tbody tr:last-child td {
     min-width: 0;
   }
 
-  .form-grid-2 {
-    grid-template-columns: 1fr;
-  }
-  
   .table-footer {
     flex-direction: column;
     align-items: stretch;
@@ -924,6 +976,10 @@ tbody tr:last-child td {
 
   .pagination {
     justify-content: center;
+  }
+
+  .form-grid-2 {
+    grid-template-columns: 1fr;
   }
 }
 
