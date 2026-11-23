@@ -311,21 +311,51 @@ tr:last-child td {
 .text-red { color: var(--red-primary); }
 .bg-red { background-color: var(--red-primary); }
 
-.action-btn {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+/* Red Button (Shown when device is Online -> "Set Offline") */
+.btn-set-offline {
+  background: #ffeff1;
+  border: 1px solid #febfc5;
   border-radius: 7px;
   padding: 6px 10px;
   cursor: pointer;
-  color: #1d4ed8;
+  color: #d81d4c;
   font-size: 0.78rem;
   font-weight: 600;
   transition: background-color 0.15s ease;
 }
 
-.action-btn:hover {
+.btn-set-offline:hover {
+  background: #fedbe1;
+}
+
+/* Blue Button (Shown when device is Offline -> "Set Online") */
+.btn-set-online {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 7px;
+  padding: 6px 10px;
+  cursor: pointer;
+  color: #2563eb;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+}
+
+.btn-set-online:hover {
   background: #dbeafe;
 }
+
+
+/* Disabled State when ESP32-MAIN is Offline */
+.btn-set-offline:disabled,
+.btn-set-online:disabled {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
 
 @media (max-width: 720px) {
   .grid-2 {
