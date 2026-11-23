@@ -6,93 +6,6 @@
   <title>Parking Map - Live Overview</title>
   <link rel="stylesheet" href="global.css">
   <link rel="stylesheet" href="parkingMap.css">
-  <style>
-    /* Additional states for Reserved, Maintenance, and Multi-Action Controls */
-    .dot.amber { background-color: #f59e0b; box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); }
-    .dot.slate { background-color: #94a3b8; }
-
-    .slot-box.reserved {
-      border-color: rgba(245, 158, 11, 0.55);
-      background: linear-gradient(180deg, rgba(245, 158, 11, 0.14) 0%, rgba(15, 23, 42, 0.65) 100%);
-    }
-    .slot-box.maintenance {
-      border-color: rgba(148, 163, 184, 0.45);
-      background: repeating-linear-gradient(
-        -45deg,
-        rgba(30, 41, 59, 0.75),
-        rgba(30, 41, 59, 0.75) 10px,
-        rgba(51, 65, 85, 0.55) 10px,
-        rgba(51, 65, 85, 0.55) 20px
-      );
-    }
-
-    .slot-subnote {
-      font-size: 0.72rem;
-      color: #cbd5e1;
-      text-align: center;
-      margin-top: 4px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-      padding: 0 6px;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 14px;
-    }
-
-    .action-btn-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-top: 8px;
-    }
-
-    .action-btn.btn-reserve {
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-    }
-    .action-btn.btn-reserve:hover {
-      background: #dbeafe;
-    }
-
-    .action-btn.btn-maint {
-      background: #fffbeb;
-      color: #b45309;
-      border: 1px solid #fde68a;
-    }
-    .action-btn.btn-maint:hover {
-      background: #fef3c7;
-    }
-
-    .action-btn.btn-settle {
-      background: #dcfce7;
-      color: #15803d;
-      border: 1px solid #bbf7d0;
-    }
-    .action-btn.btn-settle:hover {
-      background: #bbf7d0;
-    }
-
-    .action-btn.btn-clear {
-      background: #f1f5f9;
-      color: #334155;
-      border: 1px solid #cbd5e1;
-    }
-    .action-btn.btn-clear:hover {
-      background: #e2e8f0;
-    }
-
-    .text-amber { color: #d97706; }
-    .text-slate { color: #64748b; }
-  </style>
 </head>
 <body>
 
@@ -107,6 +20,7 @@
       <li class="nav-item active"><a href="parkingMap.html"><span data-icon="map"></span> Parking Map</a></li>
       <li class="nav-item"><a href="infra&Hardware.html"><span data-icon="hardware"></span> Infrastructure and Hardware</a></li>
       <li class="nav-item"><a href="bill&Pricing.html"><span data-icon="billing"></span> Billing &amp; Pricing</a></li>
+      <li class="nav-item"><a href="driver&Vehicle.html"><span data-icon="user"></span> Drivers &amp; Vehicles</a></li>
       <li class="nav-item"><a href="comply&Setting.html"><span data-icon="compliance"></span> Compliance &amp; Settings</a></li>
     </ul>
   </aside>
@@ -126,6 +40,11 @@
       <div>
         <h2>Live parking overview</h2>
         <p>Monitor bay availability, manage reservations, and handle slot maintenance.</p>
+      </div>
+
+      <div class="bays-in-use-card">
+        <span class="bays-in-use-label">Bays In Use</span>
+        <span class="bays-in-use-value" id="statTotalFull">0 / 4</span>
       </div>
     </div>
 
@@ -184,16 +103,40 @@
             <div class="stat-value" id="statFee">&#8369;0.00</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">Bays In Use</div>
-            <div class="stat-value" id="statTotalFull">0 / 4</div>
+            <div class="stat-label">Bay Details</div>
+            <button
+              type="button"
+              class="stat-note-btn"
+              onclick="openSelectedBayModal()"
+              title="View details and notes for the selected bay"
+              aria-label="View details and notes for the selected bay"
+            >
+              <span data-icon="note"></span>
+              <span>View Notes</span>
+            </button>
           </div>
+          
         </div>
 
         <div class="controls-row">
           <div class="control-group">
-            <div class="control-title" id="controlGroupTitle">Bay Management Actions</div>
-            <div class="action-btn-group" id="slotActionButtons">
-              <!-- Populated dynamically based on selected slot state -->
+            <div class="control-header-bar">
+              <div class="control-header-left">
+                <div class="control-title" id="controlGroupTitle">Bay Management Actions</div>
+                <span class="bay-context-pill" id="actionBayBadge">1A-01 &middot; Available</span>
+              </div>
+
+              <div class="override-toggle-wrap" id="overrideWrap" title="Unlock sensor-controlled manual actions">
+                <span class="override-label" id="overrideStatusLabel">Manual Override: OFF</span>
+                <label class="override-switch">
+                  <input type="checkbox" id="manualOverrideToggle" onchange="toggleManualOverride(this.checked)">
+                  <span class="override-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="action-list" id="slotActionButtons">
+              <!-- Populated dynamically as a structured list with disabled states -->
             </div>
           </div>
         </div>
@@ -230,6 +173,16 @@
 
     let currentFloor = 1;
     let selectedIndex = 0; // Default to 1A-01
+    let manualOverrideMode = false;
+
+    function toggleManualOverride(isEnabled) {
+      manualOverrideMode = Boolean(isEnabled);
+      const wrap = document.getElementById("overrideWrap");
+      const label = document.getElementById("overrideStatusLabel");
+      if (wrap) wrap.classList.toggle("active", manualOverrideMode);
+      if (label) label.textContent = manualOverrideMode ? "Manual Override: ON" : "Manual Override: OFF";
+      updateTelemetry();
+    }
 
     function formatElapsed(startMs) {
       if (!startMs) return "0m 0s";
@@ -330,10 +283,10 @@
 
       const beamEl = document.getElementById("statBeam");
       if (currentSlot.status === "occupied") {
-        beamEl.textContent = "Occupied (Sensor)";
+        beamEl.textContent = "Occupied";
         beamEl.className = "stat-value text-red";
       } else if (currentSlot.status === "reserved") {
-        beamEl.textContent = "Reserved (Billed)";
+        beamEl.textContent = "Reserved";
         beamEl.className = "stat-value text-amber";
       } else if (currentSlot.status === "maintenance") {
         beamEl.textContent = "Under Maintenance";
@@ -365,11 +318,11 @@
 
       const occupancyRatio = slots.length > 0 ? unavailableCount / slots.length : 0;
       if (occupancyRatio >= 1) {
-        totalFullEl.className = "stat-value text-red";
+        totalFullEl.className = "bays-in-use-value text-red";
       } else if (occupancyRatio >= 0.75) {
-        totalFullEl.className = "stat-value text-amber";
+        totalFullEl.className = "bays-in-use-value text-amber";
       } else {
-        totalFullEl.className = "stat-value";
+        totalFullEl.className = "bays-in-use-value";
       }
 
       renderActionButtons(currentSlot);
@@ -377,50 +330,122 @@
 
     function renderActionButtons(slot) {
       const btnContainer = document.getElementById("slotActionButtons");
+      const bayBadge = document.getElementById("actionBayBadge");
 
-      if (slot.status === "available") {
-        btnContainer.innerHTML = `
-          <button class="action-btn btn-reserve" onclick="reserveSlot()">
-            <span data-icon="lock"></span>
-            <span>Reserve Bay (Standard Rate)</span>
-          </button>
-          <button class="action-btn btn-maint" onclick="setMaintenance()">
-            <span data-icon="settings"></span>
-            <span>Put Under Maintenance</span>
-          </button>
-        `;
-      } else if (slot.status === "reserved") {
-        btnContainer.innerHTML = `
-          <button class="action-btn btn-settle" onclick="markArrived()">
-            <span data-icon="car"></span>
-            <span>Vehicle Arrived (Mark Occupied)</span>
-          </button>
-          <button class="action-btn btn-clear" onclick="settleAndReleaseSlot()">
-            <span>Settle Fee &amp; Release Bay</span>
-          </button>
-          <button class="action-btn btn-maint" onclick="setMaintenance()">
-            <span>Switch to Maintenance</span>
-          </button>
-        `;
-      } else if (slot.status === "occupied") {
-        btnContainer.innerHTML = `
-          <button class="action-btn btn-reserve" onclick="assignPlateToOccupied()">
-            <span>${slot.plate ? 'Update Plate No.' : 'Assign Plate &amp; Ticket'}</span>
-          </button>
-          <button class="action-btn btn-settle" onclick="settleAndReleaseSlot()">
-            <span>Settle Fee &amp; Check Out</span>
-          </button>
-          <button class="action-btn btn-maint" onclick="setMaintenance()">
-            <span>Flag Bay Incident / Maintenance</span>
-          </button>
-        `;
-      } else if (slot.status === "maintenance") {
-        btnContainer.innerHTML = `
-          <button class="action-btn btn-settle" onclick="restoreAvailable()">
-            <span>Complete Maintenance (Restore Available)</span>
-          </button>
-        `;
+      const statusText = slot.status.charAt(0).toUpperCase() + slot.status.slice(1);
+      if (bayBadge) {
+        bayBadge.textContent = `${slot.id} · ${statusText}`;
       }
+
+      const isAvail = slot.status === "available";
+      const isRes = slot.status === "reserved";
+      const isOcc = slot.status === "occupied";
+      const isMaint = slot.status === "maintenance";
+
+      const canReserve = isAvail;
+      const canMarkArrived = manualOverrideMode && (isRes || isAvail);
+      const canAssignPlate = isOcc || isRes || isMaint;
+      const canSettle = isOcc || isRes;
+      const canFlagMaint = isAvail || isRes || isOcc;
+      const canRestore = isMaint;
+
+      let arriveTitle = isRes ? "Vehicle Arrived (Mark Occupied)" : "Manual Check-In (Force Occupy)";
+      let arriveSub = "";
+      let arriveTag = "Override";
+
+      if (isOcc) {
+        arriveSub = "Bay is already occupied";
+        arriveTag = "Active";
+      } else if (isMaint) {
+        arriveSub = "Restore bay from maintenance first";
+        arriveTag = "Locked";
+      } else if (!manualOverrideMode) {
+        arriveSub = "Auto-detected by ESP32 (Enable Override to force)";
+        arriveTag = "Sensor Auto";
+      } else {
+        arriveSub = isRes
+          ? "Transition reserved bay to occupied and keep timer"
+          : "Manually lock bay as occupied without sensor trigger";
+        arriveTag = "Override";
+      }
+
+      const actions = [
+        {
+          title: "Reserve Bay (Standard Rate)",
+          sub: canReserve ? "Lock bay and start reservation billing" : `Bay is already ${statusText.toLowerCase()}`,
+          icon: "lock",
+          tone: "tone-blue",
+          tag: canReserve ? "Ready" : "Unavailable",
+          enabled: canReserve,
+          onClick: "reserveSlot()"
+        },
+        {
+          title: arriveTitle,
+          sub: arriveSub,
+          icon: "car",
+          tone: "tone-amber",
+          tag: arriveTag,
+          enabled: canMarkArrived,
+          onClick: "markArrived()"
+        },
+        {
+          title: isMaint ? "Update Maintenance Details" : (slot.plate || isRes ? "Update Plate & Ticket" : "Assign Plate & Ticket"),
+          sub: isMaint
+            ? "Edit maintenance or incident note for this bay"
+            : (canAssignPlate ? "Edit plate, vehicle type, start time, ticket ID, and notes" : "Available for occupied, reserved, or maintenance bays"),
+          icon: "billing",
+          tone: "tone-blue",
+          tag: canAssignPlate ? "Ready" : "Unavailable",
+          enabled: canAssignPlate,
+          onClick: "assignPlateToOccupied()"
+        },
+        {
+          title: isRes ? "Settle Fee & Release Bay" : "Settle Fee & Check Out",
+          sub: canSettle ? "Collect accrued fee and return bay to auto mode" : "No active billable session on this bay",
+          icon: "currency",
+          tone: "tone-green",
+          tag: canSettle ? "Ready" : "Unavailable",
+          enabled: canSettle,
+          onClick: "settleAndReleaseSlot()"
+        },
+        {
+          title: isOcc ? "Flag Incident / Maintenance" : "Put Under Maintenance",
+          sub: canFlagMaint
+            ? (isOcc ? "Requires settling active fee before locking bay" : isRes ? "Transfer, void, or settle reservation before locking" : "Take bay offline and set LED to red")
+            : "Bay is already under maintenance",
+          icon: "settings",
+          tone: "tone-amber",
+          tag: canFlagMaint ? "Ready" : "Active",
+          enabled: canFlagMaint,
+          onClick: "setMaintenance()"
+        },
+        {
+          title: "Complete Maintenance",
+          sub: canRestore ? "Clear incident flag and restore auto sensor control" : "Only available for bays under maintenance",
+          icon: "check",
+          tone: "tone-green",
+          tag: canRestore ? "Restore" : "Unavailable",
+          enabled: canRestore,
+          onClick: "restoreAvailable()"
+        }
+      ];
+
+      btnContainer.innerHTML = actions.map(a => `
+        <button
+          type="button"
+          class="action-row-btn ${a.tone}"
+          ${a.enabled ? `onclick="${a.onClick}"` : "disabled"}
+        >
+          <div class="action-row-main">
+            <span class="action-row-icon" data-icon="${a.icon}"></span>
+            <div class="action-row-text">
+              <span class="action-row-title">${a.title}</span>
+              <span class="action-row-sub">${a.sub}</span>
+            </div>
+          </div>
+          <span class="action-row-tag">${a.tag}</span>
+        </button>
+      `).join("");
 
       if (window.renderIcons) window.renderIcons();
     }
@@ -430,23 +455,128 @@
       renderDashboard();
     }
 
-    // 1. Reserve a Bay (Charges standard rate immediately & creates active transaction)
-    function reserveSlot() {
-      const slot = floorsData[currentFloor][selectedIndex];
-      const plateInput = prompt(`Reserve Bay ${slot.id} - Enter Vehicle Plate Number:`, "");
-      if (plateInput === null) return;
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
 
-      const cleanPlate = plateInput.trim().toUpperCase() || "RESERVED";
-      const vehInput = prompt("Enter Vehicle Type (4W for 4 Wheelers, 2W for 2 Wheelers):", "4W") || "4W";
-      const is2W = vehInput.toLowerCase().includes("2");
-      const vehicleType = is2W ? "2w" : "4w";
+    function openSelectedBayModal() {
+      const slot = floorsData[currentFloor][selectedIndex];
+      const isAvail = slot.status === "available";
+      const isMaint = slot.status === "maintenance";
+      const fee = calculateAccruedFee(slot);
+      const vLabel = (slot.vehicleType || "4w").toUpperCase();
+      const statusLabel = slot.status.charAt(0).toUpperCase() + slot.status.slice(1);
+      const noteText = slot.note ? escapeHtml(slot.note) : "No additional note recorded.";
+
+      const bodyHtml = isAvail
+        ? `<div class="bays-empty-state">Bay ${escapeHtml(slot.id)} is currently available. There are no active tickets, vehicle records, or notes for this bay.</div>`
+        : `
+          <div class="bay-detail-item" style="margin-bottom: 16px;">
+            <div class="bay-detail-top">
+              <div class="bay-detail-id-group">
+                <span class="bay-detail-id">Bay ${escapeHtml(slot.id)}</span>
+                <span class="bay-status-chip ${slot.status}">${statusLabel}</span>
+              </div>
+              <span class="bay-detail-fee">${isMaint ? "No Charge" : `₱${fee.toFixed(2)}`}</span>
+            </div>
+
+            <div class="bay-detail-grid">
+              <div><strong>Plate:</strong> ${isMaint ? "N/A" : escapeHtml(slot.plate || "Unassigned")} ${!isMaint ? `(${vLabel})` : ""}</div>
+              <div><strong>Ticket ID:</strong> ${isMaint ? "N/A" : escapeHtml(slot.ticketId || "Not Assigned")}</div>
+              <div><strong>Start Time:</strong> ${isMaint ? "--:--" : escapeHtml(slot.entry || "--:--")}</div>
+              <div><strong>Duration:</strong> ${isMaint ? "N/A" : escapeHtml(formatElapsed(slot.entryTimeMs))}</div>
+            </div>
+
+            <div class="bay-detail-note-row">
+              <strong>Note / Details:</strong> ${noteText}
+            </div>
+          </div>
+        `;
+
+      const backdrop = document.createElement("div");
+      backdrop.className = "pe-modal-backdrop";
+      backdrop.innerHTML = `
+        <div class="pe-modal-card bays-info-modal" role="dialog" aria-modal="true">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px;">
+            <h3 class="pe-modal-title" style="margin: 0;">Bay ${escapeHtml(slot.id)} Details</h3>
+            ${isAvail ? `<span class="bay-status-chip available">Available</span>` : ""}
+          </div>
+          <p class="pe-modal-subtitle">Full session telemetry and notes for the currently selected bay.</p>
+
+          ${bodyHtml}
+
+          <div class="pe-modal-actions">
+            ${!isAvail ? `<button type="button" class="pe-modal-btn cancel" id="editBayFromModalBtn">Edit Details</button>` : ""}
+            <button type="button" class="pe-modal-btn confirm" id="closeBaysInfoBtn">Close</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(backdrop);
+      requestAnimationFrame(() => backdrop.classList.add("open"));
+
+      const closeModal = () => {
+        document.removeEventListener("keydown", onEsc);
+        backdrop.classList.remove("open");
+        setTimeout(() => backdrop.remove(), 160);
+      };
+
+      const onEsc = (e) => {
+        if (e.key === "Escape") closeModal();
+      };
+      document.addEventListener("keydown", onEsc);
+
+      backdrop.querySelector("#closeBaysInfoBtn").addEventListener("click", closeModal);
+      backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) closeModal();
+      });
+
+      const editBtn = backdrop.querySelector("#editBayFromModalBtn");
+      if (editBtn) {
+        editBtn.addEventListener("click", () => {
+          closeModal();
+          setTimeout(() => assignPlateToOccupied(), 170);
+        });
+      }
+    }
+
+    // 1. Reserve a Bay (Single custom form replaces 2 native prompts)
+    async function reserveSlot() {
+      const slot = floorsData[currentFloor][selectedIndex];
+      const result = await window.peForm({
+        title: `Reserve Bay ${slot.id}`,
+        subtitle: 'Assign a vehicle plate and type to lock this bay at the standard rate.',
+        confirmText: 'Reserve Bay',
+        fields: [
+          { name: 'plate', label: 'Vehicle Plate Number', placeholder: 'e.g., ABC 1234', uppercase: true },
+          {
+            name: 'vehicleType',
+            label: 'Vehicle Type',
+            type: 'select',
+            value: '4w',
+            options: [
+              { value: '4w', label: `4 Wheelers (₱${activeRates['4w'].firstHour.toFixed(2)} first hr)` },
+              { value: '2w', label: `2 Wheelers (₱${activeRates['2w'].firstHour.toFixed(2)} first hr)` }
+            ]
+          },
+          { name: 'note', label: 'Reservation Note (Name / Details)', placeholder: 'e.g., Juan Dela Cruz (optional)' }
+        ]
+      });
+      if (!result) return;
+
+      const cleanPlate = result.plate || "RESERVED";
+      const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
+      const is2W = vehicleType === "2w";
       const rateAmount = activeRates[vehicleType].firstHour.toFixed(2);
 
       const nowMs = Date.now();
       const timeStr = getCurrentTimeStr();
       const ticketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
 
-      // Create an active Unpaid transaction so reservation is charged the standard rate
       window.dbUpdate(`transactions/${ticketId}`, {
         id: ticketId,
         slotId: slot.id,
@@ -460,7 +590,6 @@
         timestamp: nowMs
       });
 
-      // Lock bay in manual mode with red LED so walk-in vehicles know it is taken
       window.dbUpdate(`slots/${slot.id}`, {
         status: "reserved",
         forced: true,
@@ -469,7 +598,7 @@
         plate: cleanPlate,
         vehicleType,
         ticketId,
-        note: "Reserved",
+        note: result.note || "Reserved",
         entry: timeStr,
         entryTimeMs: nowMs
       });
@@ -479,36 +608,134 @@
       }
     }
 
-    // 2. Transition Reserved Bay to Occupied when vehicle physically parks (keeps original billing timer)
-    function markArrived() {
+    // 2. Manual Override: Mark Reserved Vehicle Arrived OR Force Occupy an Available Bay
+    async function markArrived() {
+      if (!manualOverrideMode) return;
       const slot = floorsData[currentFloor][selectedIndex];
-      window.dbUpdate(`slots/${slot.id}`, {
-        status: "occupied",
-        note: "Parked"
-      });
-      if (window.pushNotification) {
-        window.pushNotification("Reserved Vehicle Arrived", `${slot.plate || 'Vehicle'} parked in Bay ${slot.id}.`);
+
+      if (slot.status === "reserved") {
+        const confirmed = await window.peConfirm(
+          `Manual Override: Bay ${slot.id}`,
+          `Confirm ${slot.plate || 'reserved vehicle'} has arrived and mark Bay ${slot.id} as Occupied?`,
+          { confirmText: 'Mark Occupied' }
+        );
+        if (!confirmed) return;
+
+        window.dbUpdate(`slots/${slot.id}`, {
+          status: "occupied",
+          forced: true,
+          mode: "manual",
+          light: "red",
+          note: "Parked (Override)"
+        });
+
+        if (window.pushNotification) {
+          window.pushNotification("Reserved Vehicle Arrived", `${slot.plate || 'Vehicle'} marked occupied in Bay ${slot.id} via Manual Override.`);
+        }
+      } else if (slot.status === "available") {
+        const confirmed = await window.peConfirm(
+          `Manual Check-In: Bay ${slot.id}`,
+          `Force Bay ${slot.id} to Occupied and start the billing timer without waiting for the ESP32 sensor?`,
+          { confirmText: 'Force Occupy' }
+        );
+        if (!confirmed) return;
+
+        const nowMs = Date.now();
+        const timeStr = getCurrentTimeStr();
+
+        window.dbUpdate(`slots/${slot.id}`, {
+          status: "occupied",
+          forced: true,
+          mode: "manual",
+          light: "red",
+          note: "Manual Override",
+          entry: timeStr,
+          entryTimeMs: nowMs
+        });
+
+        if (window.pushNotification) {
+          window.pushNotification("Manual Bay Check-In", `Bay ${slot.id} was manually marked Occupied via Override.`);
+        }
       }
     }
 
-    // 3. Assign or update a Plate Number + Billing Ticket for a walk-in Occupied bay
-    function assignPlateToOccupied() {
+    // Helper to convert HH:MM time input back into a timestamp for today
+    function timeStrToTodayMs(timeStr, fallbackMs) {
+      if (!timeStr || !timeStr.includes(":")) return fallbackMs || Date.now();
+      const [h, m] = timeStr.split(":").map(Number);
+      if (isNaN(h) || isNaN(m)) return fallbackMs || Date.now();
+      const d = new Date();
+      d.setHours(h, m, 0, 0);
+      return d.getTime();
+    }
+
+    // 3. Update ALL Details (Plate, Vehicle Type, Start Time, Ticket ID, and Note)
+    async function assignPlateToOccupied() {
       const slot = floorsData[currentFloor][selectedIndex];
-      const plateInput = prompt(`Enter Plate Number for Bay ${slot.id}:`, slot.plate || "");
-      if (!plateInput || !plateInput.trim()) return;
 
-      const cleanPlate = plateInput.trim().toUpperCase();
-      const vehInput = prompt("Enter Vehicle Type (4W or 2W):", (slot.vehicleType || "4W").toUpperCase()) || "4W";
-      const is2W = vehInput.toLowerCase().includes("2");
-      const vehicleType = is2W ? "2w" : "4w";
-      const currentFee = calculateAccruedFee({ ...slot, vehicleType }).toFixed(2);
+      // If bay is in maintenance, allow editing the maintenance note directly
+      if (slot.status === "maintenance") {
+        const res = await window.peForm({
+          title: `Update Maintenance Note: Bay ${slot.id}`,
+          subtitle: "Edit the maintenance or incident details displayed for this bay.",
+          confirmText: "Save Note",
+          fields: [
+            { name: "note", label: "Maintenance / Incident Note", value: slot.note || "", placeholder: "e.g., Sensor calibration in progress", required: true }
+          ]
+        });
+        if (!res) return;
 
-      const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
-      const timeIn = (slot.entry && slot.entry !== "--:--") ? slot.entry : getCurrentTimeStr();
-      const entryTimeMs = slot.entryTimeMs || Date.now();
+        window.dbUpdate(`slots/${slot.id}`, { note: res.note });
+        if (window.pushNotification) {
+          window.pushNotification("Maintenance Note Updated", `Updated details for Bay ${slot.id}.`);
+        }
+        return;
+      }
 
-      window.dbUpdate(`transactions/${ticketId}`, {
-        id: ticketId,
+      const defaultTime = (slot.entry && slot.entry !== "--:--") ? slot.entry : getCurrentTimeStr();
+      const defaultTicket = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+
+      const result = await window.peForm({
+        title: `Update Details: Bay ${slot.id}`,
+        subtitle: "Modify plate number, vehicle class, start time, ticket ID, or driver/reservation notes.",
+        confirmText: "Save Changes",
+        fields: [
+          { name: "plate", label: "Vehicle Plate Number", value: slot.plate || "", placeholder: "e.g., ABC 1234", required: true, uppercase: true },
+          {
+            name: "vehicleType",
+            label: "Vehicle Type",
+            type: "select",
+            value: (slot.vehicleType || "4w").toLowerCase().includes("2") ? "2w" : "4w",
+            options: [
+              { value: "4w", label: `4 Wheelers (₱${activeRates["4w"].firstHour.toFixed(2)} first hr)` },
+              { value: "2w", label: `2 Wheelers (₱${activeRates["2w"].firstHour.toFixed(2)} first hr)` }
+            ]
+          },
+          { name: "entry", label: "Start Time", type: "time", value: defaultTime, required: true },
+          { name: "ticketId", label: "Ticket ID", value: defaultTicket, placeholder: "e.g., TKT-1234", required: true, uppercase: true },
+          { name: "note", label: "Driver Name / Note / Details", value: slot.note || "", placeholder: "e.g., Juan Dela Cruz, VIP, or special instructions" }
+        ]
+      });
+      if (!result) return;
+
+      const cleanPlate = result.plate;
+      const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
+      const is2W = vehicleType === "2w";
+      const timeIn = result.entry || defaultTime;
+      const entryTimeMs = (timeIn === slot.entry && slot.entryTimeMs)
+        ? slot.entryTimeMs
+        : timeStrToTodayMs(timeIn, slot.entryTimeMs);
+      const newTicketId = result.ticketId || defaultTicket;
+      const cleanNote = result.note || (slot.status === "reserved" ? "Reserved" : "");
+      const currentFee = calculateAccruedFee({ ...slot, vehicleType, entryTimeMs }).toFixed(2);
+
+      // Remove old transaction node if the Ticket ID was renamed
+      if (slot.ticketId && slot.ticketId !== newTicketId && typeof window.dbSet === "function") {
+        window.dbSet(`transactions/${slot.ticketId}`, null);
+      }
+
+      window.dbUpdate(`transactions/${newTicketId}`, {
+        id: newTicketId,
         slotId: slot.id,
         plate: cleanPlate,
         vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
@@ -516,25 +743,187 @@
         timeOut: "--:--",
         amount: currentFee,
         status: "Unpaid",
+        type: slot.status === "reserved" ? "Reservation" : "Walk-In",
+        note: cleanNote,
         timestamp: entryTimeMs
       });
 
       window.dbUpdate(`slots/${slot.id}`, {
         plate: cleanPlate,
         vehicleType,
-        ticketId,
+        ticketId: newTicketId,
+        note: cleanNote,
         entry: timeIn,
         entryTimeMs
       });
+
+      if (window.pushNotification) {
+        window.pushNotification("Bay Details Updated", `Saved updated details for Bay ${slot.id} (${cleanPlate}).`);
+      }
     }
 
-    // 4. Put Bay Under Maintenance or Flag an Accident/Incident (No fee charged)
-    function setMaintenance() {
-      const slot = floorsData[currentFloor][selectedIndex];
-      const reason = prompt(`Enter maintenance or incident reason for Bay ${slot.id}:`, slot.note || "Scheduled Maintenance");
-      if (reason === null) return;
+    // 4. Put Bay Under Maintenance or Flag an Incident (Safeguards for Occupied & Reserved bays)
+    async function setMaintenance() {
+      const slots = floorsData[currentFloor];
+      const slot = slots[selectedIndex];
+      const isOccupied = slot.status === "occupied";
+      const isReserved = slot.status === "reserved";
+      const accruedFee = (isOccupied || isReserved) ? calculateAccruedFee(slot).toFixed(2) : "0.00";
 
-      const cleanReason = reason.trim() || "Under Maintenance";
+      const fields = [
+        {
+          name: 'reason',
+          label: 'Maintenance / Incident Reason',
+          value: slot.note || 'Scheduled Maintenance',
+          placeholder: 'e.g., Sensor fault or bay obstruction',
+          required: true
+        }
+      ];
+
+      let modalTitle = `Maintenance: Bay ${slot.id}`;
+      let modalSubtitle = 'Mark this bay unavailable and lock its indicator LED to red.';
+      let confirmText = 'Set Maintenance';
+
+      if (isOccupied) {
+        modalTitle = `Settle & Lock Bay ${slot.id}`;
+        modalSubtitle = `Bay ${slot.id} is currently occupied. Payment of ₱${accruedFee} must be collected before locking this bay for maintenance.`;
+        confirmText = `Collect ₱${accruedFee} & Lock Bay`;
+
+        fields.push(
+          {
+            name: 'plate',
+            label: 'Vehicle Plate Number (for receipt)',
+            value: slot.plate || '',
+            placeholder: 'e.g., ABC 1234 (optional)',
+            uppercase: true
+          },
+          {
+            name: 'vehicleType',
+            label: 'Vehicle Type',
+            type: 'select',
+            value: (slot.vehicleType || '4w').toLowerCase().includes('2') ? '2w' : '4w',
+            options: [
+              { value: '4w', label: '4 Wheelers' },
+              { value: '2w', label: '2 Wheelers' }
+            ]
+          }
+        );
+      } else if (isReserved) {
+        const availableBays = slots.filter(s => s.status === "available" && s.id !== slot.id);
+        const reservationOptions = availableBays.map(b => ({
+          value: `transfer:${b.id}`,
+          label: `Transfer reservation to Bay ${b.id} (Available)`
+        }));
+
+        reservationOptions.push(
+          { value: 'void', label: 'Cancel & Void Reservation (Remove Unpaid Ticket)' },
+          { value: 'settle', label: `Collect Reservation Fee (Mark ₱${accruedFee} as Paid)` }
+        );
+
+        modalTitle = `Reserved Bay Maintenance: ${slot.id}`;
+        modalSubtitle = `Bay ${slot.id} is reserved for ${slot.plate || 'a vehicle'}. Choose how to handle the active reservation before locking this bay.`;
+        confirmText = 'Apply & Lock Bay';
+
+        fields.push({
+          name: 'reservationAction',
+          label: 'Reservation Safeguard Action',
+          type: 'select',
+          value: reservationOptions[0].value,
+          options: reservationOptions
+        });
+      }
+
+      const result = await window.peForm({
+        title: modalTitle,
+        subtitle: modalSubtitle,
+        confirmText,
+        danger: isOccupied || isReserved,
+        fields
+      });
+      if (!result) return;
+
+      const cleanReason = result.reason || "Under Maintenance";
+      let notifExtra = "";
+
+      if (isOccupied) {
+        const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
+        const is2W = vehicleType === "2w";
+        const finalFee = calculateAccruedFee({ ...slot, vehicleType }).toFixed(2);
+        const timeOutStr = getCurrentTimeStr();
+        const timeInStr = (slot.entry && slot.entry !== "--:--") ? slot.entry : timeOutStr;
+        const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+        const finalPlate = result.plate || slot.plate || `BAY-${slot.id}`;
+
+        window.dbUpdate(`transactions/${ticketId}`, {
+          id: ticketId,
+          slotId: slot.id,
+          plate: finalPlate,
+          vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+          timeIn: timeInStr,
+          timeOut: timeOutStr,
+          amount: finalFee,
+          status: "Paid",
+          timestamp: slot.entryTimeMs || Date.now()
+        });
+        notifExtra = ` (₱${finalFee} settled)`;
+      }
+
+      if (isReserved) {
+        const action = result.reservationAction;
+
+        if (action.startsWith('transfer:')) {
+          const targetBayId = action.split(':')[1];
+          window.dbUpdate(`slots/${targetBayId}`, {
+            status: "reserved",
+            forced: true,
+            mode: "manual",
+            light: "red",
+            plate: slot.plate || "RESERVED",
+            vehicleType: slot.vehicleType || "4w",
+            ticketId: slot.ticketId || "",
+            note: "Reserved (Transferred)",
+            entry: slot.entry || getCurrentTimeStr(),
+            entryTimeMs: slot.entryTimeMs || Date.now()
+          });
+
+          if (slot.ticketId) {
+            window.dbUpdate(`transactions/${slot.ticketId}`, {
+              slotId: targetBayId
+            });
+          }
+          notifExtra = ` (Reservation moved to ${targetBayId})`;
+        } else if (action === 'void') {
+          if (slot.ticketId) {
+            if (typeof window.dbSet === 'function') {
+              window.dbSet(`transactions/${slot.ticketId}`, null);
+            } else {
+              window.dbUpdate(`transactions/${slot.ticketId}`, {
+                amount: "0.00",
+                timeOut: getCurrentTimeStr(),
+                status: "Paid"
+              });
+            }
+          }
+          notifExtra = " (Reservation voided)";
+        } else if (action === 'settle') {
+          const timeOutStr = getCurrentTimeStr();
+          const is2W = (slot.vehicleType || "4w").toLowerCase().includes("2");
+          const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+
+          window.dbUpdate(`transactions/${ticketId}`, {
+            id: ticketId,
+            slotId: slot.id,
+            plate: slot.plate || `BAY-${slot.id}`,
+            vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+            timeIn: (slot.entry && slot.entry !== "--:--") ? slot.entry : timeOutStr,
+            timeOut: timeOutStr,
+            amount: accruedFee,
+            status: "Paid",
+            timestamp: slot.entryTimeMs || Date.now()
+          });
+          notifExtra = ` (₱${accruedFee} reservation fee settled)`;
+        }
+      }
 
       window.dbUpdate(`slots/${slot.id}`, {
         status: "maintenance",
@@ -549,19 +938,22 @@
       });
 
       if (window.pushNotification) {
-        window.pushNotification("Bay Under Maintenance", `Bay ${slot.id} marked unavailable: ${cleanReason}.`);
+        window.pushNotification("Bay Under Maintenance", `Bay ${slot.id} marked unavailable: ${cleanReason}${notifExtra}.`);
       }
     }
 
-    // 5. Settle accrued parking/reservation fee and release bay back to Available
-    function settleAndReleaseSlot() {
+    // 5. Settle accrued parking/reservation fee and release bay
+    async function settleAndReleaseSlot() {
       const slot = floorsData[currentFloor][selectedIndex];
       const finalFee = calculateAccruedFee(slot).toFixed(2);
       const timeOutStr = getCurrentTimeStr();
 
-      if (!confirm(`Settle Bay ${slot.id} (${slot.plate || 'Vehicle'}) for ₱${finalFee} and release the bay?`)) {
-        return;
-      }
+      const confirmed = await window.peConfirm(
+        `Settle & Release Bay ${slot.id}`,
+        `Confirm payment of ₱${finalFee} for ${slot.plate || 'this vehicle'} and restore Bay ${slot.id} to Available?`,
+        { confirmText: `Settle ₱${finalFee}` }
+      );
+      if (!confirmed) return;
 
       if (slot.ticketId) {
         window.dbUpdate(`transactions/${slot.ticketId}`, {

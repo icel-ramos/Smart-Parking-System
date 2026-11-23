@@ -37,7 +37,7 @@ body {
 .bg-grid-pattern {
   position: absolute;
   inset: 0;
-  background-image: 
+  background-image:
     linear-gradient(rgba(59, 130, 246, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(59, 130, 246, 0.06) 1px, transparent 1px);
   background-size: 48px 48px;
@@ -56,7 +56,7 @@ body {
   align-items: center;
 }
 
-/* Top Brand Header (Styled for your <div class="brand-logo"><span>🅿️</span> Park Easy</div>) */
+/* Top Brand Header */
 .brand-logo {
   display: flex;
   align-items: center;
@@ -154,7 +154,7 @@ body {
 
 .input-wrapper input {
   width: 100%;
-  padding: 11px 38px 11px 38px;
+  padding: 11px 38px;
   border: 1.5px solid var(--border-light);
   border-radius: 8px;
   font-size: 0.9rem;
@@ -177,6 +177,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 22px;
   font-size: 0.82rem;
 }
@@ -254,4 +256,14 @@ body {
   background-color: var(--green);
   border-radius: 50%;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+@media (max-width: 480px) {
+  .login-backdrop {
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 26px 20px 22px;
+  }
 }

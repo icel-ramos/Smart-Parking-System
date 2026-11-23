@@ -1,46 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Smart Parking System - Drivers and Vehicles</title>
-        <link rel="stylesheet" href="global.css">
-        <link rel="stylesheet" href="driver&Vehicle.css">
-    </head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Parking System - Drivers and Vehicles</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="driver&Vehicle.css">
+</head>
 
-    <body>
+<body>
 
-    <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="brand-logo">
-            <span data-icon="logo"></span>Park Easy
-            </div>
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="brand-logo">
+      <span data-icon="logo"></span>Park Easy
+    </div>
 
-            <ul class="nav-links">
-            <li class="nav-item"><a href="dashboard.html"><span data-icon="dashboard"></span> Dashboard</a></li>
-            <li class="nav-item"><a href="parkingMap.html"><span data-icon="map"></span> Parking Map</a></li>
-            <li class="nav-item"><a href="infra&Hardware.html"><span data-icon="hardware"></span> Infrastructure and Hardware</a></li>
-            <li class="nav-item"><a href="bill&Pricing.html"><span data-icon="billing"></span> Billing &amp; Pricing</a></li>
-            <li class="nav-item active"><a href="driver&Vehicle.html"><span data-icon="user"></span> Drivers &amp; Vehicles</a></li>
-            <li class="nav-item"><a href="comply&Setting.html"><span data-icon="compliance"></span> Compliance &amp; Settings</a></li>
-            </ul>
-        </aside>
+    <ul class="nav-links">
+      <li class="nav-item"><a href="dashboard.html"><span data-icon="dashboard"></span> Dashboard</a></li>
+      <li class="nav-item"><a href="parkingMap.html"><span data-icon="map"></span> Parking Map</a></li>
+      <li class="nav-item"><a href="infra&Hardware.html"><span data-icon="hardware"></span> Infrastructure and Hardware</a></li>
+      <li class="nav-item"><a href="bill&Pricing.html"><span data-icon="billing"></span> Billing &amp; Pricing</a></li>
+      <li class="nav-item active"><a href="driver&Vehicle.html"><span data-icon="user"></span> Drivers &amp; Vehicles</a></li>
+      <li class="nav-item"><a href="comply&Setting.html"><span data-icon="compliance"></span> Compliance &amp; Settings</a></li>
+    </ul>
+  </aside>
 
-        <header>
-            <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu"></button>
-            <h1>Drivers and Vehicles</h1>
-            <div class="user-profile">
-            <span class="bell-icon" aria-label="Notifications"></span>
-            <div class="avatar" aria-label="Account"></div>
-            </div>
-        </header>
+  <header>
+    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu"></button>
+    <h1>Drivers and Vehicles</h1>
+    <div class="user-profile">
+      <span class="bell-icon" aria-label="Notifications"></span>
+      <div class="avatar" aria-label="Account"></div>
+    </div>
+  </header>
 
-         <!-- Main Content (Uses .main-content from global.css) -->
+  <!-- Main Content -->
   <main class="main-content">
     <div class="section-header">
       <div>
         <h2>RFID Access &amp; Driver Registry</h2>
-        <p>Register driver RFID cards, manage prepaid balances, and control gate access</p>
+        <p>Register member and reusable visitor RFID cards, manage prepaid balances, and control gate access</p>
       </div>
       <button type="button" class="btn-primary-action" onclick="openDriverModal()">+ Register RFID Card</button>
     </div>
@@ -55,17 +55,17 @@
       <div class="kpi-card">
         <div class="kpi-label">Active Access Passes</div>
         <div class="kpi-value text-green" id="kpiActiveCards">0</div>
-        <div class="kpi-sub text-muted">Authorized for automatic entry</div>
+        <div class="kpi-sub text-muted">Authorized for gate entry</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Total Prepaid Load</div>
         <div class="kpi-value text-blue" id="kpiTotalBalance">₱0.00</div>
-        <div class="kpi-sub text-muted">Combined driver wallet credits</div>
+        <div class="kpi-sub text-muted">Combined member wallet credits</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Low Balance Cards</div>
         <div class="kpi-value text-orange" id="kpiLowBalance">0</div>
-        <div class="kpi-sub text-muted">Cards below ₱50.00 threshold</div>
+        <div class="kpi-sub text-muted">Member cards below ₱50.00 threshold</div>
       </div>
     </div>
 
@@ -74,7 +74,7 @@
       <div class="card-header">
         <div>
           <h3>Authorized Drivers &amp; RFID Cards</h3>
-          <span class="sub-note">Click "+ Load" to top up a card or click a status badge to toggle gate access</span>
+          <span class="sub-note">Click "+ Load" to top up a member card or click a status badge to toggle gate access</span>
         </div>
       </div>
 
@@ -94,9 +94,12 @@
             <option value="ALL">All Vehicle Types</option>
             <option value="4W">4 Wheelers (Car/SUV)</option>
             <option value="2W">2 Wheelers (Motorcycle)</option>
+            <option value="ANY">Any / Walk-In</option>
           </select>
           <select id="statusFilter" class="filter-select" onchange="renderDriversTable()">
             <option value="ALL">All Statuses</option>
+            <option value="Member">Members Only</option>
+            <option value="Visitor">Visitor Passes Only</option>
             <option value="Active">Active Only</option>
             <option value="Suspended">Suspended Only</option>
             <option value="LowBal">Low Balance (&lt; ₱50)</option>
@@ -118,7 +121,7 @@
             </tr>
           </thead>
           <tbody id="driversTableBody">
-            <tr>
+            <tr class="empty-row">
               <td colspan="7" class="empty-state">Loading registered RFID cards...</td>
             </tr>
           </tbody>
@@ -128,83 +131,102 @@
   </main>
 
   <!-- Modal 1: Register / Edit RFID Card -->
-  <div class="modal-backdrop" id="driverModal">
-    <div class="modal-box">
-      <div class="modal-header">
+  <div class="pe-modal-backdrop" id="driverModal">
+    <div class="pe-modal-card pe-modal-wide pe-modal-structured" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="pe-modal-header">
         <h3 id="modalTitle">Register Driver RFID Card</h3>
-        <button type="button" class="modal-close" onclick="closeDriverModal()">&times;</button>
+        <button type="button" class="pe-modal-close" onclick="closeDriverModal()" aria-label="Close">&times;</button>
       </div>
 
       <form id="driverForm" onsubmit="saveDriverRecord(event)">
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="rfidUidInput">RFID Card UID (Hexadecimal) *</label>
-            <input
-              type="text"
-              id="rfidUidInput"
-              placeholder="e.g., A1B2C3D4"
-              maxlength="14"
-              required
-              style="text-transform: uppercase; font-family: monospace;"
-            />
-            <small class="field-hint">8-character hex UID from the MIFARE card or ESP32 Serial Monitor.</small>
-          </div>
+        <div class="pe-modal-body">
+          <div id="driverFormError" class="form-error-banner"></div>
 
           <div class="form-grid-2">
             <div class="form-group">
-              <label for="driverNameInput">Driver Full Name *</label>
-              <input type="text" 
-              id="driverNameInput" 
-              pattern="[A-Za-zÀ-ÿ\s.\-']+" 
-              placeholder="Juan Dela Cruz" 
-              oninput="this.value = this.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '')" 
-              required 
-              style="text-transform: uppercase;"/>
-            </div>
-
-            <div class="form-group">
-              <label for="driverContactInput">Contact Number</label>
-              <input type="text" 
-              id="driverContactInput" 
-              inputmode="numeric"
-              maxlength="11"
-              minlength="11"
-              pattern="[0-9]{11}" 
-              placeholder="09** *** ***" 
-              oninput="this.value = this.value.replace(/[^0-9]/g, '')"/>
-            </div>
-          </div>
-
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label for="plateNumberInput">Plate Number *</label>
+              <label for="rfidUidInput">RFID Card UID (Hex) *</label>
               <input
                 type="text"
-                id="plateNumberInput"
-                inputmode="numeric"
-                maxlength="8"
-                minlength="8"
-                placeholder="ABC 1234"
+                id="rfidUidInput"
+                placeholder="e.g., A1B2C3D4"
+                maxlength="14"
+                required
+                style="text-transform: uppercase; font-family: monospace;"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="passTypeInput">Card Type *</label>
+              <select id="passTypeInput" onchange="handlePassTypeChange()">
+                <option value="Member">Member Pass (Prepaid)</option>
+                <option value="Visitor">Visitor Pass (Reusable Walk-In)</option>
+              </select>
+            </div>
+          </div>
+          <small class="field-hint" style="margin-top: -6px;">8-character hex UID from the MIFARE card or ESP32 Serial Monitor.</small>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="driverNameInput" id="driverNameLabel">Driver Full Name *</label>
+              <input
+                type="text"
+                id="driverNameInput"
+                pattern="[A-Za-zÀ-ÿ0-9\s.\-']+"
+                placeholder="Juan Dela Cruz"
+                oninput="this.value = this.value.replace(/[^A-Za-zÀ-ÿ0-9\s.\-']/g, '')"
                 required
                 style="text-transform: uppercase;"
               />
             </div>
+
+            <div class="form-group" id="contactGroup">
+              <label for="driverContactInput">Contact Number</label>
+              <input
+                type="text"
+                id="driverContactInput"
+                inputmode="numeric"
+                maxlength="11"
+                minlength="11"
+                pattern="[0-9]{11}"
+                placeholder="09171234567"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+              />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="plateNumberInput" id="plateNumberLabel">Plate Number *</label>
+              <input
+                type="text"
+                id="plateNumberInput"
+                minlength="6"
+                maxlength="12"
+                placeholder="e.g., ABC 1234"
+                required
+                style="text-transform: uppercase;"
+              />
+            </div>
+
             <div class="form-group">
               <label for="vehicleTypeInput">Vehicle Category *</label>
               <select id="vehicleTypeInput" required>
                 <option value="4W">4 Wheeler (Car / SUV / Van)</option>
                 <option value="2W">2 Wheeler (Motorcycle / Scooter)</option>
+                <option value="ANY">Any Vehicle (Assigned at Bay)</option>
               </select>
             </div>
           </div>
 
           <div class="form-grid-2">
-            <div class="form-group">
+            <div class="form-group" id="vehicleModelGroup">
               <label for="vehicleModelInput">Vehicle Make / Color</label>
-              <input type="text" 
-              id="vehicleModelInput" 
-              placeholder="e.g., White Toyota Vios" 
-              style="text-transform: uppercase;"/>
+              <input
+                type="text"
+                id="vehicleModelInput"
+                placeholder="e.g., White Toyota Vios"
+                style="text-transform: uppercase;"
+              />
             </div>
 
             <div class="form-group" id="initialBalanceGroup">
@@ -225,28 +247,30 @@
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn-cancel" onclick="closeDriverModal()">Cancel</button>
-          <button type="submit" class="btn-save">Save Registration</button>
+        <div class="pe-modal-footer">
+          <button type="button" class="pe-modal-btn cancel" onclick="closeDriverModal()">Cancel</button>
+          <button type="submit" class="pe-modal-btn confirm">Save Registration</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- Modal 2: Top-Up / Load RFID Balance -->
-  <div class="modal-backdrop" id="loadModal">
-    <div class="modal-box modal-sm">
-      <div class="modal-header">
-        <h3>Top Up RFID Card Balance</h3>
-        <button type="button" class="modal-close" onclick="closeLoadModal()">&times;</button>
+  <div class="pe-modal-backdrop" id="loadModal">
+    <div class="pe-modal-card pe-modal-wide pe-modal-structured" role="dialog" aria-modal="true" aria-labelledby="loadModalTitle">
+      <div class="pe-modal-header">
+        <h3 id="loadModalTitle">Top Up RFID Card Balance</h3>
+        <button type="button" class="pe-modal-close" onclick="closeLoadModal()" aria-label="Close">&times;</button>
       </div>
 
       <form id="loadForm" onsubmit="confirmTopUp(event)">
-        <div class="modal-body">
+        <div class="pe-modal-body">
+          <div id="loadFormError" class="form-error-banner"></div>
+
           <div class="topup-driver-banner">
             <div>
               <div class="topup-driver-name" id="topupDriverName">Driver Name</div>
-              <div class="topup-driver-meta" id="topupDriverMeta">UID: A1B2C3D4 • ABC 1234</div>
+              <div class="topup-driver-meta" id="topupDriverMeta">UID: A1B2C3D4 &bull; ABC 1234</div>
             </div>
             <div class="topup-bal-box">
               <span>Current Balance</span>
@@ -257,10 +281,8 @@
           <div class="form-group">
             <label>Quick Amount Preset</label>
             <div class="preset-grid">
-              <button type="button" class="preset-btn" onclick="selectPresetAmount(0, this)">₱0</button>
               <button type="button" class="preset-btn" onclick="selectPresetAmount(50, this)">₱50</button>
               <button type="button" class="preset-btn" onclick="selectPresetAmount(100, this)">₱100</button>
-              <button type="button" class="preset-btn" onclick="selectPresetAmount(200, this)">₱200</button>
               <button type="button" class="preset-btn active" onclick="selectPresetAmount(500, this)">₱500</button>
               <button type="button" class="preset-btn" onclick="selectPresetAmount(1000, this)">₱1,000</button>
             </div>
@@ -298,14 +320,14 @@
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn-cancel" onclick="closeLoadModal()">Cancel</button>
-          <button type="submit" class="btn-save">Confirm Top-Up</button>
+        <div class="pe-modal-footer">
+          <button type="button" class="pe-modal-btn cancel" onclick="closeLoadModal()">Cancel</button>
+          <button type="submit" class="pe-modal-btn confirm">Confirm Top-Up</button>
         </div>
       </form>
     </div>
   </div>
-  
+
   <footer class="site-footer">
     <span>&copy; 2026 Park Easy Smart Parking System. All rights reserved.</span>
     <div class="footer-links">
@@ -314,8 +336,7 @@
     </div>
   </footer>
 
-
-      <!-- Load Global Script First -->
+  <!-- Load Global Script First -->
   <script src="global.js"></script>
 
   <!-- Page Script -->
@@ -339,12 +360,25 @@
       return '₱' + num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function setFormError(id, msg) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (msg) {
+        el.textContent = msg;
+        el.style.display = 'block';
+      } else {
+        el.textContent = '';
+        el.style.display = 'none';
+      }
+    }
+
     function updateKPIs() {
       const entries = Object.values(driversData);
       const total = entries.length;
       const active = entries.filter(d => d.active === true).length;
-      const totalLoad = entries.reduce((sum, d) => sum + (Number(d.balance) || 0), 0);
-      const lowBalCount = entries.filter(d => (Number(d.balance) || 0) < LOW_BALANCE_THRESHOLD).length;
+      const memberEntries = entries.filter(d => (d.passType || 'Member') !== 'Visitor');
+      const totalLoad = memberEntries.reduce((sum, d) => sum + (Number(d.balance) || 0), 0);
+      const lowBalCount = memberEntries.filter(d => (Number(d.balance) || 0) < LOW_BALANCE_THRESHOLD).length;
 
       document.getElementById('kpiTotalCards').textContent = total;
       document.getElementById('kpiActiveCards').textContent = active;
@@ -361,7 +395,10 @@
       const list = Object.entries(driversData)
         .map(([uid, info]) => ({ uid, ...info }))
         .filter(item => {
+          const passType = item.passType || 'Member';
+          const isVisitor = passType === 'Visitor';
           const bal = Number(item.balance) || 0;
+
           const matchesQuery =
             item.uid.toLowerCase().includes(query) ||
             (item.name || '').toLowerCase().includes(query) ||
@@ -370,16 +407,18 @@
           const matchesVeh = vehFilter === 'ALL' || item.vehicleType === vehFilter;
           const matchesStatus =
             statusFilter === 'ALL' ||
+            (statusFilter === 'Member' && !isVisitor) ||
+            (statusFilter === 'Visitor' && isVisitor) ||
             (statusFilter === 'Active' && item.active) ||
             (statusFilter === 'Suspended' && !item.active) ||
-            (statusFilter === 'LowBal' && bal < LOW_BALANCE_THRESHOLD);
+            (statusFilter === 'LowBal' && !isVisitor && bal < LOW_BALANCE_THRESHOLD);
 
           return matchesQuery && matchesVeh && matchesStatus;
         });
 
       if (list.length === 0) {
         tbody.innerHTML = `
-          <tr>
+          <tr class="empty-row">
             <td colspan="7" class="empty-state">No registered RFID cards found. Click "+ Register RFID Card" to add one.</td>
           </tr>
         `;
@@ -387,11 +426,31 @@
       }
 
       tbody.innerHTML = list.map(driver => {
+        const isVisitor = (driver.passType || 'Member') === 'Visitor';
         const is2W = driver.vehicleType === '2W';
-        const vehBadgeClass = is2W ? 'veh-pill-2w' : 'veh-pill-4w';
-        const vehLabel = is2W ? '2 Wheeler' : '4 Wheeler';
+        const isAny = driver.vehicleType === 'ANY';
+
+        const vehBadgeClass = isAny ? 'veh-pill-any' : (is2W ? 'veh-pill-2w' : 'veh-pill-4w');
+        const vehLabel = isAny ? 'Any / Walk-In' : (is2W ? '2 Wheeler' : '4 Wheeler');
         const bal = Number(driver.balance) || 0;
-        const isLow = bal < LOW_BALANCE_THRESHOLD;
+        const isLow = !isVisitor && bal < LOW_BALANCE_THRESHOLD;
+
+        const passBadge = isVisitor
+          ? '<span class="pass-tag pass-tag-visitor">Visitor</span>'
+          : '<span class="pass-tag pass-tag-member">Member</span>';
+
+        const plateDisplay = driver.plate
+          ? escapeHtml(driver.plate)
+          : (isVisitor ? 'WALK-IN' : 'UNASSIGNED');
+
+        const balanceMarkup = isVisitor
+          ? '<span class="pay-per-use-label">Pay-per-use (Map)</span>'
+          : `
+            <div class="balance-cell">
+              <span class="balance-amount ${isLow ? 'low-bal' : ''}">${formatPHP(bal)}</span>
+              <button type="button" class="btn-load" onclick="openLoadModal('${driver.uid}')">+ Load</button>
+            </div>
+          `;
 
         const statusBadge = driver.active
           ? `<span class="badge badge-paid" onclick="toggleCardAccess('${driver.uid}', false)" title="Click to suspend">Active</span>`
@@ -399,21 +458,18 @@
 
         return `
           <tr>
-            <td><span class="uid-tag">${driver.uid}</span></td>
-            <td>
-              <div class="driver-name">${escapeHtml(driver.name)}</div>
-              <div class="driver-sub">${escapeHtml(driver.contact || driver.vehicleModel || 'Registered Driver')}</div>
-            </td>
-            <td><span class="plate-tag">${escapeHtml(driver.plate)}</span></td>
-            <td><span class="veh-pill ${vehBadgeClass}">${vehLabel}</span></td>
-            <td>
-              <div class="balance-cell">
-                <span class="balance-amount ${isLow ? 'low-bal' : ''}">${formatPHP(bal)}</span>
-                <button type="button" class="btn-load" onclick="openLoadModal('${driver.uid}')">+ Load</button>
+            <td data-label="RFID UID"><span class="uid-tag">${escapeHtml(driver.uid)}</span></td>
+            <td data-label="Driver">
+              <div>
+                <div class="driver-name">${escapeHtml(driver.name)}${passBadge}</div>
+                <div class="driver-sub">${escapeHtml(driver.contact || driver.vehicleModel || (isVisitor ? 'Reusable Guest Entry Card' : 'Registered Driver'))}</div>
               </div>
             </td>
-            <td>${statusBadge}</td>
-            <td>
+            <td data-label="Plate No."><span class="plate-tag">${plateDisplay}</span></td>
+            <td data-label="Vehicle"><span class="veh-pill ${vehBadgeClass}">${vehLabel}</span></td>
+            <td data-label="Balance">${balanceMarkup}</td>
+            <td data-label="Status">${statusBadge}</td>
+            <td class="cell-actions">
               <div class="action-btns">
                 <button type="button" class="btn-edit" onclick="openDriverModal('${driver.uid}')">Edit</button>
                 <button type="button" class="btn-delete" onclick="deleteDriver('${driver.uid}')">Remove</button>
@@ -424,62 +480,117 @@
       }).join('');
     }
 
+    function handlePassTypeChange() {
+      const isVisitor = document.getElementById('passTypeInput').value === 'Visitor';
+      const nameLabel = document.getElementById('driverNameLabel');
+      const nameInput = document.getElementById('driverNameInput');
+      const plateLabel = document.getElementById('plateNumberLabel');
+      const plateInput = document.getElementById('plateNumberInput');
+      const vehSelect = document.getElementById('vehicleTypeInput');
+      const contactInput = document.getElementById('driverContactInput');
+      const modelInput = document.getElementById('vehicleModelInput');
+      const initBalInput = document.getElementById('initialBalanceInput');
+      const initBalGroup = document.getElementById('initialBalanceGroup');
+      const contactGroup = document.getElementById('contactGroup');
+      const modelGroup = document.getElementById('vehicleModelGroup');
+
+      if (isVisitor) {
+        nameLabel.textContent = 'Pass Label / Name *';
+        nameInput.placeholder = 'e.g., Visitor Pass 01';
+        plateLabel.textContent = 'Plate Number (Optional)';
+        plateInput.required = false;
+        plateInput.removeAttribute('minlength');
+        plateInput.placeholder = 'Assigned on Parking Map';
+        contactGroup.style.display = 'none';
+        modelGroup.style.display = 'none';
+        initBalGroup.style.display = 'none';
+        contactInput.disabled = true;
+        modelInput.disabled = true;
+        initBalInput.disabled = true;
+        if (!editingUid) vehSelect.value = 'ANY';
+      } else {
+        nameLabel.textContent = 'Driver Full Name *';
+        nameInput.placeholder = 'Juan Dela Cruz';
+        plateLabel.textContent = 'Plate Number *';
+        plateInput.required = true;
+        plateInput.setAttribute('minlength', '6');
+        plateInput.placeholder = 'e.g., ABC 1234';
+        contactGroup.style.display = 'flex';
+        modelGroup.style.display = 'flex';
+        initBalGroup.style.display = editingUid ? 'none' : 'flex';
+        contactInput.disabled = false;
+        modelInput.disabled = false;
+        initBalInput.disabled = Boolean(editingUid);
+        if (vehSelect.value === 'ANY') vehSelect.value = '4W';
+      }
+    }
+
     function openDriverModal(uid = null) {
       const modal = document.getElementById('driverModal');
       const form = document.getElementById('driverForm');
       const uidInput = document.getElementById('rfidUidInput');
-      const initBalGroup = document.getElementById('initialBalanceGroup');
 
       form.reset();
+      setFormError('driverFormError', '');
       editingUid = uid;
 
       if (uid && driversData[uid]) {
         const d = driversData[uid];
+        const passType = d.passType || 'Member';
         document.getElementById('modalTitle').textContent = 'Edit Driver & RFID Card';
         uidInput.value = uid;
         uidInput.disabled = true;
-        initBalGroup.style.display = 'none';
+        document.getElementById('passTypeInput').value = passType;
         document.getElementById('driverNameInput').value = d.name || '';
         document.getElementById('driverContactInput').value = d.contact || '';
         document.getElementById('plateNumberInput').value = d.plate || '';
-        document.getElementById('vehicleTypeInput').value = d.vehicleType || '4W';
+        document.getElementById('vehicleTypeInput').value = d.vehicleType || (passType === 'Visitor' ? 'ANY' : '4W');
         document.getElementById('vehicleModelInput').value = d.vehicleModel || '';
         document.getElementById('accessActiveToggle').checked = d.active !== false;
       } else {
         document.getElementById('modalTitle').textContent = 'Register Driver RFID Card';
         uidInput.disabled = false;
-        initBalGroup.style.display = 'flex';
+        document.getElementById('passTypeInput').value = 'Member';
         document.getElementById('initialBalanceInput').value = 100;
         document.getElementById('accessActiveToggle').checked = true;
       }
 
+      handlePassTypeChange();
       modal.classList.add('open');
     }
 
     function closeDriverModal() {
       document.getElementById('driverModal').classList.remove('open');
+      setFormError('driverFormError', '');
       editingUid = null;
     }
 
     async function saveDriverRecord(e) {
       e.preventDefault();
+      setFormError('driverFormError', '');
+
       const rawUid = document.getElementById('rfidUidInput').value.trim().toUpperCase().replace(/[^0-9A-F]/g, '');
       if (rawUid.length < 4) {
-        alert('Please enter a valid hexadecimal RFID UID (at least 4 hex characters).');
+        setFormError('driverFormError', 'Please enter a valid hexadecimal RFID UID (at least 4 hex characters).');
         return;
       }
 
+      const passType = document.getElementById('passTypeInput').value;
+      const isVisitor = passType === 'Visitor';
       const isActive = document.getElementById('accessActiveToggle').checked;
-      const existingBalance = editingUid && driversData[editingUid]
-        ? (Number(driversData[editingUid].balance) || 0)
-        : (Number(document.getElementById('initialBalanceInput').value) || 0);
+      const existingBalance = isVisitor
+        ? 0
+        : (editingUid && driversData[editingUid]
+            ? (Number(driversData[editingUid].balance) || 0)
+            : (Number(document.getElementById('initialBalanceInput').value) || 0));
 
       const record = {
-        name: document.getElementById('driverNameInput').value.trim(),
-        contact: document.getElementById('driverContactInput').value.trim(),
+        passType: passType,
+        name: document.getElementById('driverNameInput').value.trim().toUpperCase(),
+        contact: isVisitor ? '' : document.getElementById('driverContactInput').value.trim(),
         plate: document.getElementById('plateNumberInput').value.trim().toUpperCase(),
         vehicleType: document.getElementById('vehicleTypeInput').value,
-        vehicleModel: document.getElementById('vehicleModelInput').value.trim(),
+        vehicleModel: isVisitor ? '' : document.getElementById('vehicleModelInput').value.trim().toUpperCase(),
         balance: existingBalance,
         active: isActive,
         updatedAt: Date.now()
@@ -491,9 +602,12 @@
       ]);
 
       if (window.pushNotification) {
+        const subText = isVisitor
+          ? `${record.name} (Reusable Visitor Pass)`
+          : `${record.name} (${record.plate}) • Balance: ${formatPHP(existingBalance)}`;
         window.pushNotification(
           editingUid ? 'RFID Card Updated' : 'New RFID Registered',
-          `${record.name} (${record.plate}) • Balance: ${formatPHP(existingBalance)}`
+          subText
         );
       }
 
@@ -502,18 +616,19 @@
 
     function openLoadModal(uid) {
       const driver = driversData[uid];
-      if (!driver) return;
+      if (!driver || (driver.passType || 'Member') === 'Visitor') return;
 
       loadingUid = uid;
+      setFormError('loadFormError', '');
       const currentBal = Number(driver.balance) || 0;
 
       document.getElementById('topupDriverName').textContent = driver.name;
-      document.getElementById('topupDriverMeta').textContent = `UID: ${uid} • ${driver.plate}`;
+      document.getElementById('topupDriverMeta').textContent = `UID: ${uid} • ${driver.plate || 'NO PLATE'}`;
       document.getElementById('topupCurrentBalance').textContent = formatPHP(currentBal);
 
       document.getElementById('customLoadInput').value = 500;
       document.querySelectorAll('.preset-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.textContent.includes('500'));
+        btn.classList.toggle('active', btn.textContent.trim() === '₱500');
       });
 
       updateNewBalancePreview();
@@ -522,6 +637,7 @@
 
     function closeLoadModal() {
       document.getElementById('loadModal').classList.remove('open');
+      setFormError('loadFormError', '');
       loadingUid = null;
     }
 
@@ -541,11 +657,12 @@
 
     async function confirmTopUp(e) {
       e.preventDefault();
+      setFormError('loadFormError', '');
       if (!loadingUid || !driversData[loadingUid]) return;
 
       const addAmount = Number(document.getElementById('customLoadInput').value);
       if (!addAmount || addAmount <= 0) {
-        alert('Please enter a valid top-up amount greater than ₱0.');
+        setFormError('loadFormError', 'Please enter a valid top-up amount greater than ₱0.');
         return;
       }
 
@@ -556,7 +673,7 @@
       const txKey = `TOPUP-${Date.now()}`;
 
       await Promise.all([
-              window.dbUpdate('driverInfo/' + loadingUid, {
+        window.dbUpdate('driverInfo/' + loadingUid, {
           balance: updatedBal,
           lastTopUpAt: Date.now()
         }),
@@ -590,7 +707,18 @@
     }
 
     async function deleteDriver(uid) {
-      if (!confirm('Remove RFID card ' + uid + ' and revoke gate access?')) return;
+      const driver = driversData[uid];
+      const label = driver && driver.name ? `${driver.name} (${uid})` : uid;
+      const confirmed = typeof window.peConfirm === 'function'
+        ? await window.peConfirm(
+            'Remove RFID Card',
+            `Remove ${label} from the registry and immediately revoke gate access?`,
+            { confirmText: 'Remove Card', danger: true }
+          )
+        : confirm('Remove RFID card ' + uid + ' and revoke gate access?');
+
+      if (!confirmed) return;
+
       await Promise.all([
         window.dbSet('driverInfo/' + uid, null),
         window.dbSet('authorizedCards/' + uid, null)
@@ -598,7 +726,7 @@
     }
 
     function escapeHtml(str) {
-      return String(str).replace(/[&<>"']/g, function(m) {
+      return String(str ?? '').replace(/[&<>"']/g, function(m) {
         var map = {
           '&': '&amp;',
           '<': '&lt;',
@@ -609,9 +737,22 @@
         return map[m];
       });
     }
-        
-        </script>
 
+    // Close modals when clicking the dark backdrop or pressing Escape
+    document.getElementById('driverModal').addEventListener('click', (e) => {
+      if (e.target.id === 'driverModal') closeDriverModal();
+    });
 
-    </body>
+    document.getElementById('loadModal').addEventListener('click', (e) => {
+      if (e.target.id === 'loadModal') closeLoadModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (document.getElementById('driverModal').classList.contains('open')) closeDriverModal();
+      if (document.getElementById('loadModal').classList.contains('open')) closeLoadModal();
+    });
+  </script>
+
+</body>
 </html>

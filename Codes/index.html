@@ -154,6 +154,9 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       errorBanner.hidden = true;
+      errorBanner.style.background = "";
+      errorBanner.style.color = "";
+      errorBanner.style.borderColor = "";
 
       const email = emailInput.value.trim();
       const password = passwordInput.value.trim();
@@ -191,10 +194,14 @@
       }
     });
 
-    // 4. Forgot password handler via Firebase Auth
+    // 4. Forgot password handler via Firebase Auth (inline banner, no native alert)
     forgotLink.addEventListener("click", async (e) => {
       e.preventDefault();
       const email = emailInput.value.trim();
+      errorBanner.style.background = "";
+      errorBanner.style.color = "";
+      errorBanner.style.borderColor = "";
+
       if (!email) {
         errorBanner.textContent = "Enter your email address above first to receive a password reset link.";
         errorBanner.hidden = false;
@@ -202,9 +209,14 @@
       }
       try {
         await sendPasswordResetEmail(auth, email);
-        alert(`If ${email} is registered, a password reset link has been sent.`);
+        errorBanner.style.background = "#eff6ff";
+        errorBanner.style.color = "#1d4ed8";
+        errorBanner.style.borderColor = "#bfdbfe";
+        errorBanner.textContent = `If ${email} is registered, a password reset link has been sent.`;
+        errorBanner.hidden = false;
       } catch (err) {
-        alert("Please contact your Park Easy System Administrator to reset your password.");
+        errorBanner.textContent = "Please contact your Park Easy System Administrator to reset your password.";
+        errorBanner.hidden = false;
       }
     });
   </script>

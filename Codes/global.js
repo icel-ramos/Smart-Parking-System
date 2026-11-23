@@ -20,7 +20,10 @@ const SVG_ICONS = {
   info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
   upload: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
   download: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
-  car: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>'
+  car: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>',
+  currency: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20V4h5.5a4.5 4.5 0 0 1 0 9H7"/><line x1="4" y1="7" x2="19" y2="7"/><line x1="4" y1="10" x2="19" y2="10"/></svg>`,
+  check: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+  note: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M16 3v4a1 1 0 0 0 1 1h4"/><line x1="7" y1="13" x2="17" y2="13"/><line x1="7" y1="17" x2="13" y2="17"/></svg>`,
 };
 
 window.renderIcons = function () {
@@ -271,3 +274,177 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderNotifications();
 });
+
+// Unified Modal Engine (Replaces native prompt, confirm, and alert)
+window.peForm = function ({
+  title = 'Park Easy',
+  subtitle = '',
+  fields = [],
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  showCancel = true,
+  danger = false,
+  onChange = null
+}) {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'pe-modal-backdrop';
+
+    const form = document.createElement('form');
+    form.className = 'pe-modal-card';
+    form.noValidate = true;
+
+    const titleEl = document.createElement('h3');
+    titleEl.className = 'pe-modal-title';
+    titleEl.textContent = title;
+    form.appendChild(titleEl);
+
+    if (subtitle) {
+      const subEl = document.createElement('p');
+      subEl.className = 'pe-modal-subtitle';
+      subEl.textContent = subtitle;
+      form.appendChild(subEl);
+    }
+
+    const inputsMap = {};
+
+    if (fields.length > 0) {
+      const fieldsWrap = document.createElement('div');
+      fieldsWrap.className = 'pe-modal-fields';
+
+      fields.forEach((f) => {
+        const group = document.createElement('div');
+        group.className = 'pe-modal-field';
+
+        const label = document.createElement('label');
+        label.textContent = f.label;
+        group.appendChild(label);
+
+        let control;
+        if (f.type === 'select') {
+          control = document.createElement('select');
+          control.className = 'pe-modal-select';
+          (f.options || []).forEach((opt) => {
+            const optionEl = document.createElement('option');
+            optionEl.value = typeof opt === 'string' ? opt : opt.value;
+            optionEl.textContent = typeof opt === 'string' ? opt : opt.label;
+            if (optionEl.value === String(f.value ?? '')) optionEl.selected = true;
+            control.appendChild(optionEl);
+          });
+        } else {
+          control = document.createElement('input');
+          control.className = 'pe-modal-input';
+          control.type = f.type || 'text';
+          control.placeholder = f.placeholder || '';
+          control.value = f.value ?? '';
+          if (f.type === 'number') control.step = f.step || '0.01';
+          if (f.uppercase) control.style.textTransform = 'uppercase';
+        }
+
+        control.name = f.name;
+        inputsMap[f.name] = { el: control, cfg: f };
+        group.appendChild(control);
+        fieldsWrap.appendChild(group);
+      });
+
+      form.appendChild(fieldsWrap);
+    }
+
+    const errEl = document.createElement('div');
+    errEl.className = 'pe-modal-error';
+    form.appendChild(errEl);
+
+    const actions = document.createElement('div');
+    actions.className = 'pe-modal-actions';
+
+    let cancelBtn = null;
+    if (showCancel) {
+      cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'pe-modal-btn cancel';
+      cancelBtn.textContent = cancelText;
+      actions.appendChild(cancelBtn);
+    }
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'submit';
+    confirmBtn.className = `pe-modal-btn confirm${danger ? ' danger' : ''}`;
+    confirmBtn.textContent = confirmText;
+    actions.appendChild(confirmBtn);
+
+    form.appendChild(actions);
+    backdrop.appendChild(form);
+    document.body.appendChild(backdrop);
+
+    requestAnimationFrame(() => backdrop.classList.add('open'));
+
+    const firstField = fields.length > 0 ? inputsMap[fields[0].name].el : confirmBtn;
+    firstField.focus();
+    if (firstField.select) firstField.select();
+
+    const getValues = () => {
+      const out = {};
+      Object.entries(inputsMap).forEach(([k, { el, cfg }]) => {
+        const raw = el.value.trim();
+        out[k] = cfg.uppercase ? raw.toUpperCase() : raw;
+      });
+      return out;
+    };
+
+    if (typeof onChange === 'function') {
+      Object.entries(inputsMap).forEach(([k, { el }]) => {
+        el.addEventListener('change', () => onChange(k, getValues(), inputsMap));
+      });
+    }
+
+    const cleanup = (result) => {
+      document.removeEventListener('keydown', onKeyDown);
+      backdrop.classList.remove('open');
+      setTimeout(() => backdrop.remove(), 160);
+      resolve(result);
+    };
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cleanup(null);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => cleanup(null));
+    }
+
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) cleanup(null);
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      errEl.style.display = 'none';
+
+      for (const f of fields) {
+        const val = inputsMap[f.name].el.value.trim();
+        if (f.required && !val) {
+          errEl.textContent = `Please fill out "${f.label}".`;
+          errEl.style.display = 'block';
+          inputsMap[f.name].el.focus();
+          return;
+        }
+      }
+
+      cleanup(fields.length > 0 ? getValues() : true);
+    });
+  });
+};
+
+window.peConfirm = function (title, subtitle, options = {}) {
+  return window.peForm({
+    title,
+    subtitle,
+    fields: [],
+    confirmText: 'Confirm',
+    ...options
+  }).then((res) => Boolean(res));
+};
