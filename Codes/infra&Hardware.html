@@ -141,9 +141,7 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="deviceTableBody">
-            <!-- Populated via Firebase -->
-          </tbody>
+          <tbody id="deviceTableBody"></tbody>
         </table>
       </div>
     </section>
@@ -299,7 +297,7 @@
       });
       renderSlots();
     });
-
+/*
     // 3. Connected Hardware Devices Table (Synced with /devices in Firebase)
     let devices = [];
 
@@ -333,7 +331,6 @@
         if (d.health === 0) colorClass = 'red';
         else if (d.health < 80) colorClass = 'yellow';
         const badgeClass = (d.status || 'Online').toLowerCase();
-
         return `
           <tr>
             <td class="device-id">${d.id}</td>
@@ -375,7 +372,7 @@
         health: nextHealth
       });
     }
-
+*/
     window.dbListen('devices', (devicesObj) => {
       if (!devicesObj) {
         devices = [];
@@ -388,5 +385,183 @@
     renderSlots();
     filterDevices();
   </script>
+  
+  <script>
+    const DEVICE_META = {
+  "ESP32-MAIN": { name: "Main Controller", layer: "Core Layer", type: "Controller" },
+  "BR-01":      { name: "Entrance Gate", layer: "Access Layer", type: "Barrier" },
+  "BR-02":      { name: "Exit Gate", layer: "Access Layer", type: "Barrier" },
+  "RFID-01":    { name: "Entry RFID Scanner", layer: "Access Layer", type: "RFID Reader" },
+  "RFID-02":    { name: "Exit RFID Scanner", layer: "Access Layer", type: "RFID Reader" },
+  "LCD-01":     { name: "Entry I2C Status Display", layer: "Display Layer", type: "Display" },
+  "LCD-02":     { name: "Exit I2C Status Display", layer: "Display Layer", type: "Display" },
+  "LED-01":     { name: "Parking Slot 1 Indicator", layer: "Display Layer", type: "LED Indicator" },
+  "LED-02":     { name: "Parking Slot 2 Indicator", layer: "Display Layer", type: "LED Indicator" },
+  "LED-03":     { name: "Parking Slot 3 Indicator", layer: "Display Layer", type: "LED Indicator" },
+  "LED-04":     { name: "Parking Slot 4 Indicator", layer: "Display Layer", type: "LED Indicator" },
+  "SNS-01":     { name: "Parking Slot 1 IR Sensor", layer: "Sensing Layer", type: "Sensor" },
+  "SNS-02":     { name: "Parking Slot 2 IR Sensor", layer: "Sensing Layer", type: "Sensor" },
+  "SNS-03":     { name: "Parking Slot 3 IR Sensor", layer: "Sensing Layer", type: "Sensor" },
+  "SNS-04":     { name: "Parking Slot 4 IR Sensor", layer: "Sensing Layer", type: "Sensor" },
+  "US-01":      { name: "Entrance Ultrasonic Sensor", layer: "Sensing Layer", type: "Sensor" },
+  "US-02":      { name: "Exit Ultrasonic Sensor", layer: "Sensing Layer", type: "Sensor" }
+};
+
+
+    let devices = [];
+    let rawFirebaseDevices = {};
+    let isEsp32Online = false;
+
+    // Helper matching dashboard.html's exact 30-second heartbeat check
+    function checkNodeOnline(fbNode) {
+      const timestamp = Number(fbNode?.lastSeenMs);
+      return (
+        fbNode?.status === "Online" &&
+        Number.isFinite(timestamp) &&
+        timestamp > 0 &&
+        Math.abs(Date.now() - timestamp) < 30000
+      );
+    }
+
+    function syncDevicesAndRender() {
+      // 1. Check master ESP32-MAIN connection first
+      isEsp32Online = checkNodeOnline(rawFirebaseDevices["ESP32-MAIN"]);
+
+      // 2. If ESP32-MAIN is offline, force all components offline
+      devices = Object.keys(DEVICE_META).map((id) => {
+        const fb = rawFirebaseDevices[id] || {};
+        const online = isEsp32Online && checkNodeOnline(fb);
+
+        return {
+          id,
+          name: fb.name || DEVICE_META[id].name,
+          layer: fb.layer || DEVICE_META[id].layer,
+          type: fb.type || DEVICE_META[id].type,
+          status: online ? "Online" : "Offline",
+          health: online ? (fb.health ?? 100) : 0
+        };
+      });
+
+      filterDevices();
+    }
+
+    function filterDevices() {
+      const typeFilter = document.getElementById('typeFilter')?.value || 'All';
+      const searchQuery = (document.getElementById('searchInput')?.value || '').toLowerCase();
+      const tbody = document.getElementById('deviceTableBody');
+      if (!tbody) return;
+
+      const filtered = devices.filter(d => {
+        const matchesType = typeFilter === 'All' || d.type === typeFilter;
+        const matchesSearch =
+          d.id.toLowerCase().includes(searchQuery) ||
+          d.name.toLowerCase().includes(searchQuery) ||
+          d.layer.toLowerCase().includes(searchQuery);
+        return matchesType && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: #64748b; padding: 28px;">
+              No hardware devices matching your filter.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(d => {
+        let colorClass = 'green';
+        if (d.health === 0) colorClass = 'red';
+        else if (d.health < 80) colorClass = 'yellow';
+
+        const isOnline = d.status === 'Online';
+        const badgeClass = isOnline ? 'online' : 'offline';
+        const btnClass = isOnline ? 'btn-set-offline' : 'btn-set-online';
+        const btnLabel = isOnline ? 'Set Offline' : 'Set Online';
+
+        // Disable button if ESP32-MAIN is offline (or if the row itself is ESP32-MAIN while offline)
+        const isDisabled = !isEsp32Online;
+
+        return `
+          <tr>
+            <td class="device-id">${d.id}</td>
+            <td>
+              <span class="device-name">${d.name}</span>
+              <span class="device-sub">${d.layer}</span>
+            </td>
+            <td>
+              <div class="health-cell">
+                <div class="progress-track">
+                  <div class="progress-fill bg-${colorClass}" style="width: ${d.health}%"></div>
+                </div>
+                <span class="text-${colorClass}">${d.health}%</span>
+              </div>
+            </td>
+            <td><span class="badge ${badgeClass}">${d.status}</span></td>
+            <td>
+              <button
+                class="${btnClass}"
+                onclick="configureDevice('${d.id}')"
+                ${isDisabled ? 'disabled title="ESP32-MAIN is offline"' : ''}>
+                ${btnLabel}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function configureDevice(deviceId) {
+      // Block action if ESP32-MAIN is disconnected
+      if (!isEsp32Online) return;
+
+      const dev = devices.find(d => d.id === deviceId);
+      if (!dev) return;
+
+      const nextStatus = dev.status === 'Online' ? 'Offline' : 'Online';
+      const nextHealth = nextStatus === 'Online' ? 100 : 0;
+
+      if (typeof window.peConfirm === "function") {
+        const ok = await window.peConfirm(
+          `Toggle Device Status`,
+          `Switch ${dev.name} (${dev.id}) to ${nextStatus}?`,
+          { confirmText: `Set ${nextStatus}`, danger: nextStatus === 'Offline' }
+        );
+        if (!ok) return;
+      }
+
+      if (typeof window.dbUpdate === "function") {
+        window.dbUpdate(`devices/${deviceId}`, {
+          status: nextStatus,
+          health: nextHealth,
+          lastSeenMs: nextStatus === 'Online' ? Date.now() : 0
+        });
+      }
+    }
+
+    syncDevicesAndRender();
+
+    function initFirebaseListener(retries = 15) {
+      if (typeof window.dbListen === "function") {
+        window.dbListen("devices", (data) => {
+          rawFirebaseDevices = data || {};
+          syncDevicesAndRender();
+        });
+      } else if (retries > 0) {
+        setTimeout(() => initFirebaseListener(retries - 1), 300);
+      }
+    }
+
+    initFirebaseListener();
+    setInterval(syncDevicesAndRender, 3000);
+  </script>
+
+
+
+
+
+
 </body>
 </html>
