@@ -63,7 +63,7 @@
       <!-- Dark Sensor Canvas (Single Row of 4 Bays) -->
       <div class="parking-canvas">
         <div class="zone-label">ZONE A</div>
-        
+
         <!-- Single Row of 4 Slots -->
         <div class="slot-row" id="topRow"></div>
 
@@ -115,7 +115,6 @@
               <span>View Notes</span>
             </button>
           </div>
-          
         </div>
 
         <div class="controls-row">
@@ -136,7 +135,7 @@
             </div>
 
             <div class="action-list" id="slotActionButtons">
-              <!-- Populated dynamically as a structured list with disabled states -->
+              <!-- Populated dynamically -->
             </div>
           </div>
         </div>
@@ -156,7 +155,6 @@
 
   <script src="global.js"></script>
   <script>
-    // Standard pricing rates (synced from /rates so Reserved & Occupied bays accrue live fees)
     const activeRates = {
       "2w": { firstHour: 20, extraHour: 10, dailyMax: 100 },
       "4w": { firstHour: 40, extraHour: 20, dailyMax: 200 }
@@ -172,8 +170,25 @@
     };
 
     let currentFloor = 1;
-    let selectedIndex = 0; // Default to 1A-01
+    let selectedIndex = 0;
     let manualOverrideMode = false;
+    let driversRegistry = {};
+
+    function normalizePlate(plate) {
+      return String(plate || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
+    }
+
+    function findMemberByPlate(plate) {
+      const target = normalizePlate(plate);
+      if (!target) return null;
+      for (const [uid, info] of Object.entries(driversRegistry)) {
+        if (!info || (info.passType || "Member") === "Visitor") continue;
+        if (normalizePlate(info.plate) === target) {
+          return { uid, ...info };
+        }
+      }
+      return null;
+    }
 
     function toggleManualOverride(isEnabled) {
       manualOverrideMode = Boolean(isEnabled);
@@ -197,7 +212,6 @@
       return `${minutes}m ${seconds}s`;
     }
 
-    // Calculate live parking fee for Occupied and Reserved bays
     function calculateAccruedFee(slot) {
       if (slot.status !== "occupied" && slot.status !== "reserved") {
         return 0;
@@ -244,17 +258,17 @@
           dotColor = "red";
           statusLabel = "Occupied";
           centerMarkup = `<div class="slot-car" data-icon="car"></div>`;
-          subNote = slot.plate ? `<div class="slot-subnote">${slot.plate}</div>` : "";
+          subNote = slot.plate ? `<div class="slot-subnote">${escapeHtml(slot.plate)}</div>` : "";
         } else if (slot.status === "reserved") {
           dotColor = "amber";
           statusLabel = "Reserved";
           centerMarkup = `<div class="slot-car" data-icon="lock"></div>`;
-          subNote = slot.plate ? `<div class="slot-subnote">${slot.plate}</div>` : `<div class="slot-subnote">Reserved</div>`;
+          subNote = slot.plate ? `<div class="slot-subnote">${escapeHtml(slot.plate)}</div>` : `<div class="slot-subnote">Reserved</div>`;
         } else if (slot.status === "maintenance") {
           dotColor = "slate";
           statusLabel = "Maintenance";
           centerMarkup = `<div class="slot-car" data-icon="settings"></div>`;
-          subNote = slot.note ? `<div class="slot-subnote">${slot.note}</div>` : `<div class="slot-subnote">Unavailable</div>`;
+          subNote = slot.note ? `<div class="slot-subnote">${escapeHtml(slot.note)}</div>` : `<div class="slot-subnote">Unavailable</div>`;
         }
 
         box.innerHTML = `
@@ -544,12 +558,12 @@
       }
     }
 
-    // 1. Reserve a Bay (Single custom form replaces 2 native prompts)
+    // 1. Reserve a Bay (auto-fills member name/note and vehicle type if plate is registered)
     async function reserveSlot() {
       const slot = floorsData[currentFloor][selectedIndex];
       const result = await window.peForm({
         title: `Reserve Bay ${slot.id}`,
-        subtitle: 'Assign a vehicle plate and type to lock this bay at the standard rate.',
+        subtitle: 'Enter a plate number (auto-fills if registered in RFID registry) and lock this bay.',
         confirmText: 'Reserve Bay',
         fields: [
           { name: 'plate', label: 'Vehicle Plate Number', placeholder: 'e.g., ABC 1234', uppercase: true },
@@ -563,15 +577,21 @@
               { value: '2w', label: `2 Wheelers (₱${activeRates['2w'].firstHour.toFixed(2)} first hr)` }
             ]
           },
-          { name: 'note', label: 'Reservation Note (Name / Details)', placeholder: 'e.g., Juan Dela Cruz (optional)' }
+          { name: 'note', label: 'Reservation Note (Name / Details)', placeholder: 'Auto-filled for registered members or optional note' }
         ]
       });
       if (!result) return;
 
       const cleanPlate = result.plate || "RESERVED";
-      const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
+      const matchedMember = findMemberByPlate(cleanPlate);
+      const memberVehType = matchedMember?.vehicleType === "2W" ? "2w" : "4w";
+      const vehicleType = result.vehicleType === "2w"
+        ? "2w"
+        : (matchedMember ? memberVehType : "4w");
       const is2W = vehicleType === "2w";
       const rateAmount = activeRates[vehicleType].firstHour.toFixed(2);
+      const resolvedNote = result.note
+        || (matchedMember ? `${matchedMember.name} (RFID Member)` : "Reserved");
 
       const nowMs = Date.now();
       const timeStr = getCurrentTimeStr();
@@ -598,7 +618,7 @@
         plate: cleanPlate,
         vehicleType,
         ticketId,
-        note: result.note || "Reserved",
+        note: resolvedNote,
         entry: timeStr,
         entryTimeMs: nowMs
       });
@@ -659,7 +679,6 @@
       }
     }
 
-    // Helper to convert HH:MM time input back into a timestamp for today
     function timeStrToTodayMs(timeStr, fallbackMs) {
       if (!timeStr || !timeStr.includes(":")) return fallbackMs || Date.now();
       const [h, m] = timeStr.split(":").map(Number);
@@ -669,11 +688,10 @@
       return d.getTime();
     }
 
-    // 3. Update ALL Details (Plate, Vehicle Type, Start Time, Ticket ID, and Note)
+    // 3. Update ALL Details
     async function assignPlateToOccupied() {
       const slot = floorsData[currentFloor][selectedIndex];
 
-      // If bay is in maintenance, allow editing the maintenance note directly
       if (slot.status === "maintenance") {
         const res = await window.peForm({
           title: `Update Maintenance Note: Bay ${slot.id}`,
@@ -729,7 +747,6 @@
       const cleanNote = result.note || (slot.status === "reserved" ? "Reserved" : "");
       const currentFee = calculateAccruedFee({ ...slot, vehicleType, entryTimeMs }).toFixed(2);
 
-      // Remove old transaction node if the Ticket ID was renamed
       if (slot.ticketId && slot.ticketId !== newTicketId && typeof window.dbSet === "function") {
         window.dbSet(`transactions/${slot.ticketId}`, null);
       }
@@ -762,7 +779,7 @@
       }
     }
 
-    // 4. Put Bay Under Maintenance or Flag an Incident (Safeguards for Occupied & Reserved bays)
+    // 4. Put Bay Under Maintenance or Flag an Incident
     async function setMaintenance() {
       const slots = floorsData[currentFloor];
       const slot = slots[selectedIndex];
@@ -942,39 +959,89 @@
       }
     }
 
-    // 5. Settle accrued parking/reservation fee and release bay
+    // 5. Settle accrued parking/reservation fee (supports RFID prepaid wallet if plate matches an active Member)
     async function settleAndReleaseSlot() {
       const slot = floorsData[currentFloor][selectedIndex];
-      const finalFee = calculateAccruedFee(slot).toFixed(2);
+      const feeNum = calculateAccruedFee(slot);
+      const finalFee = feeNum.toFixed(2);
       const timeOutStr = getCurrentTimeStr();
+      const matchedMember = findMemberByPlate(slot.plate);
+      const currentMemberBal = matchedMember ? (Number(matchedMember.balance) || 0) : 0;
+      const canUseRfid = Boolean(matchedMember && matchedMember.active !== false && currentMemberBal >= feeNum);
 
-      const confirmed = await window.peConfirm(
-        `Settle & Release Bay ${slot.id}`,
-        `Confirm payment of ₱${finalFee} for ${slot.plate || 'this vehicle'} and restore Bay ${slot.id} to Available?`,
-        { confirmText: `Settle ₱${finalFee}` }
-      );
-      if (!confirmed) return;
-
-      if (slot.ticketId) {
-        window.dbUpdate(`transactions/${slot.ticketId}`, {
-          amount: finalFee,
-          timeOut: timeOutStr,
-          status: "Paid"
+      let paymentMethod = "Cash";
+      if (canUseRfid) {
+        const choice = await window.peForm({
+          title: `Settle & Release Bay ${slot.id}`,
+          subtitle: `Matched RFID Member: ${matchedMember.name} (${matchedMember.uid}) · Balance: ₱${currentMemberBal.toFixed(2)}`,
+          confirmText: `Settle ₱${finalFee}`,
+          fields: [
+            {
+              name: "paymentMethod",
+              label: "Settlement Method",
+              type: "select",
+              value: "RFID",
+              options: [
+                { value: "RFID", label: `Deduct from RFID Wallet (New Bal: ₱${(currentMemberBal - feeNum).toFixed(2)})` },
+                { value: "Cash", label: "Cash / Over-the-Counter" }
+              ]
+            }
+          ]
         });
+        if (!choice) return;
+        paymentMethod = choice.paymentMethod || "RFID";
       } else {
-        const autoTicketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
-        const is2W = (slot.vehicleType || "4w").toLowerCase().includes("2");
-        window.dbUpdate(`transactions/${autoTicketId}`, {
-          id: autoTicketId,
-          slotId: slot.id,
-          plate: slot.plate || `BAY-${slot.id}`,
-          vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
-          timeIn: slot.entry !== "--:--" ? slot.entry : timeOutStr,
-          timeOut: timeOutStr,
-          amount: finalFee,
-          status: "Paid",
-          timestamp: slot.entryTimeMs || Date.now()
-        });
+        const confirmed = await window.peConfirm(
+          `Settle & Release Bay ${slot.id}`,
+          `Confirm payment of ₱${finalFee} for ${slot.plate || 'this vehicle'} and restore Bay ${slot.id} to Available?`,
+          { confirmText: `Settle ₱${finalFee}` }
+        );
+        if (!confirmed) return;
+      }
+
+      const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+      const is2W = (slot.vehicleType || "4w").toLowerCase().includes("2");
+
+      window.dbUpdate(`transactions/${ticketId}`, {
+        id: ticketId,
+        slotId: slot.id,
+        plate: slot.plate || `BAY-${slot.id}`,
+        vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+        timeIn: slot.entry !== "--:--" ? slot.entry : timeOutStr,
+        timeOut: timeOutStr,
+        amount: finalFee,
+        paymentMethod,
+        status: "Paid",
+        timestamp: slot.entryTimeMs || Date.now()
+      });
+
+      if (paymentMethod === "RFID" && matchedMember && typeof window.dbSet === "function") {
+        const updatedBal = Math.max(0, currentMemberBal - feeNum);
+        const txKey = `DEDUCT-${Date.now()}`;
+        await Promise.all([
+          window.dbUpdate(`driverInfo/${matchedMember.uid}`, {
+            balance: updatedBal,
+            lastChargeAt: Date.now()
+          }),
+          window.dbSet(`topupHistory/${txKey}`, {
+            uid: matchedMember.uid,
+            driverName: matchedMember.name,
+            plate: slot.plate,
+            amount: -feeNum,
+            previousBalance: currentMemberBal,
+            newBalance: updatedBal,
+            method: "RFID Parking Fee",
+            ticketId,
+            timestamp: Date.now()
+          })
+        ]);
+
+        if (window.pushNotification) {
+          window.pushNotification(
+            "RFID Wallet Charged",
+            `Deducted ₱${finalFee} from ${matchedMember.name} · New Bal: ₱${updatedBal.toFixed(2)}`
+          );
+        }
       }
 
       restoreAvailable(true);
@@ -998,6 +1065,13 @@
       if (!skipConfirm && window.pushNotification) {
         window.pushNotification("Bay Restored", `Bay ${slot.id} is now Available.`);
       }
+    }
+
+    // Sync driverInfo for plate lookup and RFID wallet deductions
+    if (typeof window.dbListen === "function") {
+      window.dbListen("driverInfo", (driversObj) => {
+        driversRegistry = driversObj || {};
+      });
     }
 
     // Sync standard pricing rates from /rates
