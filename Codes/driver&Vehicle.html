@@ -249,7 +249,7 @@
 
         <div class="pe-modal-footer">
           <button type="button" class="pe-modal-btn cancel" onclick="closeDriverModal()">Cancel</button>
-          <button type="submit" class="pe-modal-btn confirm">Save Registration</button>
+          <button type="submit" class="pe-modal-btn confirm" id="driverSaveBtn">Save Registration</button>
         </div>
       </form>
     </div>
@@ -322,7 +322,7 @@
 
         <div class="pe-modal-footer">
           <button type="button" class="pe-modal-btn cancel" onclick="closeLoadModal()">Cancel</button>
-          <button type="submit" class="pe-modal-btn confirm">Confirm Top-Up</button>
+          <button type="submit" class="pe-modal-btn confirm" id="loadConfirmBtn">Confirm Top-Up</button>
         </div>
       </form>
     </div>
@@ -344,9 +344,10 @@
     let driversData = {};
     let editingUid = null;
     let loadingUid = null;
+    let isSavingDriver = false;
+    let isConfirmingTopUp = false;
     const LOW_BALANCE_THRESHOLD = 50;
 
-    // 1. Listen to Firebase Realtime Database 'driverInfo' node
     if (typeof window.dbListen === 'function') {
       window.dbListen('driverInfo', (snapshotVal) => {
         driversData = snapshotVal || {};
@@ -532,6 +533,12 @@
 
       form.reset();
       setFormError('driverFormError', '');
+      isSavingDriver = false;
+      const saveBtn = document.getElementById('driverSaveBtn');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Registration';
+      }
       editingUid = uid;
 
       if (uid && driversData[uid]) {
@@ -562,11 +569,18 @@
     function closeDriverModal() {
       document.getElementById('driverModal').classList.remove('open');
       setFormError('driverFormError', '');
+      isSavingDriver = false;
+      const saveBtn = document.getElementById('driverSaveBtn');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Registration';
+      }
       editingUid = null;
     }
 
     async function saveDriverRecord(e) {
       e.preventDefault();
+      if (isSavingDriver) return;
       setFormError('driverFormError', '');
 
       const rawUid = document.getElementById('rfidUidInput').value.trim().toUpperCase().replace(/[^0-9A-F]/g, '');
@@ -575,43 +589,70 @@
         return;
       }
 
-      const passType = document.getElementById('passTypeInput').value;
-      const isVisitor = passType === 'Visitor';
-      const isActive = document.getElementById('accessActiveToggle').checked;
-      const existingBalance = isVisitor
-        ? 0
-        : (editingUid && driversData[editingUid]
-            ? (Number(driversData[editingUid].balance) || 0)
-            : (Number(document.getElementById('initialBalanceInput').value) || 0));
-
-      const record = {
-        passType: passType,
-        name: document.getElementById('driverNameInput').value.trim().toUpperCase(),
-        contact: isVisitor ? '' : document.getElementById('driverContactInput').value.trim(),
-        plate: document.getElementById('plateNumberInput').value.trim().toUpperCase(),
-        vehicleType: document.getElementById('vehicleTypeInput').value,
-        vehicleModel: isVisitor ? '' : document.getElementById('vehicleModelInput').value.trim().toUpperCase(),
-        balance: existingBalance,
-        active: isActive,
-        updatedAt: Date.now()
-      };
-
-      await Promise.all([
-        window.dbSet(`driverInfo/${rawUid}`, record),
-        window.dbSet(`authorizedCards/${rawUid}`, isActive)
-      ]);
-
-      if (window.pushNotification) {
-        const subText = isVisitor
-          ? `${record.name} (Reusable Visitor Pass)`
-          : `${record.name} (${record.plate}) • Balance: ${formatPHP(existingBalance)}`;
-        window.pushNotification(
-          editingUid ? 'RFID Card Updated' : 'New RFID Registered',
-          subText
+      // Prevent accidental overwrite when registering a new card with an existing UID
+      if (!editingUid && Object.prototype.hasOwnProperty.call(driversData, rawUid)) {
+        const existingOwner = driversData[rawUid]?.name || 'another driver';
+        setFormError(
+          'driverFormError',
+          `RFID UID "${rawUid}" is already registered to ${existingOwner}. Edit that card instead or enter a different UID.`
         );
+        return;
       }
 
-      closeDriverModal();
+      const saveBtn = document.getElementById('driverSaveBtn');
+      isSavingDriver = true;
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+      }
+
+      try {
+        const passType = document.getElementById('passTypeInput').value;
+        const isVisitor = passType === 'Visitor';
+        const isActive = document.getElementById('accessActiveToggle').checked;
+        const existingBalance = isVisitor
+          ? 0
+          : (editingUid && driversData[editingUid]
+              ? (Number(driversData[editingUid].balance) || 0)
+              : (Number(document.getElementById('initialBalanceInput').value) || 0));
+
+        const record = {
+          passType: passType,
+          name: document.getElementById('driverNameInput').value.trim().toUpperCase(),
+          contact: isVisitor ? '' : document.getElementById('driverContactInput').value.trim(),
+          plate: document.getElementById('plateNumberInput').value.trim().toUpperCase(),
+          vehicleType: document.getElementById('vehicleTypeInput').value,
+          vehicleModel: isVisitor ? '' : document.getElementById('vehicleModelInput').value.trim().toUpperCase(),
+          balance: existingBalance,
+          active: isActive,
+          updatedAt: Date.now()
+        };
+
+        await Promise.all([
+          window.dbSet(`driverInfo/${rawUid}`, record),
+          window.dbSet(`authorizedCards/${rawUid}`, isActive)
+        ]);
+
+        if (window.pushNotification) {
+          const subText = isVisitor
+            ? `${record.name} (Reusable Visitor Pass)`
+            : `${record.name} (${record.plate}) • Balance: ${formatPHP(existingBalance)}`;
+          window.pushNotification(
+            editingUid ? 'RFID Card Updated' : 'New RFID Registered',
+            subText
+          );
+        }
+
+        closeDriverModal();
+      } catch (err) {
+        console.error('Failed to save RFID record:', err);
+        setFormError('driverFormError', 'Could not save RFID card to database. Please check your connection and try again.');
+        isSavingDriver = false;
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Registration';
+        }
+      }
     }
 
     function openLoadModal(uid) {
@@ -620,6 +661,13 @@
 
       loadingUid = uid;
       setFormError('loadFormError', '');
+      isConfirmingTopUp = false;
+      const confirmBtn = document.getElementById('loadConfirmBtn');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Confirm Top-Up';
+      }
+
       const currentBal = Number(driver.balance) || 0;
 
       document.getElementById('topupDriverName').textContent = driver.name;
@@ -638,6 +686,12 @@
     function closeLoadModal() {
       document.getElementById('loadModal').classList.remove('open');
       setFormError('loadFormError', '');
+      isConfirmingTopUp = false;
+      const confirmBtn = document.getElementById('loadConfirmBtn');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Confirm Top-Up';
+      }
       loadingUid = null;
     }
 
@@ -657,6 +711,7 @@
 
     async function confirmTopUp(e) {
       e.preventDefault();
+      if (isConfirmingTopUp) return;
       setFormError('loadFormError', '');
       if (!loadingUid || !driversData[loadingUid]) return;
 
@@ -666,44 +721,65 @@
         return;
       }
 
-      const driver = driversData[loadingUid];
-      const currentBal = Number(driver.balance) || 0;
-      const updatedBal = currentBal + addAmount;
-      const method = document.getElementById('paymentMethodInput').value;
-      const txKey = `TOPUP-${Date.now()}`;
-
-      await Promise.all([
-        window.dbUpdate('driverInfo/' + loadingUid, {
-          balance: updatedBal,
-          lastTopUpAt: Date.now()
-        }),
-        window.dbSet('topupHistory/' + txKey, {
-          uid: loadingUid,
-          driverName: driver.name,
-          plate: driver.plate,
-          amount: addAmount,
-          previousBalance: currentBal,
-          newBalance: updatedBal,
-          method: method,
-          timestamp: Date.now()
-        })
-      ]);
-
-      if (window.pushNotification) {
-        window.pushNotification(
-          'RFID Balance Loaded',
-          '+' + formatPHP(addAmount) + ' (' + method + ') to ' + driver.name + ' • New Bal: ' + formatPHP(updatedBal)
-        );
+      const confirmBtn = document.getElementById('loadConfirmBtn');
+      isConfirmingTopUp = true;
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing...';
       }
 
-      closeLoadModal();
+      try {
+        const driver = driversData[loadingUid];
+        const currentBal = Number(driver.balance) || 0;
+        const updatedBal = currentBal + addAmount;
+        const method = document.getElementById('paymentMethodInput').value;
+        const txKey = `TOPUP-${Date.now()}`;
+
+        await Promise.all([
+          window.dbUpdate('driverInfo/' + loadingUid, {
+            balance: updatedBal,
+            lastTopUpAt: Date.now()
+          }),
+          window.dbSet('topupHistory/' + txKey, {
+            uid: loadingUid,
+            driverName: driver.name,
+            plate: driver.plate,
+            amount: addAmount,
+            previousBalance: currentBal,
+            newBalance: updatedBal,
+            method: method,
+            timestamp: Date.now()
+          })
+        ]);
+
+        if (window.pushNotification) {
+          window.pushNotification(
+            'RFID Balance Loaded',
+            '+' + formatPHP(addAmount) + ' (' + method + ') to ' + driver.name + ' • New Bal: ' + formatPHP(updatedBal)
+          );
+        }
+
+        closeLoadModal();
+      } catch (err) {
+        console.error('Failed to top up RFID card:', err);
+        setFormError('loadFormError', 'Could not complete top-up. Please check your connection and try again.');
+        isConfirmingTopUp = false;
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Confirm Top-Up';
+        }
+      }
     }
 
     async function toggleCardAccess(uid, newState) {
-      await Promise.all([
-        window.dbUpdate('driverInfo/' + uid, { active: newState, updatedAt: Date.now() }),
-        window.dbSet('authorizedCards/' + uid, newState)
-      ]);
+      try {
+        await Promise.all([
+          window.dbUpdate('driverInfo/' + uid, { active: newState, updatedAt: Date.now() }),
+          window.dbSet('authorizedCards/' + uid, newState)
+        ]);
+      } catch (err) {
+        console.error('Failed to toggle card access:', err);
+      }
     }
 
     async function deleteDriver(uid) {
@@ -719,10 +795,14 @@
 
       if (!confirmed) return;
 
-      await Promise.all([
-        window.dbSet('driverInfo/' + uid, null),
-        window.dbSet('authorizedCards/' + uid, null)
-      ]);
+      try {
+        await Promise.all([
+          window.dbSet('driverInfo/' + uid, null),
+          window.dbSet('authorizedCards/' + uid, null)
+        ]);
+      } catch (err) {
+        console.error('Failed to remove RFID card:', err);
+      }
     }
 
     function escapeHtml(str) {
@@ -738,7 +818,6 @@
       });
     }
 
-    // Close modals when clicking the dark backdrop or pressing Escape
     document.getElementById('driverModal').addEventListener('click', (e) => {
       if (e.target.id === 'driverModal') closeDriverModal();
     });
