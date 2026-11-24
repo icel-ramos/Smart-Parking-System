@@ -10,6 +10,7 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <SPI.h>
+//#include <Wire.h>
 #include <MFRC522.h>
 #include <ESP32Servo.h>
 
@@ -210,6 +211,76 @@ void heartbeat() {
     "{\"id\":\"ESP32-MAIN\",\"name\":\"Main ESP32 Controller\",\"type\":\"Sensor\",\"layer\":\"Gate Controller\",\"status\":\"Online\",\"health\":100,\"lastSeenMs\":{\".sv\":\"timestamp\"}}", ignored)) {
     Serial.println("Firebase heartbeat OK (ESP32-MAIN)");
   }
+
+
+  /*
+  bool isI2COnline(uint8_t addr) {
+  Wire.beginTransmission(addr);
+  return (Wire.endTransmission() == 0);
+}
+
+bool isRFIDOnline(MFRC522& reader) {
+  byte v = reader.PCD_ReadRegister(reader.VersionReg);
+  return (v == 0x91 || v == 0x92);
+}
+
+void heartbeat() {
+  // 1. Check live hardware states
+  bool lcdOk   = isI2COnline(0x27);
+  bool mcpOk   = isI2COnline(0x20);
+  bool rfid1Ok = isRFIDOnline(entryRFID);
+  bool rfid2Ok = isRFIDOnline(exitRFID);
+  bool us1Ok   = (distanceCm(ENTRY_TRIG, ENTRY_ECHO) >= 0);
+  bool us2Ok   = (distanceCm(EXIT_TRIG, EXIT_ECHO) >= 0);
+
+  // 2. Build a single JSON object for /devices
+  JsonDocument doc;
+
+  auto addNode = [&](const char* id, const char* name, const char* type, const char* layer, bool online) {
+    JsonObject obj = doc[id].to<JsonObject>();
+    obj["id"] = id;
+    obj["name"] = name;
+    obj["type"] = type;
+    obj["layer"] = layer;
+    obj["status"] = online ? "Online" : "Offline";
+    obj["health"] = online ? 100 : 0;
+    if (online) {
+      obj["lastSeenMs"][".sv"] = "timestamp";
+    } else {
+      obj["lastSeenMs"] = 0;
+    }
+  };
+
+  addNode("ESP32-MAIN", "Main Controller", "Controller", "Core Layer", true);
+  addNode("BR-01", "Entrance Gate", "Barrier", "Access Layer", true);
+  addNode("BR-02", "Exit Gate", "Barrier", "Access Layer", true);
+  addNode("RFID-01", "Entry RFID Scanner", "RFID Reader", "Access Layer", rfid1Ok);
+  addNode("RFID-02", "Exit RFID Scanner", "RFID Reader", "Access Layer", rfid2Ok);
+  addNode("LCD-01", "Entry I2C Status Display", "Display", "Display Layer", lcdOk);
+  addNode("LCD-02", "Exit I2C Status Display", "Display", "Display Layer", lcdOk);
+  addNode("LED-01", "Parking Slot 1 Indicator", "LED Indicator", "Display Layer", mcpOk);
+  addNode("LED-02", "Parking Slot 2 Indicator", "LED Indicator", "Display Layer", mcpOk);
+  addNode("LED-03", "Parking Slot 3 Indicator", "LED Indicator", "Display Layer", mcpOk);
+  addNode("LED-04", "Parking Slot 4 Indicator", "LED Indicator", "Display Layer", mcpOk);
+  addNode("SNS-01", "Parking Slot 1 IR Sensor", "Sensor", "Sensing Layer", true);
+  addNode("SNS-02", "Parking Slot 2 IR Sensor", "Sensor", "Sensing Layer", true);
+  addNode("SNS-03", "Parking Slot 3 IR Sensor", "Sensor", "Sensing Layer", true);
+  addNode("SNS-04", "Parking Slot 4 IR Sensor", "Sensor", "Sensing Layer", true);
+  addNode("US-01", "Entrance Ultrasonic Sensor", "Sensor", "Sensing Layer", us1Ok);
+  addNode("US-02", "Exit Ultrasonic Sensor", "Sensor", "Sensing Layer", us2Ok);
+
+  String payload, ignored;
+  serializeJson(doc, payload);
+
+  // 3. Send all 17 devices in one single HTTPS PATCH request
+  if (dbRequest("devices", "PATCH", payload, ignored)) {
+    Serial.println("Firebase heartbeat OK (All Devices Synced)");
+  }
+}
+
+  */
+
+
 }
 
 void setup() {
@@ -218,6 +289,7 @@ void setup() {
   pinMode(ENTRY_TRIG, OUTPUT); pinMode(EXIT_TRIG, OUTPUT);
   pinMode(ENTRY_ECHO, INPUT); pinMode(EXIT_ECHO, INPUT);
   pinMode(IR_SENSOR_PIN, INPUT);
+  // Wire.begin(I2C_SDA, I2C_SCL);
   SPI.begin(RFID_SCK, RFID_MISO, RFID_MOSI);
   entryRFID.PCD_Init(); exitRFID.PCD_Init();
   entryServo.setPeriodHertz(50); exitServo.setPeriodHertz(50);
