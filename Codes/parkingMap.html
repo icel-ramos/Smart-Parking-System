@@ -6,6 +6,51 @@
   <title>Parking Map - Live Overview</title>
   <link rel="stylesheet" href="global.css">
   <link rel="stylesheet" href="parkingMap.css">
+  <style>
+    .telemetry-panel {
+      padding: 20px 24px;
+    }
+
+    .stats-grid {
+      padding-bottom: 18px;
+    }
+
+    .controls-row {
+      padding-top: 16px;
+    }
+
+    .control-group {
+      gap: 16px;
+    }
+
+    .control-header-bar {
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 16px;
+    }
+
+    @media (max-width: 720px) {
+      .telemetry-panel {
+        padding: 14px 12px;
+      }
+
+      .stats-grid {
+        padding-bottom: 14px;
+      }
+
+      .controls-row {
+        padding-top: 14px;
+      }
+
+      .control-group {
+        gap: 12px;
+      }
+
+      .control-header-bar {
+        padding-bottom: 12px;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -63,7 +108,7 @@
       <!-- Dark Sensor Canvas (Single Row of 4 Bays) -->
       <div class="parking-canvas">
         <div class="zone-label">ZONE A</div>
-        
+
         <!-- Single Row of 4 Slots -->
         <div class="slot-row" id="topRow"></div>
 
@@ -115,7 +160,6 @@
               <span>View Notes</span>
             </button>
           </div>
-          
         </div>
 
         <div class="controls-row">
@@ -136,7 +180,7 @@
             </div>
 
             <div class="action-list" id="slotActionButtons">
-              <!-- Populated dynamically as a structured list with disabled states -->
+              <!-- Populated dynamically -->
             </div>
           </div>
         </div>
@@ -156,7 +200,6 @@
 
   <script src="global.js"></script>
   <script>
-    // Standard pricing rates (synced from /rates so Reserved & Occupied bays accrue live fees)
     const activeRates = {
       "2w": { firstHour: 20, extraHour: 10, dailyMax: 100 },
       "4w": { firstHour: 40, extraHour: 20, dailyMax: 200 }
@@ -164,16 +207,141 @@
 
     const floorsData = {
       1: [
-        { id: "1A-01", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "" },
-        { id: "1A-02", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "" },
-        { id: "1A-03", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "" },
-        { id: "1A-04", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "" }
+        { id: "1A-01", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "", rfidUid: "", passType: "" },
+        { id: "1A-02", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "", rfidUid: "", passType: "" },
+        { id: "1A-03", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "", rfidUid: "", passType: "" },
+        { id: "1A-04", status: "available", entry: "--:--", entryTimeMs: 0, duration: "0m 0s", plate: "", vehicleType: "4w", ticketId: "", note: "", rfidUid: "", passType: "" }
       ]
     };
 
     let currentFloor = 1;
-    let selectedIndex = 0; // Default to 1A-01
+    let selectedIndex = 0;
     let manualOverrideMode = false;
+    let driversRegistry = {};
+
+    function normalizePlate(plate) {
+      return String(plate || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
+    }
+
+    function normalizeUid(val) {
+      return String(val || "").replace(/[^0-9A-F]/gi, "").toUpperCase();
+    }
+
+    function formatVehicleCode(vType) {
+      return (vType || "4w").toLowerCase().includes("2") ? "2W" : "4W+";
+    }
+
+    function formatVehicleLabel(vType) {
+      return (vType || "4w").toLowerCase().includes("2") ? "2-Wheeler" : "4-Wheelers+";
+    }
+
+    function findMemberByPlate(plate) {
+      const target = normalizePlate(plate);
+      if (!target) return null;
+      for (const [uid, info] of Object.entries(driversRegistry)) {
+        if (!info || (info.passType || "Member") === "Visitor") continue;
+        if (normalizePlate(info.plate) === target) {
+          return { uid, ...info };
+        }
+      }
+      return null;
+    }
+
+    function findMemberForSlot(slot) {
+      if (slot.rfidUid && slot.passType !== "Visitor") {
+        const directUid = normalizeUid(slot.rfidUid);
+        const directRecord = driversRegistry[directUid] || driversRegistry[slot.rfidUid];
+        if (directRecord && (directRecord.passType || "Member") !== "Visitor") {
+          return { uid: directUid || slot.rfidUid, ...directRecord };
+        }
+      }
+      return findMemberByPlate(slot.plate);
+    }
+
+    function findActiveSlotUsingUid(uid) {
+      const target = normalizeUid(uid);
+      if (!target) return null;
+      const slots = floorsData[currentFloor] || [];
+      return slots.find(
+        s => (s.status === "occupied" || s.status === "reserved") && normalizeUid(s.rfidUid) === target
+      ) || null;
+    }
+
+    function lookupRegistryPass(rawQuery, requiredMode) {
+      const trimmed = String(rawQuery || "").trim();
+      if (!trimmed) {
+        return {
+          ok: false,
+          reason: requiredMode === "Visitor"
+            ? "Enter a Visitor Pass RFID UID or label first."
+            : "Enter a Subscriber plate number or RFID UID first."
+        };
+      }
+
+      const normPlate = normalizePlate(trimmed);
+      const normUid = normalizeUid(trimmed);
+      const lowerText = trimmed.toLowerCase();
+
+      let matched = null;
+
+      for (const [uid, info] of Object.entries(driversRegistry)) {
+        if (!info) continue;
+        const cardUid = normalizeUid(uid);
+        const cardPlate = normalizePlate(info.plate);
+        const cardName = String(info.name || "").trim().toLowerCase();
+
+        const isUidMatch = normUid.length >= 4 && cardUid === normUid;
+        const isPlateMatch = normPlate.length >= 3 && cardPlate && cardPlate === normPlate;
+        const isNameMatch = cardName && cardName === lowerText;
+
+        if (isUidMatch || isPlateMatch || (requiredMode === "Visitor" && isNameMatch)) {
+          matched = { uid, ...info };
+          break;
+        }
+      }
+
+      if (!matched) {
+        return {
+          ok: false,
+          reason: requiredMode === "Visitor"
+            ? "Not registered as a Visitor Pass. Register it in Drivers & Vehicles before reserving."
+            : "Not registered as a Subscriber. Only registered RFID passes can reserve a bay."
+        };
+      }
+
+      const cardType = (matched.passType || "Member") === "Visitor" ? "Visitor" : "Member";
+
+      if (requiredMode === "Member" && cardType !== "Member") {
+        return {
+          ok: false,
+          reason: `Card "${matched.name}" (${matched.uid}) is a Visitor Pass. Switch to Walk-In mode above.`
+        };
+      }
+
+      if (requiredMode === "Visitor" && cardType !== "Visitor") {
+        return {
+          ok: false,
+          reason: `Card "${matched.name}" (${matched.uid}) is a Subscriber pass. Switch to Subscriber mode above.`
+        };
+      }
+
+      if (matched.active === false) {
+        return {
+          ok: false,
+          reason: `RFID pass "${matched.name}" (${matched.uid}) is SUSPENDED. Activate it in Drivers & Vehicles first.`
+        };
+      }
+
+      const inUseSlot = findActiveSlotUsingUid(matched.uid);
+      if (inUseSlot) {
+        return {
+          ok: false,
+          reason: `RFID pass "${matched.name}" (${matched.uid}) is already assigned to Bay ${inUseSlot.id}.`
+        };
+      }
+
+      return { ok: true, card: matched };
+    }
 
     function toggleManualOverride(isEnabled) {
       manualOverrideMode = Boolean(isEnabled);
@@ -197,7 +365,6 @@
       return `${minutes}m ${seconds}s`;
     }
 
-    // Calculate live parking fee for Occupied and Reserved bays
     function calculateAccruedFee(slot) {
       if (slot.status !== "occupied" && slot.status !== "reserved") {
         return 0;
@@ -244,17 +411,17 @@
           dotColor = "red";
           statusLabel = "Occupied";
           centerMarkup = `<div class="slot-car" data-icon="car"></div>`;
-          subNote = slot.plate ? `<div class="slot-subnote">${slot.plate}</div>` : "";
+          subNote = slot.plate ? `<div class="slot-subnote">${escapeHtml(slot.plate)}</div>` : "";
         } else if (slot.status === "reserved") {
           dotColor = "amber";
           statusLabel = "Reserved";
           centerMarkup = `<div class="slot-car" data-icon="lock"></div>`;
-          subNote = slot.plate ? `<div class="slot-subnote">${slot.plate}</div>` : `<div class="slot-subnote">Reserved</div>`;
+          subNote = slot.plate ? `<div class="slot-subnote">${escapeHtml(slot.plate)}</div>` : `<div class="slot-subnote">Reserved</div>`;
         } else if (slot.status === "maintenance") {
           dotColor = "slate";
           statusLabel = "Maintenance";
           centerMarkup = `<div class="slot-car" data-icon="settings"></div>`;
-          subNote = slot.note ? `<div class="slot-subnote">${slot.note}</div>` : `<div class="slot-subnote">Unavailable</div>`;
+          subNote = slot.note ? `<div class="slot-subnote">${escapeHtml(slot.note)}</div>` : `<div class="slot-subnote">Unavailable</div>`;
         }
 
         box.innerHTML = `
@@ -300,8 +467,7 @@
       if (currentSlot.status === "maintenance") {
         noteEl.textContent = currentSlot.note || "Maintenance / Incident";
       } else if (currentSlot.plate) {
-        const vLabel = (currentSlot.vehicleType || "4w").toUpperCase();
-        noteEl.textContent = `${currentSlot.plate} (${vLabel})`;
+        noteEl.textContent = `${currentSlot.plate} (${formatVehicleCode(currentSlot.vehicleType)})`;
       } else {
         noteEl.textContent = "None";
       }
@@ -468,9 +634,12 @@
       const isAvail = slot.status === "available";
       const isMaint = slot.status === "maintenance";
       const fee = calculateAccruedFee(slot);
-      const vLabel = (slot.vehicleType || "4w").toUpperCase();
+      const vLabel = formatVehicleLabel(slot.vehicleType);
       const statusLabel = slot.status.charAt(0).toUpperCase() + slot.status.slice(1);
       const noteText = slot.note ? escapeHtml(slot.note) : "No additional note recorded.";
+      const rfidLabel = slot.rfidUid
+        ? `${escapeHtml(slot.rfidUid)}${slot.passType ? ` (${escapeHtml(slot.passType)})` : ""}`
+        : "Unlinked";
 
       const bodyHtml = isAvail
         ? `<div class="bays-empty-state">Bay ${escapeHtml(slot.id)} is currently available. There are no active tickets, vehicle records, or notes for this bay.</div>`
@@ -487,6 +656,7 @@
             <div class="bay-detail-grid">
               <div><strong>Plate:</strong> ${isMaint ? "N/A" : escapeHtml(slot.plate || "Unassigned")} ${!isMaint ? `(${vLabel})` : ""}</div>
               <div><strong>Ticket ID:</strong> ${isMaint ? "N/A" : escapeHtml(slot.ticketId || "Not Assigned")}</div>
+              <div><strong>RFID Pass:</strong> ${isMaint ? "N/A" : rfidLabel}</div>
               <div><strong>Start Time:</strong> ${isMaint ? "--:--" : escapeHtml(slot.entry || "--:--")}</div>
               <div><strong>Duration:</strong> ${isMaint ? "N/A" : escapeHtml(formatElapsed(slot.entryTimeMs))}</div>
             </div>
@@ -544,68 +714,307 @@
       }
     }
 
-    // 1. Reserve a Bay (Single custom form replaces 2 native prompts)
-    async function reserveSlot() {
+    // 1. Reserve a Bay (Requires Verified Subscriber Pass or Verified Walk-In Visitor Pass)
+    function reserveSlot() {
       const slot = floorsData[currentFloor][selectedIndex];
-      const result = await window.peForm({
-        title: `Reserve Bay ${slot.id}`,
-        subtitle: 'Assign a vehicle plate and type to lock this bay at the standard rate.',
-        confirmText: 'Reserve Bay',
-        fields: [
-          { name: 'plate', label: 'Vehicle Plate Number', placeholder: 'e.g., ABC 1234', uppercase: true },
-          {
-            name: 'vehicleType',
-            label: 'Vehicle Type',
-            type: 'select',
-            value: '4w',
-            options: [
-              { value: '4w', label: `4 Wheelers (₱${activeRates['4w'].firstHour.toFixed(2)} first hr)` },
-              { value: '2w', label: `2 Wheelers (₱${activeRates['2w'].firstHour.toFixed(2)} first hr)` }
-            ]
-          },
-          { name: 'note', label: 'Reservation Note (Name / Details)', placeholder: 'e.g., Juan Dela Cruz (optional)' }
-        ]
+
+      const backdrop = document.createElement("div");
+      backdrop.className = "pe-modal-backdrop";
+      backdrop.innerHTML = `
+        <div class="pe-modal-card pe-modal-wide" role="dialog" aria-modal="true">
+          <h3 class="pe-modal-title">Reserve Bay ${escapeHtml(slot.id)}</h3>
+          <p class="pe-modal-subtitle">Verify an active RFID pass to lock this bay at the standard rate.</p>
+
+          <div class="pe-mode-switch" role="tablist" aria-label="Customer pass type">
+            <button type="button" class="pe-mode-btn active" id="modeMemberBtn" role="tab" aria-selected="true">
+              Subscriber (Member)
+            </button>
+            <button type="button" class="pe-mode-btn" id="modeVisitorBtn" role="tab" aria-selected="false">
+              Walk-In (Visitor Pass)
+            </button>
+          </div>
+
+          <form id="reserveBayForm">
+            <div class="pe-modal-fields">
+              <div class="pe-modal-field">
+                <label for="resLookupInput" id="resLookupLabel">Subscriber Plate Number or RFID UID *</label>
+                <div class="pe-lookup-row">
+                  <input
+                    type="text"
+                    id="resLookupInput"
+                    class="pe-modal-input"
+                    placeholder="e.g., ABC 1234 or A1B2C3D4"
+                    style="text-transform: uppercase;"
+                    autocomplete="off"
+                  />
+                  <button
+                    type="button"
+                    class="pe-lookup-btn"
+                    id="resLookupBtn"
+                    title="Verify RFID registration"
+                    aria-label="Verify RFID registration"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <path d="m21 21-4.3-4.3"></path>
+                    </svg>
+                  </button>
+                </div>
+                <div id="resLookupStatus" class="pe-lookup-status idle">
+                  Click the lookup icon to verify subscriber registration.
+                </div>
+              </div>
+
+              <div class="pe-modal-field" id="walkInPlateGroup" style="display: none;">
+                <label for="resWalkInPlate">Walk-In Vehicle Plate Number *</label>
+                <input
+                  type="text"
+                  id="resWalkInPlate"
+                  class="pe-modal-input"
+                  placeholder="e.g., ABC 1234"
+                  minlength="4"
+                  maxlength="12"
+                  style="text-transform: uppercase;"
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="pe-modal-field">
+                <label for="resVehicleType">Vehicle Category</label>
+                <select id="resVehicleType" class="pe-modal-select">
+                  <option value="4w">4-Wheelers+ (₱${activeRates["4w"].firstHour.toFixed(2)} first hr)</option>
+                  <option value="2w">2-Wheeler (₱${activeRates["2w"].firstHour.toFixed(2)} first hr)</option>
+                </select>
+              </div>
+
+              <div class="pe-modal-field">
+                <label for="resNoteInput">Reservation Note (Name / Details)</label>
+                <input
+                  type="text"
+                  id="resNoteInput"
+                  class="pe-modal-input"
+                  placeholder="Optional driver name or notes"
+                />
+              </div>
+            </div>
+
+            <div class="pe-modal-actions">
+              <button type="button" class="pe-modal-btn cancel" id="resCancelBtn">Cancel</button>
+              <button type="submit" class="pe-modal-btn confirm" id="resSubmitBtn" disabled>Reserve Bay</button>
+            </div>
+          </form>
+        </div>
+      `;
+
+      document.body.appendChild(backdrop);
+      requestAnimationFrame(() => backdrop.classList.add("open"));
+
+      let activeMode = "Member";
+      let verifiedCard = null;
+
+      const modeMemberBtn = backdrop.querySelector("#modeMemberBtn");
+      const modeVisitorBtn = backdrop.querySelector("#modeVisitorBtn");
+      const lookupLabel = backdrop.querySelector("#resLookupLabel");
+      const lookupInput = backdrop.querySelector("#resLookupInput");
+      const lookupBtn = backdrop.querySelector("#resLookupBtn");
+      const lookupStatus = backdrop.querySelector("#resLookupStatus");
+      const walkInPlateGroup = backdrop.querySelector("#walkInPlateGroup");
+      const walkInPlateInput = backdrop.querySelector("#resWalkInPlate");
+      const vehSelect = backdrop.querySelector("#resVehicleType");
+      const noteInput = backdrop.querySelector("#resNoteInput");
+      const submitBtn = backdrop.querySelector("#resSubmitBtn");
+
+      const setStatus = (state, text) => {
+        lookupStatus.className = `pe-lookup-status ${state}`;
+        lookupStatus.textContent = text;
+      };
+
+      const updateSubmitState = () => {
+        if (!verifiedCard) {
+          submitBtn.disabled = true;
+          return;
+        }
+        if (activeMode === "Visitor") {
+          submitBtn.disabled = walkInPlateInput.value.trim().length < 4;
+        } else {
+          submitBtn.disabled = false;
+        }
+      };
+
+      const resetVerification = () => {
+        verifiedCard = null;
+        setStatus(
+          "idle",
+          activeMode === "Visitor"
+            ? "Click the lookup icon to verify an active Visitor Pass."
+            : "Click the lookup icon to verify subscriber registration."
+        );
+        updateSubmitState();
+      };
+
+      const switchMode = (newMode) => {
+        if (activeMode === newMode) return;
+        activeMode = newMode;
+        const isVisitor = activeMode === "Visitor";
+
+        modeMemberBtn.classList.toggle("active", !isVisitor);
+        modeMemberBtn.setAttribute("aria-selected", String(!isVisitor));
+        modeVisitorBtn.classList.toggle("active", isVisitor);
+        modeVisitorBtn.setAttribute("aria-selected", String(isVisitor));
+
+        lookupLabel.textContent = isVisitor
+          ? "Visitor Pass RFID UID or Label *"
+          : "Subscriber Plate Number or RFID UID *";
+        lookupInput.placeholder = isVisitor
+          ? "e.g., B2C3D4E5 or VISITOR PASS 01"
+          : "e.g., ABC 1234 or A1B2C3D4";
+        lookupInput.value = "";
+        noteInput.value = "";
+
+        walkInPlateGroup.style.display = isVisitor ? "flex" : "none";
+        walkInPlateInput.required = isVisitor;
+        walkInPlateInput.value = "";
+
+        resetVerification();
+        lookupInput.focus();
+      };
+
+      const runLookup = () => {
+        const res = lookupRegistryPass(lookupInput.value, activeMode);
+        if (!res.ok) {
+          verifiedCard = null;
+          setStatus("error", res.reason);
+          updateSubmitState();
+          return;
+        }
+
+        verifiedCard = res.card;
+        if (activeMode === "Member") {
+          const bal = (Number(verifiedCard.balance) || 0).toFixed(2);
+          if (verifiedCard.plate) {
+            lookupInput.value = verifiedCard.plate.toUpperCase();
+          }
+          vehSelect.value = verifiedCard.vehicleType === "2W" ? "2w" : "4w";
+          noteInput.value = `${verifiedCard.name} (Subscriber)`;
+          setStatus(
+            "valid",
+            `Registered Subscriber: ${verifiedCard.name} (UID: ${verifiedCard.uid} · Bal: ₱${bal})`
+          );
+        } else {
+          if (verifiedCard.vehicleType === "2W") vehSelect.value = "2w";
+          else if (verifiedCard.vehicleType === "4W") vehSelect.value = "4w";
+          noteInput.value = `${verifiedCard.name} (Walk-In)`;
+          setStatus(
+            "valid",
+            `Registered Visitor Pass: ${verifiedCard.name} (UID: ${verifiedCard.uid}) · Select vehicle category & plate below`
+          );
+          walkInPlateInput.focus();
+        }
+
+        updateSubmitState();
+      };
+
+      modeMemberBtn.addEventListener("click", () => switchMode("Member"));
+      modeVisitorBtn.addEventListener("click", () => switchMode("Visitor"));
+      lookupBtn.addEventListener("click", runLookup);
+
+      lookupInput.addEventListener("input", () => {
+        if (verifiedCard || lookupStatus.classList.contains("error")) {
+          resetVerification();
+        }
       });
-      if (!result) return;
 
-      const cleanPlate = result.plate || "RESERVED";
-      const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
-      const is2W = vehicleType === "2w";
-      const rateAmount = activeRates[vehicleType].firstHour.toFixed(2);
-
-      const nowMs = Date.now();
-      const timeStr = getCurrentTimeStr();
-      const ticketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
-
-      window.dbUpdate(`transactions/${ticketId}`, {
-        id: ticketId,
-        slotId: slot.id,
-        plate: cleanPlate,
-        vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
-        timeIn: timeStr,
-        timeOut: "--:--",
-        amount: rateAmount,
-        status: "Unpaid",
-        type: "Reservation",
-        timestamp: nowMs
+      lookupInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          runLookup();
+        }
       });
 
-      window.dbUpdate(`slots/${slot.id}`, {
-        status: "reserved",
-        forced: true,
-        mode: "manual",
-        light: "red",
-        plate: cleanPlate,
-        vehicleType,
-        ticketId,
-        note: result.note || "Reserved",
-        entry: timeStr,
-        entryTimeMs: nowMs
+      walkInPlateInput.addEventListener("input", updateSubmitState);
+
+      const closeModal = () => {
+        document.removeEventListener("keydown", onEsc);
+        backdrop.classList.remove("open");
+        setTimeout(() => backdrop.remove(), 160);
+      };
+
+      const onEsc = (e) => {
+        if (e.key === "Escape") closeModal();
+      };
+      document.addEventListener("keydown", onEsc);
+
+      backdrop.querySelector("#resCancelBtn").addEventListener("click", closeModal);
+      backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) closeModal();
       });
 
-      if (window.pushNotification) {
-        window.pushNotification("Bay Reserved", `Bay ${slot.id} reserved for ${cleanPlate} (Ticket ${ticketId}).`);
-      }
+      backdrop.querySelector("#reserveBayForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (!verifiedCard) {
+          runLookup();
+          return;
+        }
+
+        const isVisitor = activeMode === "Visitor";
+        const cleanPlate = isVisitor
+          ? walkInPlateInput.value.trim().toUpperCase()
+          : (verifiedCard.plate || lookupInput.value).trim().toUpperCase();
+
+        if (!cleanPlate) {
+          setStatus("error", "Please enter the vehicle plate number before reserving.");
+          return;
+        }
+
+        const vehicleType = vehSelect.value === "2w" ? "2w" : "4w";
+        const rateAmount = activeRates[vehicleType].firstHour.toFixed(2);
+        const resolvedNote = noteInput.value.trim() || `${verifiedCard.name} (${isVisitor ? "Walk-In" : "Subscriber"})`;
+
+        const nowMs = Date.now();
+        const timeStr = getCurrentTimeStr();
+        const ticketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
+
+        window.dbUpdate(`transactions/${ticketId}`, {
+          id: ticketId,
+          slotId: slot.id,
+          plate: cleanPlate,
+          rfidUid: verifiedCard.uid,
+          passType: activeMode,
+          vehicle: formatVehicleLabel(vehicleType),
+          timeIn: timeStr,
+          timeOut: "--:--",
+          amount: rateAmount,
+          status: "Unpaid",
+          type: isVisitor ? "Walk-In Reservation" : "Subscriber Reservation",
+          timestamp: nowMs
+        });
+
+        window.dbUpdate(`slots/${slot.id}`, {
+          status: "reserved",
+          forced: true,
+          mode: "manual",
+          light: "red",
+          plate: cleanPlate,
+          rfidUid: verifiedCard.uid,
+          passType: activeMode,
+          vehicleType,
+          ticketId,
+          note: resolvedNote,
+          entry: timeStr,
+          entryTimeMs: nowMs
+        });
+
+        if (window.pushNotification) {
+          window.pushNotification(
+            "Bay Reserved",
+            `Bay ${slot.id} reserved for ${cleanPlate} (${verifiedCard.name} · ${ticketId}).`
+          );
+        }
+
+        closeModal();
+      });
+
+      lookupInput.focus();
     }
 
     // 2. Manual Override: Mark Reserved Vehicle Arrived OR Force Occupy an Available Bay
@@ -626,7 +1035,7 @@
           forced: true,
           mode: "manual",
           light: "red",
-          note: "Parked (Override)"
+          note: slot.note || "Parked (Override)"
         });
 
         if (window.pushNotification) {
@@ -659,7 +1068,6 @@
       }
     }
 
-    // Helper to convert HH:MM time input back into a timestamp for today
     function timeStrToTodayMs(timeStr, fallbackMs) {
       if (!timeStr || !timeStr.includes(":")) return fallbackMs || Date.now();
       const [h, m] = timeStr.split(":").map(Number);
@@ -669,11 +1077,10 @@
       return d.getTime();
     }
 
-    // 3. Update ALL Details (Plate, Vehicle Type, Start Time, Ticket ID, and Note)
+    // 3. Update ALL Details
     async function assignPlateToOccupied() {
       const slot = floorsData[currentFloor][selectedIndex];
 
-      // If bay is in maintenance, allow editing the maintenance note directly
       if (slot.status === "maintenance") {
         const res = await window.peForm({
           title: `Update Maintenance Note: Bay ${slot.id}`,
@@ -703,12 +1110,12 @@
           { name: "plate", label: "Vehicle Plate Number", value: slot.plate || "", placeholder: "e.g., ABC 1234", required: true, uppercase: true },
           {
             name: "vehicleType",
-            label: "Vehicle Type",
+            label: "Vehicle Category",
             type: "select",
             value: (slot.vehicleType || "4w").toLowerCase().includes("2") ? "2w" : "4w",
             options: [
-              { value: "4w", label: `4 Wheelers (₱${activeRates["4w"].firstHour.toFixed(2)} first hr)` },
-              { value: "2w", label: `2 Wheelers (₱${activeRates["2w"].firstHour.toFixed(2)} first hr)` }
+              { value: "4w", label: `4-Wheelers+ (₱${activeRates["4w"].firstHour.toFixed(2)} first hr)` },
+              { value: "2w", label: `2-Wheeler (₱${activeRates["2w"].firstHour.toFixed(2)} first hr)` }
             ]
           },
           { name: "entry", label: "Start Time", type: "time", value: defaultTime, required: true },
@@ -720,7 +1127,6 @@
 
       const cleanPlate = result.plate;
       const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
-      const is2W = vehicleType === "2w";
       const timeIn = result.entry || defaultTime;
       const entryTimeMs = (timeIn === slot.entry && slot.entryTimeMs)
         ? slot.entryTimeMs
@@ -729,7 +1135,6 @@
       const cleanNote = result.note || (slot.status === "reserved" ? "Reserved" : "");
       const currentFee = calculateAccruedFee({ ...slot, vehicleType, entryTimeMs }).toFixed(2);
 
-      // Remove old transaction node if the Ticket ID was renamed
       if (slot.ticketId && slot.ticketId !== newTicketId && typeof window.dbSet === "function") {
         window.dbSet(`transactions/${slot.ticketId}`, null);
       }
@@ -738,7 +1143,9 @@
         id: newTicketId,
         slotId: slot.id,
         plate: cleanPlate,
-        vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+        rfidUid: slot.rfidUid || "",
+        passType: slot.passType || "",
+        vehicle: formatVehicleLabel(vehicleType),
         timeIn,
         timeOut: "--:--",
         amount: currentFee,
@@ -762,7 +1169,7 @@
       }
     }
 
-    // 4. Put Bay Under Maintenance or Flag an Incident (Safeguards for Occupied & Reserved bays)
+    // 4. Put Bay Under Maintenance or Flag an Incident
     async function setMaintenance() {
       const slots = floorsData[currentFloor];
       const slot = slots[selectedIndex];
@@ -799,12 +1206,12 @@
           },
           {
             name: 'vehicleType',
-            label: 'Vehicle Type',
+            label: 'Vehicle Category',
             type: 'select',
             value: (slot.vehicleType || '4w').toLowerCase().includes('2') ? '2w' : '4w',
             options: [
-              { value: '4w', label: '4 Wheelers' },
-              { value: '2w', label: '2 Wheelers' }
+              { value: '4w', label: '4-Wheelers+' },
+              { value: '2w', label: '2-Wheeler' }
             ]
           }
         );
@@ -847,7 +1254,6 @@
 
       if (isOccupied) {
         const vehicleType = result.vehicleType === "2w" ? "2w" : "4w";
-        const is2W = vehicleType === "2w";
         const finalFee = calculateAccruedFee({ ...slot, vehicleType }).toFixed(2);
         const timeOutStr = getCurrentTimeStr();
         const timeInStr = (slot.entry && slot.entry !== "--:--") ? slot.entry : timeOutStr;
@@ -858,7 +1264,9 @@
           id: ticketId,
           slotId: slot.id,
           plate: finalPlate,
-          vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+          rfidUid: slot.rfidUid || "",
+          passType: slot.passType || "",
+          vehicle: formatVehicleLabel(vehicleType),
           timeIn: timeInStr,
           timeOut: timeOutStr,
           amount: finalFee,
@@ -879,9 +1287,11 @@
             mode: "manual",
             light: "red",
             plate: slot.plate || "RESERVED",
+            rfidUid: slot.rfidUid || "",
+            passType: slot.passType || "",
             vehicleType: slot.vehicleType || "4w",
             ticketId: slot.ticketId || "",
-            note: "Reserved (Transferred)",
+            note: slot.note ? `${slot.note} (Transferred)` : "Reserved (Transferred)",
             entry: slot.entry || getCurrentTimeStr(),
             entryTimeMs: slot.entryTimeMs || Date.now()
           });
@@ -907,14 +1317,15 @@
           notifExtra = " (Reservation voided)";
         } else if (action === 'settle') {
           const timeOutStr = getCurrentTimeStr();
-          const is2W = (slot.vehicleType || "4w").toLowerCase().includes("2");
           const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
 
           window.dbUpdate(`transactions/${ticketId}`, {
             id: ticketId,
             slotId: slot.id,
             plate: slot.plate || `BAY-${slot.id}`,
-            vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
+            rfidUid: slot.rfidUid || "",
+            passType: slot.passType || "",
+            vehicle: formatVehicleLabel(slot.vehicleType),
             timeIn: (slot.entry && slot.entry !== "--:--") ? slot.entry : timeOutStr,
             timeOut: timeOutStr,
             amount: accruedFee,
@@ -931,6 +1342,8 @@
         mode: "manual",
         light: "red",
         plate: "",
+        rfidUid: "",
+        passType: "",
         ticketId: "",
         note: cleanReason,
         entry: "--:--",
@@ -942,39 +1355,94 @@
       }
     }
 
-    // 5. Settle accrued parking/reservation fee and release bay
+    // 5. Settle accrued parking/reservation fee (supports RFID prepaid wallet if linked to an active Subscriber)
     async function settleAndReleaseSlot() {
       const slot = floorsData[currentFloor][selectedIndex];
-      const finalFee = calculateAccruedFee(slot).toFixed(2);
+      const feeNum = calculateAccruedFee(slot);
+      const finalFee = feeNum.toFixed(2);
       const timeOutStr = getCurrentTimeStr();
+      const matchedMember = findMemberForSlot(slot);
+      const currentMemberBal = matchedMember ? (Number(matchedMember.balance) || 0) : 0;
+      const isMemberActive = Boolean(matchedMember && matchedMember.active !== false);
+      const canUseRfid = Boolean(isMemberActive && currentMemberBal >= feeNum);
 
-      const confirmed = await window.peConfirm(
-        `Settle & Release Bay ${slot.id}`,
-        `Confirm payment of ₱${finalFee} for ${slot.plate || 'this vehicle'} and restore Bay ${slot.id} to Available?`,
-        { confirmText: `Settle ₱${finalFee}` }
-      );
-      if (!confirmed) return;
-
-      if (slot.ticketId) {
-        window.dbUpdate(`transactions/${slot.ticketId}`, {
-          amount: finalFee,
-          timeOut: timeOutStr,
-          status: "Paid"
+      let paymentMethod = "Cash";
+      if (canUseRfid) {
+        const choice = await window.peForm({
+          title: `Settle & Release Bay ${slot.id}`,
+          subtitle: `Matched Subscriber: ${matchedMember.name} (${matchedMember.uid}) · Balance: ₱${currentMemberBal.toFixed(2)}`,
+          confirmText: `Settle ₱${finalFee}`,
+          fields: [
+            {
+              name: "paymentMethod",
+              label: "Settlement Method",
+              type: "select",
+              value: "RFID",
+              options: [
+                { value: "RFID", label: `Deduct from RFID Wallet (New Bal: ₱${(currentMemberBal - feeNum).toFixed(2)})` },
+                { value: "Cash", label: "Cash / Over-the-Counter" }
+              ]
+            }
+          ]
         });
+        if (!choice) return;
+        paymentMethod = choice.paymentMethod || "RFID";
       } else {
-        const autoTicketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
-        const is2W = (slot.vehicleType || "4w").toLowerCase().includes("2");
-        window.dbUpdate(`transactions/${autoTicketId}`, {
-          id: autoTicketId,
-          slotId: slot.id,
-          plate: slot.plate || `BAY-${slot.id}`,
-          vehicle: is2W ? "2 Wheelers" : "4 Wheelers",
-          timeIn: slot.entry !== "--:--" ? slot.entry : timeOutStr,
-          timeOut: timeOutStr,
-          amount: finalFee,
-          status: "Paid",
-          timestamp: slot.entryTimeMs || Date.now()
-        });
+        const extraNote = isMemberActive
+          ? `\n\nMatched Subscriber ${matchedMember.name} has ₱${currentMemberBal.toFixed(2)} (insufficient for ₱${finalFee}). Collect Cash at the counter.`
+          : "";
+        const confirmed = await window.peConfirm(
+          `Settle & Release Bay ${slot.id}`,
+          `Confirm payment of ₱${finalFee} for ${slot.plate || 'this vehicle'} and restore Bay ${slot.id} to Available?${extraNote}`,
+          { confirmText: `Settle ₱${finalFee}` }
+        );
+        if (!confirmed) return;
+      }
+
+      const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+
+      window.dbUpdate(`transactions/${ticketId}`, {
+        id: ticketId,
+        slotId: slot.id,
+        plate: slot.plate || `BAY-${slot.id}`,
+        rfidUid: slot.rfidUid || (matchedMember ? matchedMember.uid : ""),
+        passType: slot.passType || (matchedMember ? "Member" : ""),
+        vehicle: formatVehicleLabel(slot.vehicleType),
+        timeIn: slot.entry !== "--:--" ? slot.entry : timeOutStr,
+        timeOut: timeOutStr,
+        amount: finalFee,
+        paymentMethod,
+        status: "Paid",
+        timestamp: slot.entryTimeMs || Date.now()
+      });
+
+      if (paymentMethod === "RFID" && matchedMember && typeof window.dbSet === "function") {
+        const updatedBal = Math.max(0, currentMemberBal - feeNum);
+        const txKey = `DEDUCT-${Date.now()}`;
+        await Promise.all([
+          window.dbUpdate(`driverInfo/${matchedMember.uid}`, {
+            balance: updatedBal,
+            lastChargeAt: Date.now()
+          }),
+          window.dbSet(`topupHistory/${txKey}`, {
+            uid: matchedMember.uid,
+            driverName: matchedMember.name,
+            plate: slot.plate,
+            amount: -feeNum,
+            previousBalance: currentMemberBal,
+            newBalance: updatedBal,
+            method: "RFID Parking Fee",
+            ticketId,
+            timestamp: Date.now()
+          })
+        ]);
+
+        if (window.pushNotification) {
+          window.pushNotification(
+            "RFID Wallet Charged",
+            `Deducted ₱${finalFee} from ${matchedMember.name} · New Bal: ₱${updatedBal.toFixed(2)}`
+          );
+        }
       }
 
       restoreAvailable(true);
@@ -989,6 +1457,8 @@
         mode: "auto",
         light: "green",
         plate: "",
+        rfidUid: "",
+        passType: "",
         ticketId: "",
         note: "",
         entry: "--:--",
@@ -998,6 +1468,13 @@
       if (!skipConfirm && window.pushNotification) {
         window.pushNotification("Bay Restored", `Bay ${slot.id} is now Available.`);
       }
+    }
+
+    // Sync driverInfo for RFID lookup and wallet deductions
+    if (typeof window.dbListen === "function") {
+      window.dbListen("driverInfo", (driversObj) => {
+        driversRegistry = driversObj || {};
+      });
     }
 
     // Sync standard pricing rates from /rates
@@ -1043,7 +1520,9 @@
           note: s.note || "",
           entry: isBillable ? entry : "--:--",
           entryTimeMs: isBillable ? entryTimeMs : 0,
-          duration: isBillable ? formatElapsed(entryTimeMs) : "0m 0s"
+          duration: isBillable ? formatElapsed(entryTimeMs) : "0m 0s",
+          rfidUid: s.rfidUid || "",
+          passType: s.passType || ""
         };
       });
 

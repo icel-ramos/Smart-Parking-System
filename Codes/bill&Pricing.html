@@ -141,6 +141,7 @@
             <tr>
               <th>Ticket ID</th>
               <th>Plate No.</th>
+              <th>Driver</th>
               <th>Vehicle</th>
               <th>Time In</th>
               <th>Time Out</th>
@@ -359,7 +360,7 @@
       if (filteredTransactions.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" style="text-align: center; color: #64748b; padding: 28px;">
+            <td colspan="8" style="text-align: center; color: #64748b; padding: 28px;">
               No transactions recorded yet. Click "+ New Ticket" to record a vehicle.
             </td>
           </tr>
@@ -380,6 +381,7 @@
         tr.innerHTML = `
           <td class="tx-id">${tx.id}</td>
           <td>${tx.plate}</td>
+          <td>${String(tx.driverName || "—").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}</td>
           <td>${tx.vehicle}</td>
           <td>${tx.timeIn}</td>
           <td>${tx.timeOut}</td>

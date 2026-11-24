@@ -448,3 +448,159 @@ window.peConfirm = function (title, subtitle, options = {}) {
     ...options
   }).then((res) => Boolean(res));
 };
+
+(() => {
+  function formatRelativeHeartbeat(ts) {
+    if (!Number.isFinite(ts) || ts <= 0) return "No heartbeat yet";
+    const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    if (diffSec < 5) return "Just now";
+    if (diffSec < 60) return `${diffSec}s ago`;
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr}h ago`;
+    return `${Math.floor(diffHr / 24)}d ago`;
+  }
+
+  function initGlobalEsp32Pill() {
+    if (document.getElementById("peEsp32PillWrap")) return;
+
+    const userProfile = document.querySelector("header .user-profile") || document.querySelector(".user-profile");
+    if (!userProfile) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "pe-esp-wrap";
+    wrap.id = "peEsp32PillWrap";
+    wrap.innerHTML = `
+      <button
+        type="button"
+        class="pe-esp-pill checking"
+        id="peEsp32PillBtn"
+        aria-haspopup="true"
+        aria-expanded="false"
+        title="ESP32 & Firebase Sync Status"
+      >
+        <span class="pe-esp-dot"></span>
+        <span class="pe-esp-label-full" id="peEsp32LabelFull">Syncing...</span>
+        <span class="pe-esp-label-short" id="peEsp32LabelShort">Sync</span>
+      </button>
+
+      <div class="pe-esp-popover" id="peEsp32Popover" role="dialog" aria-label="ESP32 Connection Details">
+        <div class="pe-esp-pop-head">
+          <span class="pe-esp-pop-title">ESP32-MAIN</span>
+          <span class="pe-esp-pop-badge" id="peEsp32PopBadge">Checking</span>
+        </div>
+        <div class="pe-esp-pop-rows">
+          <div class="pe-esp-pop-row">
+            <span>Device</span>
+            <strong id="peEsp32PopDevice">Checking Firebase...</strong>
+          </div>
+          <div class="pe-esp-pop-row">
+            <span>Sync Channel</span>
+            <strong id="peEsp32PopChannel">Firebase RTDB</strong>
+          </div>
+          <div class="pe-esp-pop-row">
+            <span>Last Heartbeat</span>
+            <strong id="peEsp32PopSeen">--</strong>
+          </div>
+        </div>
+        <a href="infra&Hardware.html" class="pe-esp-pop-link">Infrastructure &amp; Hardware &rarr;</a>
+      </div>
+    `;
+
+    userProfile.insertBefore(wrap, userProfile.firstChild);
+
+    const pillBtn = document.getElementById("peEsp32PillBtn");
+    const popover = document.getElementById("peEsp32Popover");
+    const labelFull = document.getElementById("peEsp32LabelFull");
+    const labelShort = document.getElementById("peEsp32LabelShort");
+    const popBadge = document.getElementById("peEsp32PopBadge");
+    const popDevice = document.getElementById("peEsp32PopDevice");
+    const popSeen = document.getElementById("peEsp32PopSeen");
+
+    const closePopover = () => {
+      popover.classList.remove("open");
+      pillBtn.setAttribute("aria-expanded", "false");
+    };
+
+    pillBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const willOpen = !popover.classList.contains("open");
+      popover.classList.toggle("open", willOpen);
+      pillBtn.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    popover.addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", closePopover);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closePopover();
+    });
+
+    let device = null;
+    let received = false;
+
+    function updateEsp32Status() {
+      if (!received) {
+        pillBtn.className = "pe-esp-pill checking";
+        labelFull.textContent = "Syncing...";
+        labelShort.textContent = "Sync";
+        popBadge.className = "pe-esp-pop-badge";
+        popBadge.textContent = "Checking";
+        popDevice.textContent = "Checking Firebase...";
+        popSeen.textContent = "--";
+        return;
+      }
+
+      const timestamp = Number(device?.lastSeenMs);
+      const online =
+        device?.status === "Online" &&
+        Number.isFinite(timestamp) &&
+        timestamp > 0 &&
+        Math.abs(Date.now() - timestamp) < 30000;
+
+      pillBtn.className = `pe-esp-pill ${online ? "online" : "offline"}`;
+      labelFull.textContent = online ? "ESP32 Online" : "ESP32 Offline";
+      labelShort.textContent = online ? "Live" : "Off";
+
+      popBadge.className = `pe-esp-pop-badge ${online ? "online" : "offline"}`;
+      popBadge.textContent = online ? "Online" : "Offline";
+      popDevice.textContent = online ? "Connected" : "Disconnected";
+      popSeen.textContent = formatRelativeHeartbeat(timestamp);
+    }
+
+    let attempts = 0;
+    function attachFirebaseListener() {
+      if (typeof window.dbListen === "function") {
+        window.dbListen("devices/ESP32-MAIN", (data) => {
+          device = data;
+          received = true;
+          updateEsp32Status();
+        });
+        updateEsp32Status();
+        setInterval(updateEsp32Status, 3000);
+        return;
+      }
+
+      attempts++;
+      if (attempts < 20) {
+        setTimeout(attachFirebaseListener, 250);
+      } else {
+        pillBtn.className = "pe-esp-pill offline";
+        labelFull.textContent = "Sync Error";
+        labelShort.textContent = "Err";
+        popBadge.className = "pe-esp-pop-badge offline";
+        popBadge.textContent = "Error";
+        popDevice.textContent = "Listener unavailable";
+        popSeen.textContent = "--";
+      }
+    }
+
+    attachFirebaseListener();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initGlobalEsp32Pill);
+  } else {
+    initGlobalEsp32Pill();
+  }
+})();

@@ -692,6 +692,110 @@
   margin-bottom: 16px;
 }
 
+/* Reserve Bay Modal: Subscriber / Walk-In Switcher & RFID Lookup */
+.pe-mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.pe-mode-btn {
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pe-mode-btn:hover {
+  color: #0f172a;
+}
+
+.pe-mode-btn.active {
+  background: #ffffff;
+  color: #1d4ed8;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.pe-lookup-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.pe-lookup-row .pe-modal-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.pe-lookup-btn {
+  width: 42px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.pe-lookup-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.pe-lookup-btn:active {
+  transform: scale(0.96);
+}
+
+.pe-lookup-status {
+  margin-top: 4px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.pe-lookup-status.idle {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+}
+
+.pe-lookup-status.valid {
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+.pe-lookup-status.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.pe-modal-btn.confirm:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .footer-note {
   margin-top: 16px;
   font-size: 0.85rem;
