@@ -115,6 +115,7 @@
             <select id="typeFilter" onchange="filterDevices()">
               <option value="All">All</option>
               <option value="Barrier">Barrier</option>
+              <option value="Controller">Main ESP32 Controller</option>
               <option value="Display">I2C Status Display</option>
               <option value="LED">LED Indicator</option>
               <option value="RFID Reader">RFID Scanner</option>
@@ -296,6 +297,8 @@ function setSlotLight(index, color) {
       });
       renderSlots();
     });
+
+    //old code which makes the component stuck on online even if esp32 is offline
 /*
     // 3. Connected Hardware Devices Table (Synced with /devices in Firebase)
     let devices = [];
@@ -385,6 +388,8 @@ function setSlotLight(index, color) {
     filterDevices();
   </script>
   
+  <!--Old code to make component offline-->
+  <!--
   <script>
     const DEVICE_META = {
   "ESP32-MAIN": { name: "Main Controller", layer: "Core Layer", type: "Controller" },
@@ -556,9 +561,9 @@ function setSlotLight(index, color) {
     initFirebaseListener();
     setInterval(syncDevicesAndRender, 3000);
   </script>
+-->
 
 
-<!--
 <script>
   const DEVICE_META = {
     "ESP32-MAIN": { name: "Main Controller", layer: "Core Layer", type: "Controller" },
@@ -725,8 +730,6 @@ function setSlotLight(index, color) {
 </script>
 
 
-
--->
 
 
 
