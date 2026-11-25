@@ -714,8 +714,52 @@
       }
     }
 
+    //Generate sequential ticket ID in the format of "TKT-{RFID}-{DATE}-{NUMBER}"
+    async function generateSequentialTicketId(rfidUid = "") {
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      
+      // Clean the RFID UID if provided (e.g., "1033DC56")
+      const cleanUid = String(rfidUid || "").replace(/[^0-9A-F]/gi, "").toUpperCase();
+      const prefix = cleanUid ? `TKT-${cleanUid}-${dateStr}-` : `TKT-${dateStr}-`;
+
+      let maxNum = 0;
+
+      // Match any ticket from today (whether it has an RFID segment or not) and extract its ending sequence number
+      const todayRegex = new RegExp(`^TKT-(?:[0-9A-F]+-)?${dateStr}-(\\d+)$`, "i");
+
+      const checkId = (id) => {
+        if (!id || typeof id !== "string") return;
+        const match = id.match(todayRegex);
+        if (match) {
+          const num = parseInt(match[1], 10) || 0;
+          if (num > maxNum) maxNum = num;
+        }
+      };
+
+      // 1. Check currently active bays in floorsData
+      if (typeof floorsData !== "undefined") {
+        Object.values(floorsData).forEach(slots => {
+          slots.forEach(s => checkId(s.ticketId));
+        });
+      }
+
+      // 2. Check completed/saved transactions in Firebase
+      try {
+        const res = await fetch("https://firebasedatabase.app");
+        const txObj = await res.json();
+        if (txObj) {
+          Object.values(txObj).forEach(tx => tx && checkId(tx.id));
+        }
+      } catch (err) {
+        console.error("Failed to fetch transactions for ticket ID:", err);
+      }
+
+      return `${prefix}${String(maxNum + 1).padStart(4, '0')}`;
+    }
+
     // 1. Reserve a Bay (Requires Verified Subscriber Pass or Verified Walk-In Visitor Pass)
-    function reserveSlot() {
+    async function reserveSlot() {
       const slot = floorsData[currentFloor][selectedIndex];
 
       const backdrop = document.createElement("div");
@@ -949,7 +993,7 @@
         if (e.target === backdrop) closeModal();
       });
 
-      backdrop.querySelector("#reserveBayForm").addEventListener("submit", (e) => {
+      backdrop.querySelector("#reserveBayForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         if (!verifiedCard) {
           runLookup();
@@ -972,7 +1016,7 @@
 
         const nowMs = Date.now();
         const timeStr = getCurrentTimeStr();
-        const ticketId = "TKT-" + String(Math.floor(1000 + Math.random() * 9000));
+        const ticketId = await generateSequentialTicketId(verifiedCard.uid);
 
         window.dbUpdate(`transactions/${ticketId}`, {
           id: ticketId,
@@ -1100,7 +1144,8 @@
       }
 
       const defaultTime = (slot.entry && slot.entry !== "--:--") ? slot.entry : getCurrentTimeStr();
-      const defaultTicket = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+      const defaultTicket = slot.ticketId || (await generateSequentialTicketId(slot.rfidUid));
+
 
       const result = await window.peForm({
         title: `Update Details: Bay ${slot.id}`,
@@ -1119,7 +1164,7 @@
             ]
           },
           { name: "entry", label: "Start Time", type: "time", value: defaultTime, required: true },
-          { name: "ticketId", label: "Ticket ID", value: defaultTicket, placeholder: "e.g., TKT-1234", required: true, uppercase: true },
+          { name: "ticketId", label: "Ticket ID", value: defaultTicket, placeholder: "e.g., TKT-1033DC56-20261125-0001", required: true, uppercase: true },
           { name: "note", label: "Driver Name / Note / Details", value: slot.note || "", placeholder: "e.g., Juan Dela Cruz, VIP, or special instructions" }
         ]
       });
@@ -1257,7 +1302,7 @@
         const finalFee = calculateAccruedFee({ ...slot, vehicleType }).toFixed(2);
         const timeOutStr = getCurrentTimeStr();
         const timeInStr = (slot.entry && slot.entry !== "--:--") ? slot.entry : timeOutStr;
-        const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+        const ticketId = slot.ticketId || (await generateSequentialTicketId(slot.rfidUid));
         const finalPlate = result.plate || slot.plate || `BAY-${slot.id}`;
 
         window.dbUpdate(`transactions/${ticketId}`, {
@@ -1317,7 +1362,7 @@
           notifExtra = " (Reservation voided)";
         } else if (action === 'settle') {
           const timeOutStr = getCurrentTimeStr();
-          const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+          const ticketId = slot.ticketId || (await generateSequentialTicketId(slot.rfidUid));
 
           window.dbUpdate(`transactions/${ticketId}`, {
             id: ticketId,
@@ -1399,7 +1444,7 @@
         if (!confirmed) return;
       }
 
-      const ticketId = slot.ticketId || ("TKT-" + String(Math.floor(1000 + Math.random() * 9000)));
+      const ticketId = slot.ticketId || (await generateSequentialTicketId(slot.rfidUid));
 
       window.dbUpdate(`transactions/${ticketId}`, {
         id: ticketId,
